@@ -20,7 +20,6 @@ class ProcessKiller
     private $checkboxRows = []; // 存储行容器引用
     private $checkboxContainer;
     private $containerParent; // 存储容器的父容器
-    private $containerIndex = 8; // 容器在父容器中的索引位置
     
     public function __construct()
     {
@@ -33,40 +32,26 @@ class ProcessKiller
         Box::append($this->box, $title, false);
         
         // 说明
-        $desc = Label::create("输入进程名或PID，点击查询按钮查看进程信息，点击杀按钮终止选中的进程");
+        $desc = Label::create("输入进程名或PID，点击查询按钮查看进程信息，点击“清除选择” 终止选中的进程");
         Box::append($this->box, $desc, false);
         
-        // 进程输入框
+        // 水平布局：进程输入框和查询按钮
+        $inputBox = Box::newHorizontalBox();
+        Box::setPadded($inputBox, true);
+        Box::append($this->box, $inputBox, false);
+        
+        // 进程输入框标签
         $processLabel = Label::create("进程名或PID:");
-        Box::append($this->box, $processLabel, false);
+        Box::append($inputBox, $processLabel, false);
         
+        // 进程输入框
         $this->processEntry = Entry::create();
-        Box::append($this->box, $this->processEntry, false);
-        
-        // 按钮容器
-        $buttonBox = Box::newHorizontalBox();
-        Box::setPadded($buttonBox, true);
-        Box::append($this->box, $buttonBox, false);
+        Box::append($inputBox, $this->processEntry, true);
         
         // 查询按钮
         $queryBtn = Button::create("查询进程");
         Button::onClicked($queryBtn, [$this, 'queryProcess']);
-        Box::append($buttonBox, $queryBtn, true);
-        
-        // 杀按钮
-        $killBtn = Button::create("杀选中进程");
-        Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
-        Box::append($buttonBox, $killBtn, true);
-        
-        // 全选按钮
-        $selectAllBtn = Button::create("全选");
-        Button::onClicked($selectAllBtn, [$this, 'selectAllProcesses']);
-        Box::append($buttonBox, $selectAllBtn, true);
-        
-        // 全不选按钮
-        $selectNoneBtn = Button::create("全不选");
-        Button::onClicked($selectNoneBtn, [$this, 'selectNoneProcesses']);
-        Box::append($buttonBox, $selectNoneBtn, true);
+        Box::append($inputBox, $queryBtn, false);
         
         // 结果标签
         $resultLabel = Label::create("进程列表（勾选需要终止的进程）:");
@@ -77,15 +62,6 @@ class ProcessKiller
         
         // 创建复选框容器
         $this->createCheckboxContainer();
-        
-        // 进程详情
-        $detailsLabel = Label::create("进程详情:");
-        Box::append($this->box, $detailsLabel, false);
-        
-        // 详细结果显示
-        $this->resultEntry = MultilineEntry::create();
-        MultilineEntry::setReadOnly($this->resultEntry, true);
-        Box::append($this->box, $this->resultEntry, true);
     }
     
     /**
@@ -110,22 +86,23 @@ class ProcessKiller
     {
         $process = Entry::text($this->processEntry);
         if (empty($process)) {
-            MultilineEntry::setText($this->resultEntry, "请输入进程名或PID");
             return;
         }
         
+        // 打印调试信息
+        error_log("进程查询: {$process}");
+        
         // 查询进程
         $this->processes = $this->getProcessesInfo($process);
+        
+        // 打印结果
+        error_log("查询结果: " . print_r($this->processes, true));
         
         // 清除旧的复选框
         $this->clearCheckboxes();
         
         // 显示进程列表
         $this->displayProcessList();
-        
-        // 显示详细结果
-        $detailResult = $this->formatProcessDetails($this->processes);
-        MultilineEntry::setText($this->resultEntry, $detailResult);
     }
     
     /**
@@ -137,15 +114,18 @@ class ProcessKiller
         $this->checkboxes = [];
         $this->checkboxRows = [];
         
-        try {
-            // 尝试删除旧容器
-            Box::delete($this->containerParent, $this->containerIndex);
-        } catch (\Exception $e) {
-            // 如果删除失败，忽略错误
-        }
+        // 创建新容器替换旧容器
+        $newContainer = Box::newVerticalBox();
+        Box::setPadded($newContainer, true);
         
-        // 创建新容器
-        $this->createCheckboxContainer();
+        // 移除旧容器（在索引4的位置）
+        Box::delete($this->containerParent, 4);
+        
+        // 添加新容器
+        Box::append($this->containerParent, $newContainer, false);
+        
+        // 更新引用
+        $this->checkboxContainer = $newContainer;
     }
     
     /**
@@ -159,30 +139,27 @@ class ProcessKiller
             return;
         }
         
+        // 打印调试信息
+        error_log("显示进程列表，数量: " . count($this->processes));
+        
         // 创建表头
         $headerBox = Box::newHorizontalBox();
         Box::setPadded($headerBox, true);
         
-        $selectHeaderLabel = Label::create("选择");
-        Box::append($headerBox, $selectHeaderLabel, false);
+        // 复选框列（空标签，保持一致性）
+        $checkboxHeaderLabel = Label::create("");
+        Box::append($headerBox, $checkboxHeaderLabel, false);
         
         $pidHeaderLabel = Label::create("PID");
         Box::append($headerBox, $pidHeaderLabel, true);
         
-        $nameHeaderLabel = Label::create("映像名称");
-        Box::append($headerBox, $nameHeaderLabel, true);
+        $userHeaderLabel = Label::create("User");
+        Box::append($headerBox, $userHeaderLabel, true);
         
-        $sessionHeaderLabel = Label::create("会话名称");
-        Box::append($headerBox, $sessionHeaderLabel, true);
-        
-        $memoryHeaderLabel = Label::create("内存使用量");
-        Box::append($headerBox, $memoryHeaderLabel, true);
+        $commandHeaderLabel = Label::create("Command");
+        Box::append($headerBox, $commandHeaderLabel, true);
         
         Box::append($this->checkboxContainer, $headerBox, false);
-        
-        // 添加分隔行
-        $separator = Label::create("------------------------------------------------------");
-        Box::append($this->checkboxContainer, $separator, false);
         
         // 添加进程行
         foreach ($this->processes as $process) {
@@ -198,21 +175,38 @@ class ProcessKiller
             $pidLabel = Label::create($process['pid']);
             Box::append($rowBox, $pidLabel, true);
             
-            // 映像名称
-            $nameLabel = Label::create($process['name']);
-            Box::append($rowBox, $nameLabel, true);
+            // User列 - 使用session或user信息
+            $userLabel = Label::create($process['session'] ?? "");
+            Box::append($rowBox, $userLabel, true);
             
-            // 会话名称
-            $sessionLabel = Label::create($process['session'] ?? "");
-            Box::append($rowBox, $sessionLabel, true);
-            
-            // 内存使用量
-            $memoryLabel = Label::create($process['memory'] ?? "");
-            Box::append($rowBox, $memoryLabel, true);
+            // Command列 - 使用完整命令行或进程名
+            $commandText = isset($process['command']) ? $process['command'] : $process['name'];
+            // 限制命令长度以防止显示过长
+            if (strlen($commandText) > 50) {
+                $commandText = substr($commandText, 0, 47) . '...';
+            }
+            $commandLabel = Label::create($commandText);
+            Box::append($rowBox, $commandLabel, true);
             
             Box::append($this->checkboxContainer, $rowBox, false);
             $this->checkboxRows[] = $rowBox; // 保存行引用
         }
+        
+        // 添加按钮
+        $buttonBox = Box::newHorizontalBox();
+        Box::setPadded($buttonBox, true);
+        
+        // 杀选中进程按钮
+        $killBtn = Button::create("清除选择");
+        Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
+        Box::append($buttonBox, $killBtn, true);
+        
+        // 全选按钮
+        $selectAllBtn = Button::create("全选");
+        Button::onClicked($selectAllBtn, [$this, 'selectAllProcesses']);
+        Box::append($buttonBox, $selectAllBtn, true);
+        
+        Box::append($this->checkboxContainer, $buttonBox, false);
     }
     
     /**
@@ -273,7 +267,9 @@ class ProcessKiller
         }
         
         if (empty($selectedPids)) {
-            MultilineEntry::setText($this->resultEntry, "未选中任何进程");
+            // 显示提示消息
+            $label = Label::create("未选中任何进程");
+            Box::append($this->checkboxContainer, $label, false);
             return;
         }
         
@@ -281,9 +277,6 @@ class ProcessKiller
         foreach ($selectedPids as $pid) {
             $results[] = $this->killProcessById($pid);
         }
-        
-        // 显示结果
-        MultilineEntry::setText($this->resultEntry, implode("\n", $results));
         
         // 重新查询进程
         $this->queryProcess();
@@ -299,6 +292,8 @@ class ProcessKiller
         $output = [];
         $processes = [];
         
+        error_log("操作系统: {$os}, 查询进程: {$process}");
+        
         if ($os === 'WIN') {
             // Windows系统
             if (is_numeric($process)) {
@@ -309,7 +304,9 @@ class ProcessKiller
                 $command = "tasklist /FI \"IMAGENAME eq {$process}*\" /FO CSV /NH";
             }
             
+            error_log("执行命令: {$command}");
             exec($command, $output);
+            error_log("命令输出: " . print_r($output, true));
             
             // 解析CSV格式输出
             foreach ($output as $line) {
@@ -320,11 +317,27 @@ class ProcessKiller
                 $parts = explode(',', $line);
                 
                 if (count($parts) >= 5) {
+                    $processName = trim($parts[0]);
+                    $pid = trim($parts[1]);
+                    $sessionName = trim($parts[2]);
+                    $memory = trim($parts[4]);
+                    
+                    // 尝试获取完整命令行
+                    $cmdOutput = [];
+                    exec("wmic process where processid={$pid} get commandline", $cmdOutput);
+                    $command = $processName; // 默认使用进程名
+                    
+                    // 如果有完整命令行，使用它
+                    if (count($cmdOutput) > 1) {
+                        $command = trim($cmdOutput[1]);
+                    }
+                    
                     $processes[] = [
-                        'name' => trim($parts[0]),
-                        'pid' => trim($parts[1]),
-                        'session' => trim($parts[2]),
-                        'memory' => trim($parts[4])
+                        'name' => $processName,
+                        'pid' => $pid,
+                        'session' => $sessionName,
+                        'memory' => $memory,
+                        'command' => $command
                     ];
                 }
             }
@@ -332,35 +345,50 @@ class ProcessKiller
             // macOS或Linux系统
             if (is_numeric($process)) {
                 // 按PID查询
-                $command = "ps -p {$process} -o pid,comm,user,%mem";
+                $command = "ps -p {$process} -o pid,user,comm,%mem";
             } else {
                 // 按进程名查询
                 $command = "ps -e | grep {$process} | grep -v grep";
             }
             
+            error_log("执行命令: {$command}");
             exec($command, $output);
+            error_log("命令输出: " . print_r($output, true));
             
-            // 解析Linux/macOS输出
-            $header = true;
+            // 解析输出
             foreach ($output as $line) {
-                if (empty(trim($line))) continue;
-                if ($header) {
-                    $header = false;
-                    continue;
-                }
+                $line = trim($line);
+                if (empty($line)) continue;
                 
-                $parts = preg_split('/\s+/', trim($line));
-                if (count($parts) >= 4) {
+                $parts = preg_split('/\s+/', $line, 4); // 限制分割为4部分
+                if (count($parts) >= 2) {
+                    $pid = $parts[0];
+                    $processName = isset($parts[2]) ? $parts[2] : $parts[1];
+                    $user = isset($parts[1]) ? $parts[1] : 'unknown';
+                    $memory = isset($parts[3]) ? $parts[3] : '';
+                    
+                    // 获取完整命令行
+                    $cmdOutput = [];
+                    exec("ps -p {$pid} -o command=", $cmdOutput);
+                    $command = $processName; // 默认值
+                    
+                    // 如果有完整命令行，使用它
+                    if (!empty($cmdOutput)) {
+                        $command = trim($cmdOutput[0]);
+                    }
+                    
                     $processes[] = [
-                        'pid' => $parts[0],
-                        'name' => $parts[1],
-                        'session' => $parts[2],
-                        'memory' => $parts[3] . '%'
+                        'name' => $processName,
+                        'pid' => $pid,
+                        'session' => $user,
+                        'memory' => $memory,
+                        'command' => $command
                     ];
                 }
             }
         }
         
+        error_log("进程查询结果: " . print_r($processes, true));
         return $processes;
     }
     

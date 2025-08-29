@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php debug_processes.php)",
+      "Bash(php test_fix.php)",
+      "Bash(php test_buttons.php)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
