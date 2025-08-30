@@ -3,7 +3,11 @@
     "allow": [
       "Bash(php debug_processes.php)",
       "Bash(php test_fix.php)",
-      "Bash(php test_buttons.php)"
+      "Bash(php test_buttons.php)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "WebSearch",
+      "Bash(php:*)"
     ],
     "deny": [],
     "ask": []

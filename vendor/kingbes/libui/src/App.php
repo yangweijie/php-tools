@@ -87,4 +87,19 @@ class App extends Base
         };
         self::ffi()->uiQueueMain($c_callable, null);
     }
+
+    /**
+     * 注册应用程序退出事件回调
+     *
+     * @param callable $callback 回调函数，返回 true 允许退出，返回 false 阻止退出
+     * @return void
+     */
+    public static function onShouldQuit(callable $callback): void
+    {
+        $c_callback = function ($data) use ($callback) {
+            $result = $callback();
+            return $result ? 1 : 0;
+        };
+        self::ffi()->uiOnShouldQuit($c_callback, null);
+    }
 }

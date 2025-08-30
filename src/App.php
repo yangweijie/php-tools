@@ -28,6 +28,12 @@ class App
             return 1;
         });
         
+        // 注册应用程序退出事件
+        LibuiApp::onShouldQuit(function () {
+            LibuiApp::quit();
+            return true;
+        });
+        
         // 创建标签页容器
         $this->tab = Tab::create();
         
