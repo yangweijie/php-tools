@@ -28,12 +28,12 @@ class ProcessKiller
         Box::setPadded($this->box, true);
         
         // 标题
-        $title = Label::create("进程查杀工具");
-        Box::append($this->box, $title, false);
+        // $title = Label::create("进程查杀工具");
+        // Box::append($this->box, $title, false);
         
         // 说明
-        $desc = Label::create("输入进程名或PID，点击查询按钮查看进程信息，点击“清除选择” 终止选中的进程");
-        Box::append($this->box, $desc, false);
+        // $desc = Label::create("输入进程名或PID，点击查询按钮查看进程信息，点击“清除选择” 终止选中的进程");
+        // Box::append($this->box, $desc, false);
         
         // 水平布局：进程输入框和查询按钮
         $inputBox = Box::newHorizontalBox();
@@ -118,8 +118,8 @@ class ProcessKiller
         $newContainer = Box::newVerticalBox();
         Box::setPadded($newContainer, true);
         
-        // 移除旧容器（在索引4的位置）
-        Box::delete($this->containerParent, 4);
+        // 移除旧容器（在索引2的位置）
+        Box::delete($this->containerParent, 2);
         
         // 添加新容器
         Box::append($this->containerParent, $newContainer, false);
@@ -150,13 +150,13 @@ class ProcessKiller
         $checkboxHeaderLabel = Label::create("");
         Box::append($headerBox, $checkboxHeaderLabel, false);
         
-        $pidHeaderLabel = Label::create("PID");
+        $pidHeaderLabel = Label::create("    PID");
         Box::append($headerBox, $pidHeaderLabel, true);
         
-        $userHeaderLabel = Label::create("User");
+        $userHeaderLabel = Label::create("  User");
         Box::append($headerBox, $userHeaderLabel, true);
         
-        $commandHeaderLabel = Label::create("Command");
+        $commandHeaderLabel = Label::create(" Command");
         Box::append($headerBox, $commandHeaderLabel, true);
         
         Box::append($this->checkboxContainer, $headerBox, false);
@@ -207,30 +207,6 @@ class ProcessKiller
         Box::append($buttonBox, $selectAllBtn, true);
         
         Box::append($this->checkboxContainer, $buttonBox, false);
-    }
-    
-    /**
-     * 格式化进程详情
-     */
-    private function formatProcessDetails($processes)
-    {
-        if (empty($processes)) {
-            return "未找到匹配的进程";
-        }
-        
-        $result = "映像名称                   PID   会话名称         内存使用量\n";
-        $result .= "================================================\n";
-        
-        foreach ($processes as $process) {
-            $name = str_pad($process['name'], 25);
-            $pid = str_pad($process['pid'], 6);
-            $session = str_pad($process['session'] ?? "", 16);
-            $memory = $process['memory'] ?? "";
-            
-            $result .= "{$name} {$pid} {$session} {$memory}\n";
-        }
-        
-        return $result;
     }
     
     /**

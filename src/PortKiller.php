@@ -28,12 +28,12 @@ class PortKiller
         Box::setPadded($this->box, true);
         
         // 标题
-        $title = Label::create("端口查杀工具");
-        Box::append($this->box, $title, false);
+        // $title = Label::create("端口查杀工具");
+        // Box::append($this->box, $title, false);
         
         // 说明
-        $desc = Label::create("输入端口号，点击“查询占用进程”按钮查看占用进程，点击“清除选择”终止选中的进程");
-        Box::append($this->box, $desc, false);
+        // $desc = Label::create("输入端口号，点击“查询占用进程”按钮查看占用进程，点击“清除选择”终止选中的进程");
+        // Box::append($this->box, $desc, false);
         
         // 水平布局：端口输入框和查询按钮
         $inputBox = Box::newHorizontalBox();
@@ -118,8 +118,8 @@ class PortKiller
         $newContainer = Box::newVerticalBox();
         Box::setPadded($newContainer, true);
         
-        // 移除旧容器（在索引4的位置）
-        Box::delete($this->containerParent, 4);
+        // 移除旧容器（在索引3的位置）
+        Box::delete($this->containerParent, 2);
         
         // 添加新容器
         Box::append($this->containerParent, $newContainer, false);
@@ -150,13 +150,13 @@ class PortKiller
         $checkboxHeaderLabel = Label::create("");
         Box::append($headerBox, $checkboxHeaderLabel, false);
         
-        $pidHeaderLabel = Label::create("PID");
+        $pidHeaderLabel = Label::create("    PID");
         Box::append($headerBox, $pidHeaderLabel, true);
         
-        $userHeaderLabel = Label::create("User");
+        $userHeaderLabel = Label::create("  User");
         Box::append($headerBox, $userHeaderLabel, true);
         
-        $commandHeaderLabel = Label::create("Command");
+        $commandHeaderLabel = Label::create(" Command");
         Box::append($headerBox, $commandHeaderLabel, true);
         
         Box::append($this->checkboxContainer, $headerBox, false);
@@ -207,32 +207,6 @@ class PortKiller
         Box::append($buttonBox, $selectAllBtn, true);
         
         Box::append($this->checkboxContainer, $buttonBox, false);
-    }
-    
-    /**
-     * 格式化端口详情
-     */
-    private function formatPortDetails($port, $processes)
-    {
-        if (empty($processes)) {
-            return "未找到占用端口 {$port} 的进程";
-        }
-        
-        $result = "端口 {$port} 占用情况:\n";
-        $result .= "协议     本地地址                远程地址                状态     PID\n";
-        $result .= "=============================================================================\n";
-        
-        foreach ($processes as $process) {
-            $protocol = str_pad($process['protocol'] ?? "", 9);
-            $localAddr = str_pad($process['local_address'] ?? "", 24);
-            $remoteAddr = str_pad($process['remote_address'] ?? "", 24);
-            $state = str_pad($process['state'] ?? "", 9);
-            $pid = $process['pid'];
-            
-            $result .= "{$protocol} {$localAddr} {$remoteAddr} {$state} {$pid}\n";
-        }
-        
-        return $result;
     }
     
     /**
