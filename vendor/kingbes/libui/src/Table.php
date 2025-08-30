@@ -204,14 +204,6 @@ class Table extends Base
         self::ffi()->uiTableAppendTextColumn($model, $name, $textModelColumn, $textEditableModelColumn, $textParams);
     }
 
-    /**
-     * 表格模型列追加图片列
-     *
-     * @param CData $model 表格模型
-     * @param string $name 列名称
-     * @param int $imageModelColumn 图片模型列
-     * @return void
-     */
     public static function appendImageColumn(CData $model, string $name, int $imageModelColumn): void
     {
         self::ffi()->uiTableAppendImageColumn($model, $name, $imageModelColumn);
