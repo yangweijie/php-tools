@@ -11,12 +11,12 @@ This is a PHP tools collection built with the kingbes/libui GUI library. It incl
 ### Main Components
 
 1. **Core Application**: 
-   - `src/App.php` - Main GUI application class that manages the window and tab structure
-   - `toolkit.php` - Main entry point that initializes the application and adds tabs
+   - `app/App.php` - Main GUI application class that manages the window and tab structure
+   - `app/Commands/gui.php` - Main entry point that initializes the application and adds tabs
 
 2. **System Tools**:
-   - `src/PortKiller.php` - Port killing utility with GUI interface
-   - `src/ProcessKiller.php` - Process killing utility with GUI interface
+   - `app/PortKiller.php` - Port killing utility with GUI interface
+   - `app/ProcessKiller.php` - Process killing utility with GUI interface
 
 3. **GUI Framework**:
    - Built on kingbes/libui PHP-FFI bindings for libui
@@ -27,10 +27,6 @@ This is a PHP tools collection built with the kingbes/libui GUI library. It incl
 
 - Graphical interface based on libui native desktop application
 - System tools: Port killing, process killing
-- HTTP load testing with high concurrency asynchronous requests
-- Flexible configuration with JSON format config files
-- Real-time monitoring during load testing
-- Detailed analysis with performance statistics and response time analysis
 
 ## Common Development Commands
 
@@ -42,13 +38,7 @@ composer install
 ### Running the Application
 ```bash
 # Start the GUI toolkit application
-php toolkit.php
-```
-
-### Testing
-```bash
-# Run tests (note: uses Windows-style paths in run_tests.php)
-php run_tests.php
+php toolkit
 ```
 
 ## Development Notes
@@ -75,6 +65,5 @@ php run_tests.php
 
 - kingbes/libui: GUI framework (PHP-FFI bindings for libui)
 - guzzlehttp/guzzle: HTTP client for load testing
-- react/socket, react/http, react/stream: Asynchronous networking
 - ext-json, ext-curl: Required PHP extensions
 - pestphp/pest: Testing framework
