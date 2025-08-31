@@ -14,6 +14,15 @@
             "email": "917647288@qq.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./kingbes/libui",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
     "require": {
         "php": "^8.2",
         "kingbes/libui": "0.0.1",
@@ -37,7 +46,10 @@
         }
     },
     "config": {
-        "preferred-install": "dist",
+        "preferred-install": {
+            "kingbes/libui": "source",
+            "*": "dist"
+        },
         "sort-packages": true,
         "optimize-autoloader": true,
         "allow-plugins": {
