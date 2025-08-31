@@ -74,8 +74,8 @@ class MutationGenerator
                     $traverser = NodeTraverserFactory::create();
                     $traverser->addVisitor(new NodeVisitor(
                         mutator: $mutator,
-                        offset: $this->offset,
                         linesToMutate: $linesToMutate,
+                        offset: $this->offset,
                         mutatorsToIgnoreByLine: $mutatorsToIgnoreByLine,
                         hasAlreadyMutated: $this->hasMutated(...),
                         trackMutation: $this->trackMutation(...),

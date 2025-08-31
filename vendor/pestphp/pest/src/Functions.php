@@ -2,14 +2,11 @@
 
 declare(strict_types=1);
 
-use Pest\Browser\Api\ArrayablePendingAwaitablePage;
-use Pest\Browser\Api\PendingAwaitablePage;
 use Pest\Concerns\Expectable;
 use Pest\Configuration;
 use Pest\Exceptions\AfterAllWithinDescribe;
 use Pest\Exceptions\BeforeAllWithinDescribe;
 use Pest\Expectation;
-use Pest\Installers\PluginBrowser;
 use Pest\Mutate\Contracts\MutationTestRunner;
 use Pest\Mutate\Repositories\ConfigurationRepository;
 use Pest\PendingCalls\AfterEachCall;
@@ -21,7 +18,6 @@ use Pest\Repositories\DatasetsRepository;
 use Pest\Support\Backtrace;
 use Pest\Support\Container;
 use Pest\Support\DatasetInfo;
-use Pest\Support\Description;
 use Pest\Support\HigherOrderTapProxy;
 use Pest\TestSuite;
 use PHPUnit\Framework\TestCase;
@@ -99,7 +95,7 @@ if (! function_exists('describe')) {
     {
         $filename = Backtrace::testFile();
 
-        return new DescribeCall(TestSuite::getInstance(), $filename, new Description($description), $tests);
+        return new DescribeCall(TestSuite::getInstance(), $filename, $description, $tests);
     }
 }
 
@@ -280,53 +276,5 @@ if (! function_exists('mutates')) {
         if (! is_array($paths)) {
             $configurationRepository->globalConfiguration('default')->class(...$targets); // @phpstan-ignore-line
         }
-    }
-}
-
-if (! function_exists('fixture')) {
-    /**
-     * Returns the absolute path to a fixture file.
-     */
-    function fixture(string $file): string
-    {
-        $file = implode(DIRECTORY_SEPARATOR, [
-            TestSuite::getInstance()->rootPath,
-            TestSuite::getInstance()->testPath,
-            'Fixtures',
-            str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file),
-        ]);
-
-        $fileRealPath = realpath($file);
-
-        if ($fileRealPath === false) {
-            throw new InvalidArgumentException(
-                'The fixture file ['.$file.'] does not exist.',
-            );
-        }
-
-        return $fileRealPath;
-    }
-}
-
-if (! function_exists('visit')) {
-    /**
-     * Browse to the given URL.
-     *
-     * @template TUrl of array<int, string>|string
-     *
-     * @param  TUrl  $url
-     * @param  array<string, mixed>  $options
-     * @return (TUrl is array<int, string> ? ArrayablePendingAwaitablePage : PendingAwaitablePage)
-     */
-    function visit(array|string $url, array $options = []): ArrayablePendingAwaitablePage|PendingAwaitablePage
-    {
-        if (! class_exists(\Pest\Browser\Configuration::class)) {
-            PluginBrowser::install();
-
-            exit(0);
-        }
-
-        // @phpstan-ignore-next-line
-        return test()->visit($url, $options);
     }
 }

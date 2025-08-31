@@ -25,7 +25,6 @@ class RemoveFunctionCall extends AbstractMutator
         return [Expression::class];
     }
 
-    #[\Override]
     public static function can(Node $node): bool
     {
         if (! $node instanceof Expression) {

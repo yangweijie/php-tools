@@ -48,7 +48,6 @@ readonly class TestCase
         };
 
         if (($errors = $node->xpath('error')) !== []) {
-            assert($errors !== null);
             $error = $getFirstNode($errors);
             $type  = $getType($error);
             $text  = (string) $error;
@@ -67,7 +66,6 @@ readonly class TestCase
         }
 
         if (($failures = $node->xpath('failure')) !== []) {
-            assert($failures !== null);
             $failure = $getFirstNode($failures);
             $type    = $getType($failure);
             $text    = (string) $failure;

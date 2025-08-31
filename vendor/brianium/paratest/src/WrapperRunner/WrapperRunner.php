@@ -67,7 +67,7 @@ final class WrapperRunner implements RunnerInterface
     private array $teamcityFiles = [];
     /** @var list<SplFileInfo> */
     private array $testdoxFiles = [];
-    /** @var array<non-empty-string> */
+    /** @var non-empty-string[] */
     private readonly array $parameters;
     private CodeCoverageFilterRegistry $codeCoverageFilterRegistry;
 
@@ -84,11 +84,8 @@ final class WrapperRunner implements RunnerInterface
         $phpFinder = new PhpExecutableFinder();
         $phpBin    = $phpFinder->find(false);
         assert($phpBin !== false);
-        assert($phpBin !== '');
         $parameters = [$phpBin];
-        /** @var array<non-empty-string> $arguments */
-        $arguments  = $phpFinder->findArguments();
-        $parameters = array_merge($parameters, $arguments);
+        $parameters = array_merge($parameters, $phpFinder->findArguments());
 
         if ($options->passthruPhp !== null) {
             $parameters = array_merge($parameters, $options->passthruPhp);
@@ -277,10 +274,8 @@ final class WrapperRunner implements RunnerInterface
                 array_merge_recursive($testResultSum->testMarkedIncompleteEvents(), $testResult->testMarkedIncompleteEvents()),
                 array_merge_recursive($testResultSum->testTriggeredPhpunitDeprecationEvents(), $testResult->testTriggeredPhpunitDeprecationEvents()),
                 array_merge_recursive($testResultSum->testTriggeredPhpunitErrorEvents(), $testResult->testTriggeredPhpunitErrorEvents()),
-                array_merge_recursive($testResultSum->testTriggeredPhpunitNoticeEvents(), $testResult->testTriggeredPhpunitNoticeEvents()),
                 array_merge_recursive($testResultSum->testTriggeredPhpunitWarningEvents(), $testResult->testTriggeredPhpunitWarningEvents()),
                 array_merge_recursive($testResultSum->testRunnerTriggeredDeprecationEvents(), $testResult->testRunnerTriggeredDeprecationEvents()),
-                array_merge_recursive($testResultSum->testRunnerTriggeredNoticeEvents(), $testResult->testRunnerTriggeredNoticeEvents()),
                 array_merge_recursive($testResultSum->testRunnerTriggeredWarningEvents(), $testResult->testRunnerTriggeredWarningEvents()),
                 array_merge_recursive($testResultSum->errors(), $testResult->errors()),
                 array_merge_recursive($testResultSum->deprecations(), $testResult->deprecations()),

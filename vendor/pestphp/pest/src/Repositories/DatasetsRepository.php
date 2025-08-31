@@ -19,7 +19,7 @@ use function sprintf;
  */
 final class DatasetsRepository
 {
-    private const string SEPARATOR = '>>';
+    private const SEPARATOR = '>>';
 
     /**
      * Holds the datasets.

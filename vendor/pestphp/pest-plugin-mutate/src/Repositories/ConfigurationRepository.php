@@ -22,7 +22,7 @@ class ConfigurationRepository
     /**
      * @internal
      */
-    final public const string FAKE = 'fake-profile';
+    final public const FAKE = 'fake-profile';
 
     public CliConfiguration $cliConfiguration;
 

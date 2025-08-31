@@ -32,7 +32,7 @@ use Symfony\Component\Console\Input\InputDefinition;
 
 class CliConfiguration extends AbstractConfiguration
 {
-    private const array OPTIONS = [
+    private const OPTIONS = [
         MutateOption::class,
         ClassOption::class,
         MinScoreOption::class,

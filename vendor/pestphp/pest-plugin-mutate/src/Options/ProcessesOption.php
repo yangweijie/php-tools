@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 class ProcessesOption
 {
-    final public const string ARGUMENT = 'processes';
+    final public const ARGUMENT = 'processes';
 
     public static function remove(): bool
     {

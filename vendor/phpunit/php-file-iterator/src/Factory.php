@@ -37,8 +37,6 @@ final class Factory
      * @param list<non-empty-string>|string           $suffixes
      * @param list<non-empty-string>|string           $prefixes
      * @param list<non-empty-string>                  $exclude
-     *
-     * @phpstan-ignore missingType.generics
      */
     public function getFileIterator(array|string $paths, array|string $suffixes = '', array|string $prefixes = '', array $exclude = []): AppendIterator
     {
@@ -115,7 +113,7 @@ final class Factory
      *
      * @return list<string>
      */
-    private function globstar(string $pattern): array
+    private function globstar(string $pattern)
     {
         if (stripos($pattern, '**') === false) {
             $files = glob($pattern, GLOB_ONLYDIR);
@@ -127,24 +125,23 @@ final class Factory
             $patterns = [$rootPattern . $restPattern];
             $rootPattern .= '/*';
 
-            while ($directories = glob($rootPattern, GLOB_ONLYDIR)) {
+            while ($dirs = glob($rootPattern, GLOB_ONLYDIR)) {
                 $rootPattern .= '/*';
 
-                foreach ($directories as $directory) {
-                    $patterns[] = $directory . $restPattern;
+                foreach ($dirs as $dir) {
+                    $patterns[] = $dir . $restPattern;
                 }
             }
 
             $files = [];
 
-            foreach ($patterns as $_pattern) {
-                $files = array_merge($files, $this->globstar($_pattern));
+            foreach ($patterns as $pat) {
+                $files = array_merge($files, $this->globstar($pat));
             }
         }
 
         if ($files !== false) {
             $files = array_unique($files);
-
             sort($files);
 
             return $files;

@@ -28,7 +28,6 @@ class FunctionProtectedToPrivate extends AbstractMutator
         return [ClassMethod::class];
     }
 
-    #[\Override]
     public static function can(Node $node): bool
     {
         return $node instanceof ClassMethod && $node->isProtected();

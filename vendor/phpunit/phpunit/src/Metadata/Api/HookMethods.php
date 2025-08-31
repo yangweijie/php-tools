@@ -55,7 +55,10 @@ final class HookMethods
 
         foreach (Reflection::methodsDeclaredDirectlyInTestClass(new ReflectionClass($className)) as $method) {
             $methodName = $method->getName();
-            $metadata   = Registry::parser()->forMethod($className, $methodName);
+
+            assert(!empty($methodName));
+
+            $metadata = Registry::parser()->forMethod($className, $methodName);
 
             if ($method->isStatic()) {
                 if ($metadata->isBeforeClass()->isNotEmpty()) {

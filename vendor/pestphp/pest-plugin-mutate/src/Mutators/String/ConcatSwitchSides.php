@@ -27,7 +27,6 @@ class ConcatSwitchSides extends AbstractMutator
         return [Concat::class];
     }
 
-    #[\Override]
     public static function can(Node $node): bool
     {
         if (! $node instanceof Concat) {

@@ -1,0 +1,123 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: ffi
+          coverage: none
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.json') }}
+
+      - name: Install dependencies
+        run: composer install --no-dev --prefer-dist --no-progress --no-suggest
+
+      - name: Build PHAR (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: php toolkit app:build tools --timeout=600
+
+      - name: Build PHAR (Windows)
+        if: runner.os == 'Windows'
+        run: php toolkit app:build tools.exe --timeout=600
+
+      - name: Set binary name (Linux)
+        if: runner.os == 'Linux'
+        run: echo "BINARY_NAME=tools-linux" >> $GITHUB_ENV
+
+      - name: Set binary name (Windows)
+        if: runner.os == 'Windows'
+        run: echo "BINARY_NAME=tools-windows.exe" >> $GITHUB_ENV
+
+      - name: Set binary name (macOS)
+        if: runner.os == 'macOS'
+        run: echo "BINARY_NAME=tools-macos" >> $GITHUB_ENV
+
+      - name: Rename binary (Linux)
+        if: runner.os == 'Linux'
+        run: mv builds/tools builds/${{ env.BINARY_NAME }}
+
+      - name: Rename binary (Windows)
+        if: runner.os == 'Windows'
+        run: ren builds\tools.exe builds\${{ env.BINARY_NAME }}
+
+      - name: Rename binary (macOS)
+        if: runner.os == 'macOS'
+        run: mv builds/tools builds/${{ env.BINARY_NAME }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tools-${{ matrix.platform }}
+          path: builds/${{ env.BINARY_NAME }}
+          if-no-files-found: error
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: List downloaded files
+        run: |
+          echo "Downloaded files:"
+          find . -type f -name "tools-*" | sort
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=untagged-$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+          artifacts: "tools-linux/tools-linux,tools-windows/tools-windows.exe,tools-macos/tools-macos"
+          artifactErrorsFailBuild: true

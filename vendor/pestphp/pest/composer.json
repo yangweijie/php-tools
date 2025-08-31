@@ -17,21 +17,19 @@
         }
     ],
     "require": {
-        "php": "^8.3.0",
-        "brianium/paratest": "^7.11.2",
+        "php": "^8.2.0",
+        "brianium/paratest": "^7.8.4",
         "nunomaduro/collision": "^8.8.2",
         "nunomaduro/termwind": "^2.3.1",
-        "pestphp/pest-plugin": "^4.0.0",
-        "pestphp/pest-plugin-arch": "^4.0.0",
-        "pestphp/pest-plugin-mutate": "^4.0.1",
-        "pestphp/pest-plugin-profanity": "^4.0.1",
-        "phpunit/phpunit": "^12.3.6",
-        "symfony/process": "^7.3.0"
+        "pestphp/pest-plugin": "^3.0.0",
+        "pestphp/pest-plugin-arch": "^3.1.1",
+        "pestphp/pest-plugin-mutate": "^3.0.5",
+        "phpunit/phpunit": "^11.5.33"
     },
     "conflict": {
-        "filp/whoops": "<2.18.3",
-        "phpunit/phpunit": ">12.3.6",
-        "sebastian/exporter": "<7.0.0",
+        "filp/whoops": "<2.16.0",
+        "phpunit/phpunit": ">11.5.33",
+        "sebastian/exporter": "<6.0.0",
         "webmozart/assert": "<1.11.0"
     },
     "autoload": {
@@ -55,10 +53,9 @@
         ]
     },
     "require-dev": {
-        "pestphp/pest-dev-tools": "^4.0.0",
-        "pestphp/pest-plugin-browser": "^4.0.2",
-        "pestphp/pest-plugin-type-coverage": "^4.0.2",
-        "psy/psysh": "^0.12.10"
+        "pestphp/pest-dev-tools": "^3.4.0",
+        "pestphp/pest-plugin-type-coverage": "^3.6.1",
+        "symfony/process": "^7.3.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
@@ -74,17 +71,16 @@
     ],
     "scripts": {
         "refacto": "rector",
-        "lint": "pint --parallel",
+        "lint": "pint",
         "test:refacto": "rector --dry-run",
-        "test:lint": "pint --parallel --test",
-        "test:profanity": "php bin/pest --profanity --compact",
+        "test:lint": "pint --test",
         "test:type:check": "phpstan analyse --ansi --memory-limit=-1 --debug",
         "test:type:coverage": "php -d memory_limit=-1  bin/pest --type-coverage --min=100",
-        "test:unit": "php bin/pest --exclude-group=integration --compact",
-        "test:inline": "php bin/pest --configuration=phpunit.inline.xml",
-        "test:parallel": "php bin/pest --exclude-group=integration --parallel --processes=3",
-        "test:integration": "php bin/pest --group=integration -v",
-        "update:snapshots": "REBUILD_SNAPSHOTS=true php bin/pest --update-snapshots",
+        "test:unit": "php bin/pest --colors=always --exclude-group=integration --compact",
+        "test:inline": "php bin/pest --colors=always --configuration=phpunit.inline.xml",
+        "test:parallel": "php bin/pest --colors=always --exclude-group=integration --parallel --processes=3",
+        "test:integration": "php bin/pest --colors=always --group=integration -v",
+        "update:snapshots": "REBUILD_SNAPSHOTS=true php bin/pest --colors=always --update-snapshots",
         "test": [
             "@test:refacto",
             "@test:lint",
@@ -115,7 +111,6 @@
                 "Pest\\Plugins\\Snapshot",
                 "Pest\\Plugins\\Verbose",
                 "Pest\\Plugins\\Version",
-                "Pest\\Plugins\\Shard",
                 "Pest\\Plugins\\Parallel"
             ]
         },

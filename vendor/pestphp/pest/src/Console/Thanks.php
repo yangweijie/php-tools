@@ -22,7 +22,7 @@ final readonly class Thanks
      *
      * @var array<string, string>
      */
-    private const array FUNDING_MESSAGES = [
+    private const FUNDING_MESSAGES = [
         'Star' => 'https://github.com/pestphp/pest',
         'YouTube' => 'https://youtube.com/@nunomaduro',
         'TikTok' => 'https://tiktok.com/@nunomaduro',

@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputOption;
 
 class EverythingOption
 {
-    final public const string ARGUMENT = 'everything';
+    final public const ARGUMENT = 'everything';
 
     public static function remove(): bool
     {

@@ -21,7 +21,7 @@ final class Configuration implements HandlesArguments, Terminable
     /**
      * The base PHPUnit file.
      */
-    public const string BASE_PHPUNIT_FILE = __DIR__
+    public const BASE_PHPUNIT_FILE = __DIR__
         .DIRECTORY_SEPARATOR
         .'..'
         .DIRECTORY_SEPARATOR
@@ -34,7 +34,7 @@ final class Configuration implements HandlesArguments, Terminable
      */
     public function handleArguments(array $arguments): array
     {
-        if ($this->hasArgument('--configuration', $arguments) || $this->hasArgument('-c', $arguments) || $this->hasCustomConfigurationFile()) {
+        if ($this->hasArgument('--configuration', $arguments) || $this->hasCustomConfigurationFile()) {
             return $arguments;
         }
 

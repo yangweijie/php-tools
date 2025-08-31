@@ -24,7 +24,6 @@ class UnwrapStrIreplace extends AbstractFunctionCallUnwrapMutator
         return 'str_ireplace';
     }
 
-    #[\Override]
     public static function mutate(Node $node): Node
     {
         /** @var FuncCall $node */

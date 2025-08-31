@@ -15,7 +15,7 @@ final readonly class Exporter
     /**
      * The maximum number of items in an array to export.
      */
-    private const int MAX_ARRAY_ITEMS = 3;
+    private const MAX_ARRAY_ITEMS = 3;
 
     /**
      * Creates a new Exporter instance.

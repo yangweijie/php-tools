@@ -33,7 +33,7 @@ final class EnsureIgnorableTestCasesAreIgnored implements StartedSubscriber
         /** @var array<int, WarningTriggered> $testRunnerTriggeredWarningEvents */
         $testRunnerTriggeredWarningEvents = $property->getValue($collector);
 
-        $testRunnerTriggeredWarningEvents = array_values(array_filter($testRunnerTriggeredWarningEvents, fn (WarningTriggered $event): bool => str_contains($event->message(), 'No tests found in class') === false));
+        $testRunnerTriggeredWarningEvents = array_values(array_filter($testRunnerTriggeredWarningEvents, fn (WarningTriggered $event): bool => $event->message() !== 'No tests found in class "Pest\TestCases\IgnorableTestCase".'));
 
         $property->setValue($collector, $testRunnerTriggeredWarningEvents);
     }

@@ -30,7 +30,6 @@ class DecrementInteger extends AbstractMutator
         ];
     }
 
-    #[\Override]
     public static function can(Node $node): bool
     {
         if (! parent::can($node)) {

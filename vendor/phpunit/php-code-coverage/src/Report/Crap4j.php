@@ -18,13 +18,13 @@ use function round;
 use function str_contains;
 use DOMDocument;
 use SebastianBergmann\CodeCoverage\CodeCoverage;
+use SebastianBergmann\CodeCoverage\Driver\WriteOperationFailedException;
 use SebastianBergmann\CodeCoverage\Node\File;
 use SebastianBergmann\CodeCoverage\Util\Filesystem;
-use SebastianBergmann\CodeCoverage\WriteOperationFailedException;
 
-final readonly class Crap4j
+final class Crap4j
 {
-    private int $threshold;
+    private readonly int $threshold;
 
     public function __construct(int $threshold = 30)
     {
@@ -83,7 +83,7 @@ final readonly class Crap4j
 
                     $methodNode = $document->createElement('method');
 
-                    if ($class['namespace'] !== '') {
+                    if (!empty($class['namespace'])) {
                         $namespace = $class['namespace'];
                     }
 

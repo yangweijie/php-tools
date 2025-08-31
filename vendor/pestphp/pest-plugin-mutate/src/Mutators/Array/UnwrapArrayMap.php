@@ -24,7 +24,6 @@ class UnwrapArrayMap extends AbstractFunctionCallUnwrapMutator
         return 'array_map';
     }
 
-    #[\Override]
     public static function mutate(Node $node): Node
     {
         /** @var FuncCall $node */

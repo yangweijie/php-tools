@@ -9,7 +9,6 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
-use function assert;
 use DOMDocument;
 use DOMElement;
 
@@ -35,7 +34,7 @@ abstract class Node
     {
         $totalsContainer = $this->contextNode()->firstChild;
 
-        if ($totalsContainer === null) {
+        if (!$totalsContainer) {
             $totalsContainer = $this->contextNode()->appendChild(
                 $this->dom->createElementNS(
                     'https://schema.phpunit.de/coverage/1.0',
@@ -43,8 +42,6 @@ abstract class Node
                 ),
             );
         }
-
-        assert($totalsContainer instanceof DOMElement);
 
         return new Totals($totalsContainer);
     }

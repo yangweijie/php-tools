@@ -23,7 +23,7 @@ final readonly class BootSubscribers implements Bootstrapper
      *
      * @var array<int, class-string<Subscriber>>
      */
-    private const array SUBSCRIBERS = [
+    private const SUBSCRIBERS = [
         TrackMutationSuiteStart::class,
         TrackMutationSuiteFinish::class,
         StopOnUncoveredMutation::class,

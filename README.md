@@ -1,217 +1,191 @@
-# PHP 工具集
+# PHP Tools Collection
 
-基于 kingbes/libui 开发的图形化工具集，包含系统管理和 HTTP 压测工具，支持跨平台运行。
+A cross-platform PHP tools collection with GUI interface built using the kingbes/libui library. This toolkit includes system management utilities and HTTP load testing tools.
 
-## 功能特性
+## Features
 
-- 🖥️ **图形化界面**: 基于 libui 的原生桌面应用
-- 🛠️ **系统工具**: 端口查杀、进程查杀等系统管理工具
-- 🚀 **HTTP 压测**: 支持高并发异步 HTTP 请求压测
-- ⚙️ **灵活配置**: 支持多种 HTTP 方法和自定义参数
-- 💾 **配置管理**: JSON 格式的配置文件保存和加载
-- 📊 **实时监控**: 压测过程中实时显示性能指标
-- 📈 **详细分析**: 提供详细的性能统计和响应时间分析
+- **Port Killer**: Identify and terminate processes occupying specific ports
+  - Scan ports by number to find associated processes
+  - Display process details including PID, user, and command
+  - Selectively terminate processes with checkboxes
+  - Cross-platform support (Windows, macOS, Linux)
 
-## 系统要求
+- **Process Killer**: Find and terminate running processes by name or PID
+  - Search processes by name or PID
+  - Display detailed process information
+  - Selective termination with bulk operations
+  - Cross-platform support (Windows, macOS, Linux)
 
-### 命令行版本 (推荐)
-- PHP 8.0 或更高版本
-- curl 扩展
-- json 扩展
-- 支持所有架构 (x86_64, ARM64 等)
+- **HTTP Load Testing**: Perform high-concurrency HTTP load testing with real-time monitoring
+  - Configure concurrent requests and duration
+  - Real-time performance metrics display
+  - Detailed analysis with response time statistics
+  - Export test results for further analysis
 
-### GUI 版本 (有架构限制)
-- PHP 8.2 或更高版本
-- PHP-FFI 扩展
-- curl 扩展
-- json 扩展
-- **仅支持 x86_64 架构** (不支持 ARM64/Apple Silicon)
+- **Cross-platform GUI**: Native desktop application with tabbed interface
+  - Built with kingbes/libui PHP-FFI bindings
+  - Native look and feel on all platforms
+  - Intuitive tabbed interface for different tools
+  - Responsive design with proper layout management
 
-⚠️ **重要提示**: kingbes/libui 库目前只支持 x86_64 架构。在 ARM64 系统（如 Apple Silicon Mac）上建议使用功能完整的命令行版本。
+## System Requirements
 
-## 安装
+- PHP 8.2+ with FFI extension
+- Windows, macOS, or Linux (x86_64 architecture only)
+- For GUI functionality: libui library dependencies
 
-1. 克隆项目：
+## Installation
+
+### From Source
+
 ```bash
-git clone <repository-url>
-cd tools
-```
+# Clone the repository
+git clone https://github.com/yangweijie/php-tools.git
+cd php-tools
 
-2. 安装依赖：
-```bash
+# Install dependencies
 composer install
 ```
 
-3. 确保已安装 libui PHP 扩展：
-```bash
-# 根据你的系统安装 libui 扩展
-# 具体安装方法请参考 kingbes/libui 文档
-```
+### Download Pre-built Binaries
 
-## 使用方法
+Pre-built binaries are available for download from the GitHub Releases page for:
+- Windows (x86_64)
+- macOS (x86_64)
+- Linux (x86_64)
 
-### 工具集 GUI 版本
+## Usage
+
+### Running the GUI Application
+
+#### From Source
 ```bash
-# 启动工具集 GUI 应用
 php toolkit.php
 ```
 
-**特性**:
-- ✅ 端口查杀工具：查询和终止占用指定端口的进程
-- ✅ 进程查杀工具：查询和终止指定进程
-- ✅ HTTP 压测工具：进行 HTTP 接口性能测试
-- ✅ 跨平台支持：支持 Windows、macOS 和 Linux
-
-### HTTP 压测工具
-
-#### CLI版本 - 交互式界面 (推荐)
+#### From Pre-built Binary
 ```bash
-# 启动交互式CLI工具 - 压测完成后不会自动退出
-php test_cli.php
+# On Unix-like systems (macOS/Linux)
+./tools-macos
+./tools-linux
 
-# 查看帮助信息
-php test_cli.php -h
+# On Windows
+tools-windows.exe
 ```
 
-**特性**:
-- ✅ 持续运行，压测完成后不退出
-- ✅ 交互式菜单操作
-- ✅ 支持多次连续压测
-- ✅ 配置保存和加载
-- ✅ 详细结果显示
-- ✅ 支持 Ctrl+C 安全退出
-
-#### GUI版本 - 增强版 (可视化界面)
-```bash
-# 启动改进的GUI版本 - 压测完成后界面保持打开
-php gui_enhanced.php
-```
-
-**特性**:
-- ✅ 压测完成后界面保持打开
-- ✅ 关闭时确认对话框
-- ✅ 更好的错误处理
-- ✅ 提供CLI版本备选方案
-
-### 原始版本 (压测完成后自动退出)
-
-#### 基础CLI版本
-```bash
-# 简单演示版本 (压测完成后进程自动退出)
-php simple_gui_demo.php
-```
-
-#### 标准GUI版本
-⚠️ **注意**: 这些版本在压测完成后可能会自动退出
+### Command Line Options
 
 ```bash
-php gui_test.php    # 基础GUI版本
-php app.php         # 完整GUI应用
+# Show help
+./tools --help
+
+# Show version
+./tools --version
 ```
 
-**GUI 版本要求**:
-- kingbes/libui 库 (已包含在依赖中)
-- PHP-FFI 扩展
-- 兼容的系统架构 (目前库支持 x86_64，ARM64 支持可能有限)
+## Building from Source
 
-如果 GUI 版本无法运行，建议使用功能完整的命令行版本。
+### Requirements for Building
+- PHP 8.2+ with FFI extension
+- Composer
 
-## 系统工具使用说明
+### Build Process
 
-### 端口查杀工具
-1. 在"端口查杀"标签页中输入要查询的端口号
-2. 点击"查询占用进程"按钮查看占用该端口的进程信息
-3. 点击"杀进程"按钮终止占用该端口的所有进程
+```bash
+# Install dependencies
+composer install
 
-### 进程查杀工具
-1. 在"进程查杀"标签页中输入进程名或PID
-2. 点击"查询进程"按钮查看匹配的进程信息
-3. 点击"杀进程"按钮终止匹配的所有进程
+# Build PHAR executable
+php toolkit app:build tools
 
-## HTTP 压测参数说明
-
-| 参数 | 说明 | 默认值 |
-|------|------|--------|
-| 目标URL | 要压测的HTTP接口地址 | - |
-| HTTP方法 | GET、POST、PUT、DELETE等 | GET |
-| 并发数 | 同时发起的请求数量 | 1 |
-| 请求总数 | 总共发送的请求数量 | 100 |
-| 持续时间 | 按时间压测（秒），0为按请求数 | 0 |
-| 超时时间 | 单个请求的超时时间（秒） | 30 |
-| 请求间延迟 | 请求之间的延迟（毫秒） | 0 |
-| Content-Type | 请求内容类型 | application/json |
-
-## 目录结构
-
-```
-tools/
-├── toolkit.php          # 工具集主程序入口
-├── app.php              # HTTP压测主程序入口
-├── composer.json        # 依赖配置
-├── configs/             # 配置文件目录
-│   └── example.json     # 示例配置
-├── src/                 # 源代码目录
-│   ├── App.php          # GUI应用主类
-│   ├── PortKiller.php   # 端口查杀工具类
-│   ├── ProcessKiller.php# 进程查杀工具类
-│   ├── Config/          # 配置相关类
-│   │   ├── LoadTestConfig.php
-│   │   ├── LoadTestResult.php
-│   │   └── ConfigManager.php
-│   ├── Engine/          # 压测引擎
-│   │   └── LoadTestEngine.php
-│   └── GUI/             # 图形界面
-│       └── MainWindow.php
-└── vendor/              # 依赖包目录
+# The built executable will be available in the builds/ directory
 ```
 
-## 开发
+### Cross-platform Builds
 
-### 代码结构
+The GitHub Actions workflow automatically builds binaries for all supported platforms:
+- Linux (x86_64)
+- Windows (x86_64)
+- macOS (x86_64)
 
-- `App\App`: GUI 应用主类
-- `App\PortKiller`: 端口查杀工具类
-- `App\ProcessKiller`: 进程查杀工具类
-- `App\Config\LoadTestConfig`: 压测配置数据结构
-- `App\Config\LoadTestResult`: 压测结果数据结构  
-- `App\Config\ConfigManager`: 配置文件管理器
-- `App\Engine\LoadTestEngine`: HTTP 压测引擎
-- `App\GUI\MainWindow`: 主窗口界面
+## Development
 
-### 扩展功能
+### Project Structure
+```
+src/                 # Source code
+├── App.php         # Main GUI application class
+├── PortKiller.php  # Port killing utility
+└── ProcessKiller.php # Process killing utility
+toolkit.php         # Main entry point
+tests/              # Test files
+builds/             # Build output directory
+```
 
-1. **添加新的工具**：
-   - 创建新的工具类
-   - 在 toolkit.php 中添加标签页
+### Running Tests
+```bash
+php run_tests.php
+```
 
-2. **自定义报告格式**：
-   - 扩展 `LoadTestResult` 类的 `toArray()` 方法
-   - 添加新的导出功能
+### Development Commands
+```bash
+# Install dependencies
+composer install
 
-## 许可证
+# Run tests
+composer test
 
-本项目采用 MIT 许可证，详见 LICENSE 文件。
+# Code formatting
+composer format
+```
 
-## 贡献
+## GitHub Actions
 
-欢迎提交 Issue 和 Pull Request！
+This repository includes GitHub Actions for automated building and releasing:
 
-## 常见问题
+- **Build and Release**: Automatically builds binaries for all platforms when a new tag is pushed
+- **Continuous Integration**: Runs tests on every push and pull request
 
-### Q: 如何安装 kingbes/libui 扩展？
-A: kingbes/libui 已包含在 composer 依赖中，但需要 PHP-FFI 扩展支持。请确保 PHP 已启用 FFI 扩展。
+### Creating a New Release
 
-### Q: GUI 版本报错 "incompatible architecture" 怎么办？
-A: 这是 kingbes/libui 库的架构兼容性问题。目前库主要支持 x86_64，在 ARM64 (Apple Silicon) 系统上可能无法正常运行。建议使用功能完整的命令行版本。
+To create a new release with pre-built binaries:
 
-### Q: 压测时出现内存不足错误怎么办？
-A: 可以适当降低并发数，或者增加 PHP 的内存限制：`php -d memory_limit=1G test_cli.php`
+1. Create and push a new tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
 
-### Q: 支持 HTTPS 吗？
-A: 是的，工具支持 HTTPS 请求，默认会忽略 SSL 证书验证。
+2. The GitHub Action will automatically:
+   - Build binaries for Linux, Windows, and macOS
+   - Create a new release on GitHub
+   - Attach all platform binaries to the release
 
-### Q: 可以压测需要认证的 API 吗？
-A: 可以，在请求头中添加相应的认证信息，如 `Authorization: Bearer token`。
+### Manual Release Trigger
 
-### Q: 为什么推荐使用命令行版本？
-A: 命令行版本无需 GUI 依赖，兼容性更好，功能完整，且适合在服务器环境中使用。
+You can also manually trigger the build workflow:
+1. Go to the "Actions" tab in your GitHub repository
+2. Select "Build and Release" workflow
+3. Click "Run workflow" and confirm
+
+### Downloading Binaries
+
+Pre-built binaries are available from the GitHub Releases page:
+- **Windows**: `tools-windows.exe`
+- **macOS**: `tools-macos`
+- **Linux**: `tools-linux`
+
+Download the appropriate binary for your platform and run it directly without any installation.
+
+## Dependencies
+
+- [kingbes/libui](https://github.com/kingbes/php-libui) - PHP-FFI bindings for libui
+- [guzzlehttp/guzzle](https://github.com/guzzle/guzzle) - HTTP client for load testing
+- [pestphp/pest](https://github.com/pestphp/pest) - Testing framework
+
+## License
+
+This project is open-source software licensed under the MIT license.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

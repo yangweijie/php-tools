@@ -10,27 +10,21 @@
 namespace SebastianBergmann\CodeCoverage\Report\Html;
 
 use function array_values;
+use function arsort;
 use function asort;
-use function assert;
 use function count;
 use function explode;
 use function floor;
 use function json_encode;
 use function sprintf;
 use function str_replace;
-use function uasort;
-use function usort;
 use SebastianBergmann\CodeCoverage\FileCouldNotBeWrittenException;
 use SebastianBergmann\CodeCoverage\Node\AbstractNode;
 use SebastianBergmann\CodeCoverage\Node\Directory as DirectoryNode;
-use SebastianBergmann\CodeCoverage\Node\File as FileNode;
 use SebastianBergmann\Template\Exception;
 use SebastianBergmann\Template\Template;
 
 /**
- * @phpstan-import-type ProcessedClassType from FileNode
- * @phpstan-import-type ProcessedTraitType from FileNode
- *
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  */
 final class Dashboard extends Renderer
@@ -87,9 +81,7 @@ final class Dashboard extends Renderer
     }
 
     /**
-     * @param array<string, ProcessedClassType|ProcessedTraitType> $classes
-     *
-     * @return array{class: non-empty-string, method: non-empty-string}
+     * Returns the data for the Class/Method Complexity charts.
      */
     private function complexity(array $classes, string $baseLink): array
     {
@@ -104,39 +96,33 @@ final class Dashboard extends Renderer
                 $result['method'][] = [
                     $method['coverage'],
                     $method['ccn'],
-                    str_replace($baseLink, '', $method['link']),
-                    $methodName,
-                    $method['crap'],
+                    sprintf(
+                        '<a href="%s">%s</a>',
+                        str_replace($baseLink, '', $method['link']),
+                        $methodName,
+                    ),
                 ];
             }
 
             $result['class'][] = [
                 $class['coverage'],
                 $class['ccn'],
-                str_replace($baseLink, '', $class['link']),
-                $className,
-                $class['crap'],
+                sprintf(
+                    '<a href="%s">%s</a>',
+                    str_replace($baseLink, '', $class['link']),
+                    $className,
+                ),
             ];
         }
 
-        usort($result['class'], static fn (mixed $a, mixed $b) => ($a[0] <=> $b[0]));
-        usort($result['method'], static fn (mixed $a, mixed $b) => ($a[0] <=> $b[0]));
-
-        $class = json_encode($result['class']);
-
-        assert($class !== false);
-
-        $method = json_encode($result['method']);
-
-        assert($method !== false);
-
-        return ['class' => $class, 'method' => $method];
+        return [
+            'class'  => json_encode($result['class']),
+            'method' => json_encode($result['method']),
+        ];
     }
 
     /**
-     * @param array<string, ProcessedClassType|ProcessedTraitType> $classes
-     *
-     * @return array{class: non-empty-string, method: non-empty-string}
+     * Returns the data for the Class / Method Coverage Distribution chart.
      */
     private function coverageDistribution(array $classes): array
     {
@@ -195,21 +181,14 @@ final class Dashboard extends Renderer
             }
         }
 
-        $class = json_encode(array_values($result['class']));
-
-        assert($class !== false);
-
-        $method = json_encode(array_values($result['method']));
-
-        assert($method !== false);
-
-        return ['class' => $class, 'method' => $method];
+        return [
+            'class'  => json_encode(array_values($result['class'])),
+            'method' => json_encode(array_values($result['method'])),
+        ];
     }
 
     /**
-     * @param array<string, ProcessedClassType|ProcessedTraitType> $classes
-     *
-     * @return array{class: string, method: string}
+     * Returns the classes / methods with insufficient coverage.
      */
     private function insufficientCoverage(array $classes, string $baseLink): array
     {
@@ -263,9 +242,7 @@ final class Dashboard extends Renderer
     }
 
     /**
-     * @param array<string, ProcessedClassType|ProcessedTraitType> $classes
-     *
-     * @return array{class: string, method: string}
+     * Returns the project risks according to the CRAP index.
      */
     private function projectRisks(array $classes, string $baseLink): array
     {
@@ -282,47 +259,37 @@ final class Dashboard extends Renderer
                         $key = $className . '::' . $methodName;
                     }
 
-                    $methodRisks[$key] = $method;
+                    $methodRisks[$key] = $method['crap'];
                 }
             }
 
             if ($class['coverage'] < $this->thresholds->highLowerBound() &&
                 $class['ccn'] > count($class['methods'])) {
-                $classRisks[$className] = $class;
+                $classRisks[$className] = $class['crap'];
             }
         }
 
-        uasort($classRisks, static function (array $a, array $b)
-        {
-            return ((int) ($a['crap']) <=> (int) ($b['crap'])) * -1;
-        });
-        uasort($methodRisks, static function (array $a, array $b)
-        {
-            return ((int) ($a['crap']) <=> (int) ($b['crap'])) * -1;
-        });
+        arsort($classRisks);
+        arsort($methodRisks);
 
-        foreach ($classRisks as $className => $class) {
+        foreach ($classRisks as $className => $crap) {
             $result['class'] .= sprintf(
-                '       <tr><td><a href="%s">%s</a></td><td class="text-right">%.1f%%</td><td class="text-right">%d</td><td class="text-right">%d</td></tr>' . "\n",
+                '       <tr><td><a href="%s">%s</a></td><td class="text-right">%d</td></tr>' . "\n",
                 str_replace($baseLink, '', $classes[$className]['link']),
                 $className,
-                $class['coverage'],
-                $class['ccn'],
-                $class['crap'],
+                $crap,
             );
         }
 
-        foreach ($methodRisks as $methodName => $methodVals) {
+        foreach ($methodRisks as $methodName => $crap) {
             [$class, $method] = explode('::', $methodName);
 
             $result['method'] .= sprintf(
-                '       <tr><td><a href="%s"><abbr title="%s">%s</abbr></a></td><td class="text-right">%.1f%%</td><td class="text-right">%d</td><td class="text-right">%d</td></tr>' . "\n",
+                '       <tr><td><a href="%s"><abbr title="%s">%s</abbr></a></td><td class="text-right">%d</td></tr>' . "\n",
                 str_replace($baseLink, '', $classes[$class]['methods'][$method]['link']),
                 $methodName,
                 $method,
-                $methodVals['coverage'],
-                $methodVals['ccn'],
-                $methodVals['crap'],
+                $crap,
             );
         }
 

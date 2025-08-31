@@ -103,14 +103,6 @@ final readonly class Configuration
     }
 
     /**
-     * Gets the browser configuration.
-     */
-    public function browser(): Browser\Configuration
-    {
-        return new Browser\Configuration;
-    }
-
-    /**
      * Proxies calls to the uses method.
      *
      * @param  array<array-key, mixed>  $arguments

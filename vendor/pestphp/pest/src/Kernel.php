@@ -34,7 +34,7 @@ final readonly class Kernel
      *
      * @var array<int, class-string>
      */
-    private const array BOOTSTRAPPERS = [
+    private const BOOTSTRAPPERS = [
         Bootstrappers\BootOverrides::class,
         Bootstrappers\BootSubscribers::class,
         Bootstrappers\BootFiles::class,

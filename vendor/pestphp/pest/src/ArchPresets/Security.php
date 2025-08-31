@@ -32,6 +32,7 @@ final class Security extends AbstractPreset
             'create_function',
             'unserialize',
             'extract',
+            'parse_str',
             'mb_parse_str',
             'dl',
             'assert',

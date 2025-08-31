@@ -99,9 +99,7 @@ abstract class NameFilterIterator extends RecursiveFilterIterator
         }
 
         if ($test instanceof HasPrintableTestCaseName) {
-            $name = trim(
-                $test::getPrintableTestCaseName().'::'.$test->getPrintableTestCaseMethodName().$test->dataSetAsString()
-            );
+            $name = $test::getPrintableTestCaseName().'::'.$test->getPrintableTestCaseMethodName();
         } else {
             $name = $test::class.'::'.$test->nameWithDataSet();
         }

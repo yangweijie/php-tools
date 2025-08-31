@@ -17,11 +17,20 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class Coverage implements AddsOutput, HandlesArguments
 {
-    private const string COVERAGE_OPTION = 'coverage';
+    /**
+     * @var string
+     */
+    private const COVERAGE_OPTION = 'coverage';
 
-    private const string MIN_OPTION = 'min';
+    /**
+     * @var string
+     */
+    private const MIN_OPTION = 'min';
 
-    private const string EXACTLY_OPTION = 'exactly';
+    /**
+     * @var string
+     */
+    private const EXACTLY_OPTION = 'exactly';
 
     /**
      * Whether it should show the coverage or not.

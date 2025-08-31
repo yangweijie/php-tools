@@ -28,11 +28,11 @@ use SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser;
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type TestType from CodeCoverage
+ * @phpstan-import-type TestType from \SebastianBergmann\CodeCoverage\CodeCoverage
  */
-final readonly class Builder
+final class Builder
 {
-    private FileAnalyser $analyser;
+    private readonly FileAnalyser $analyser;
 
     public function __construct(FileAnalyser $analyser)
     {
@@ -70,8 +70,6 @@ final readonly class Builder
                 $filename = $root->pathAsString() . DIRECTORY_SEPARATOR . $key;
 
                 if (is_file($filename)) {
-                    $analysisResult = $this->analyser->analyse($filename);
-
                     $root->addFile(
                         new File(
                             $key,
@@ -79,10 +77,10 @@ final readonly class Builder
                             $value['lineCoverage'],
                             $value['functionCoverage'],
                             $tests,
-                            $analysisResult->classes(),
-                            $analysisResult->traits(),
-                            $analysisResult->functions(),
-                            $analysisResult->linesOfCode(),
+                            $this->analyser->classesIn($filename),
+                            $this->analyser->traitsIn($filename),
+                            $this->analyser->functionsIn($filename),
+                            $this->analyser->linesOfCodeFor($filename),
                         ),
                     );
                 }
@@ -203,7 +201,7 @@ final readonly class Builder
      */
     private function reducePaths(ProcessedCodeCoverageData $coverage): string
     {
-        if ($coverage->coveredFiles() === []) {
+        if (empty($coverage->coveredFiles())) {
             return '.';
         }
 
@@ -225,10 +223,9 @@ final readonly class Builder
                 $paths[$i] = substr($paths[$i], 7);
                 $paths[$i] = str_replace('/', DIRECTORY_SEPARATOR, $paths[$i]);
             }
-
             $paths[$i] = explode(DIRECTORY_SEPARATOR, $paths[$i]);
 
-            if ($paths[$i][0] === '') {
+            if (empty($paths[$i][0])) {
                 $paths[$i][0] = DIRECTORY_SEPARATOR;
             }
         }

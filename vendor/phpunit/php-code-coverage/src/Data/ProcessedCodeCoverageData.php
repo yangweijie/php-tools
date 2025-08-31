@@ -17,31 +17,13 @@ use function count;
 use function is_array;
 use function ksort;
 use SebastianBergmann\CodeCoverage\Driver\Driver;
-use SebastianBergmann\CodeCoverage\Driver\XdebugDriver;
 
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type XdebugFunctionCoverageType from XdebugDriver
+ * @phpstan-import-type XdebugFunctionCoverageType from \SebastianBergmann\CodeCoverage\Driver\XdebugDriver
  *
- * @phpstan-type TestIdType string
- * @phpstan-type FunctionCoverageDataType array{
- *      branches: array<int, array{
- *          op_start: int,
- *          op_end: int,
- *          line_start: int,
- *          line_end: int,
- *          hit: list<TestIdType>,
- *          out: array<int, int>,
- *          out_hit: array<int, int>,
- *      }>,
- *      paths: array<int, array{
- *          path: array<int, int>,
- *          hit: list<TestIdType>,
- *      }>,
- *      hit: list<TestIdType>
- *  }
- * @phpstan-type FunctionCoverageType array<string, array<string, FunctionCoverageDataType>>
+ * @phpstan-type TestIdType = string
  */
 final class ProcessedCodeCoverageData
 {
@@ -58,7 +40,22 @@ final class ProcessedCodeCoverageData
      * Maintains base format of raw data (@see https://xdebug.org/docs/code_coverage), but each 'hit' entry is an array
      * of testcase ids.
      *
-     * @var FunctionCoverageType
+     * @var array<string, array<string, array{
+     *     branches: array<int, array{
+     *         op_start: int,
+     *         op_end: int,
+     *         line_start: int,
+     *         line_end: int,
+     *         hit: list<TestIdType>,
+     *         out: array<int, int>,
+     *         out_hit: array<int, int>,
+     *     }>,
+     *     paths: array<int, array{
+     *         path: array<int, int>,
+     *         hit: list<TestIdType>,
+     *     }>,
+     *     hit: list<TestIdType>
+     * }>>
      */
     private array $functionCoverage = [];
 
@@ -219,8 +216,6 @@ final class ProcessedCodeCoverageData
      * 4 = the line has been tested
      *
      * During a merge, a higher number is better.
-     *
-     * @return 1|2|3|4
      */
     private function priorityForLine(array $data, int $line): int
     {
@@ -242,7 +237,7 @@ final class ProcessedCodeCoverageData
     /**
      * For a function we have never seen before, copy all data over and simply init the 'hit' array.
      *
-     * @param FunctionCoverageDataType|XdebugFunctionCoverageType $functionData
+     * @param XdebugFunctionCoverageType $functionData
      */
     private function initPreviouslyUnseenFunction(string $file, string $functionName, array $functionData): void
     {
@@ -262,7 +257,7 @@ final class ProcessedCodeCoverageData
      * Techniques such as mocking and where the contents of a file are different vary during tests (e.g. compiling
      * containers) mean that the functions inside a file cannot be relied upon to be static.
      *
-     * @param FunctionCoverageDataType|XdebugFunctionCoverageType $functionData
+     * @param XdebugFunctionCoverageType $functionData
      */
     private function initPreviouslySeenFunction(string $file, string $functionName, array $functionData): void
     {

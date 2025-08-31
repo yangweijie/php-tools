@@ -28,23 +28,16 @@ use function substr;
 use DateTimeImmutable;
 use DOMDocument;
 use SebastianBergmann\CodeCoverage\CodeCoverage;
+use SebastianBergmann\CodeCoverage\Driver\PathExistsButIsNotDirectoryException;
+use SebastianBergmann\CodeCoverage\Driver\WriteOperationFailedException;
 use SebastianBergmann\CodeCoverage\Node\AbstractNode;
 use SebastianBergmann\CodeCoverage\Node\Directory as DirectoryNode;
-use SebastianBergmann\CodeCoverage\Node\File;
 use SebastianBergmann\CodeCoverage\Node\File as FileNode;
-use SebastianBergmann\CodeCoverage\PathExistsButIsNotDirectoryException;
 use SebastianBergmann\CodeCoverage\Util\Filesystem as DirectoryUtil;
 use SebastianBergmann\CodeCoverage\Version;
-use SebastianBergmann\CodeCoverage\WriteOperationFailedException;
 use SebastianBergmann\CodeCoverage\XmlException;
 use SebastianBergmann\Environment\Runtime;
 
-/**
- * @phpstan-import-type ProcessedClassType from File
- * @phpstan-import-type ProcessedTraitType from File
- * @phpstan-import-type ProcessedFunctionType from File
- * @phpstan-import-type TestType from CodeCoverage
- */
 final class Facade
 {
     private string $target;
@@ -96,7 +89,6 @@ final class Facade
     private function initTargetDirectory(string $directory): void
     {
         if (is_file($directory)) {
-            // @codeCoverageIgnoreStart
             if (!is_dir($directory)) {
                 throw new PathExistsButIsNotDirectoryException($directory);
             }
@@ -104,7 +96,6 @@ final class Facade
             if (!is_writable($directory)) {
                 throw new WriteOperationFailedException($directory);
             }
-            // @codeCoverageIgnoreEnd
         }
 
         DirectoryUtil::createDirectory($directory);
@@ -184,9 +175,6 @@ final class Facade
         $this->saveDocument($fileReport->asDom(), $file->id());
     }
 
-    /**
-     * @param ProcessedClassType|ProcessedTraitType $unit
-     */
     private function processUnit(array $unit, Report $report): void
     {
         if (isset($unit['className'])) {
@@ -217,9 +205,6 @@ final class Facade
         }
     }
 
-    /**
-     * @param ProcessedFunctionType $function
-     */
     private function processFunction(array $function, Report $report): void
     {
         $functionObject = $report->functionObject($function['functionName']);
@@ -230,9 +215,6 @@ final class Facade
         $functionObject->setTotals((string) $function['executableLines'], (string) $function['executedLines'], (string) $function['coverage']);
     }
 
-    /**
-     * @param array<string, TestType> $tests
-     */
     private function processTests(array $tests): void
     {
         $testsObject = $this->project->tests();
@@ -247,9 +229,9 @@ final class Facade
         $loc = $node->linesOfCode();
 
         $totals->setNumLines(
-            $loc->linesOfCode(),
-            $loc->commentLinesOfCode(),
-            $loc->nonCommentLinesOfCode(),
+            $loc['linesOfCode'],
+            $loc['commentLinesOfCode'],
+            $loc['nonCommentLinesOfCode'],
             $node->numberOfExecutableLines(),
             $node->numberOfExecutedLines(),
         );
@@ -305,7 +287,6 @@ final class Facade
         $xml              = $document->saveXML();
 
         if ($xml === false) {
-            // @codeCoverageIgnoreStart
             $message = 'Unable to generate the XML';
 
             foreach (libxml_get_errors() as $error) {
@@ -313,7 +294,6 @@ final class Facade
             }
 
             throw new XmlException($message);
-            // @codeCoverageIgnoreEnd
         }
 
         libxml_clear_errors();

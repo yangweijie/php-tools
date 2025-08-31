@@ -52,8 +52,6 @@ use PHPUnit\Util\Filter;
 use PHPUnit\Util\ThrowableToStringMapper;
 
 /**
- * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
- *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
 final readonly class ThrowableBuilder
@@ -84,7 +82,7 @@ final readonly class ThrowableBuilder
             $t->getMessage(),
             ThrowableToStringMapper::map($t),
             $trace,
-            $previous,
+            $previous
         );
     }
 }

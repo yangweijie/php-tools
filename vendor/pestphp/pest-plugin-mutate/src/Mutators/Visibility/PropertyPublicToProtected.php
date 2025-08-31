@@ -26,7 +26,6 @@ class PropertyPublicToProtected extends AbstractMutator
         return [Property::class, Param::class];
     }
 
-    #[\Override]
     public static function can(Node $node): bool
     {
         if ($node instanceof Property && $node->isPublic()) {

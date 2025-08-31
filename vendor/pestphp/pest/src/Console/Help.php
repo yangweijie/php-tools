@@ -16,7 +16,7 @@ final readonly class Help
      *
      * @var array<int, string>
      */
-    private const array HELP_MESSAGES = [
+    private const HELP_MESSAGES = [
         '<comment>Pest Options:</comment>',
         '  <info>--init</info>                      Initialise a standard Pest configuration',
         '  <info>--coverage</info>                  Enable coverage and output to standard output',

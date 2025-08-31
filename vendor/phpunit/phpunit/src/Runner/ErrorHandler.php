@@ -36,7 +36,6 @@ use PHPUnit\Event;
 use PHPUnit\Event\Code\IssueTrigger\IssueTrigger;
 use PHPUnit\Event\Code\NoTestCaseObjectOnCallStackException;
 use PHPUnit\Event\Code\TestMethod;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\Baseline\Baseline;
 use PHPUnit\Runner\Baseline\Issue;
 use PHPUnit\TextUI\Configuration\Registry;
@@ -51,24 +50,13 @@ use PHPUnit\Util\ExcludeList;
  */
 final class ErrorHandler
 {
-    private const int UNHANDLEABLE_LEVELS     = E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING;
-    private const int INSUPPRESSIBLE_LEVELS   = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR;
+    private const UNHANDLEABLE_LEVELS         = E_ERROR | E_PARSE | E_CORE_ERROR | E_CORE_WARNING | E_COMPILE_ERROR | E_COMPILE_WARNING;
+    private const INSUPPRESSIBLE_LEVELS       = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR;
     private static ?self $instance            = null;
     private ?Baseline $baseline               = null;
     private bool $enabled                     = false;
     private ?int $originalErrorReportingLevel = null;
     private readonly Source $source;
-
-    /**
-     * @var list<array{int, string, string, int}>
-     */
-    private array $globalDeprecations = [];
-
-    /**
-     * @var array<string, list<array{int, string, string, int}>>
-     */
-    private array $testCaseContextDeprecations = [];
-    private ?string $testCaseContext           = null;
 
     /**
      * @var ?array{functions: list<non-empty-string>, methods: list<array{className: class-string, methodName: non-empty-string}>}
@@ -106,12 +94,6 @@ final class ErrorHandler
         }
 
         $test = Event\Code\TestMethodBuilder::fromCallStack();
-
-        if ($errorNumber === E_USER_DEPRECATED) {
-            $deprecationFrame = $this->guessDeprecationFrame();
-            $errorFile        = $deprecationFrame['file'] ?? $errorFile;
-            $errorLine        = $deprecationFrame['line'] ?? $errorLine;
-        }
 
         $ignoredByBaseline = $this->ignoredByBaseline($errorFile, $errorLine, $errorString);
         $ignoredByTest     = $test->metadata()->isIgnoreDeprecations()->isNotEmpty();
@@ -180,11 +162,13 @@ final class ErrorHandler
                 break;
 
             case E_USER_DEPRECATED:
+                $deprecationFrame = $this->guessDeprecationFrame();
+
                 Event\Facade::emitter()->testTriggeredDeprecation(
                     $test,
                     $errorString,
-                    $errorFile,
-                    $errorLine,
+                    $deprecationFrame['file'] ?? $errorFile,
+                    $deprecationFrame['line'] ?? $errorLine,
                     $suppressed,
                     $ignoredByBaseline,
                     $ignoredByTest,
@@ -212,28 +196,7 @@ final class ErrorHandler
         return false;
     }
 
-    public function deprecationHandler(int $errorNumber, string $errorString, string $errorFile, int $errorLine): bool
-    {
-        if ($this->testCaseContext !== null) {
-            $this->testCaseContextDeprecations[$this->testCaseContext][] = [$errorNumber, $errorString, $errorFile, $errorLine];
-        } else {
-            $this->globalDeprecations[] = [$errorNumber, $errorString, $errorFile, $errorLine];
-        }
-
-        return true;
-    }
-
-    public function registerDeprecationHandler(): void
-    {
-        set_error_handler([self::$instance, 'deprecationHandler'], E_USER_DEPRECATED);
-    }
-
-    public function restoreDeprecationHandler(): void
-    {
-        restore_error_handler();
-    }
-
-    public function enable(TestCase $test): void
+    public function enable(): void
     {
         if ($this->enabled) {
             return;
@@ -249,8 +212,6 @@ final class ErrorHandler
 
         $this->enabled                     = true;
         $this->originalErrorReportingLevel = error_reporting();
-
-        $this->triggerGlobalDeprecations($test);
 
         error_reporting($this->originalErrorReportingLevel & self::UNHANDLEABLE_LEVELS);
     }
@@ -280,16 +241,6 @@ final class ErrorHandler
     public function useDeprecationTriggers(array $deprecationTriggers): void
     {
         $this->deprecationTriggers = $deprecationTriggers;
-    }
-
-    public function enterTestCaseContext(string $className, string $methodName): void
-    {
-        $this->testCaseContext = $this->testCaseContext($className, $methodName);
-    }
-
-    public function leaveTestCaseContext(): void
-    {
-        $this->testCaseContext = null;
     }
 
     /**
@@ -469,23 +420,5 @@ final class ErrorHandler
         }
 
         return $buffer;
-    }
-
-    private function triggerGlobalDeprecations(TestCase $test): void
-    {
-        foreach ($this->globalDeprecations ?? [] as $d) {
-            $this->__invoke(...$d);
-        }
-
-        $testCaseContext = $this->testCaseContext($test::class, $test->name());
-
-        foreach ($this->testCaseContextDeprecations[$testCaseContext] ?? [] as $d) {
-            $this->__invoke(...$d);
-        }
-    }
-
-    private function testCaseContext(string $className, string $methodName): string
-    {
-        return "{$className}::{$methodName}";
     }
 }

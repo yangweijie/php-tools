@@ -13,7 +13,7 @@ use Throwable;
  */
 final class HigherOrderMessage
 {
-    public const string UNDEFINED_METHOD = 'Method %s does not exist';
+    public const UNDEFINED_METHOD = 'Method %s does not exist';
 
     /**
      * An optional condition that will determine if the message will be executed.

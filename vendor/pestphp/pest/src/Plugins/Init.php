@@ -20,12 +20,12 @@ final readonly class Init implements HandlesArguments
     /**
      * The option the triggers the init job.
      */
-    private const string INIT_OPTION = '--init';
+    private const INIT_OPTION = '--init';
 
     /**
      * The files that will be created.
      */
-    private const array STUBS = [
+    private const STUBS = [
         'phpunit.xml.stub' => 'phpunit.xml',
         'Pest.php.stub' => 'tests/Pest.php',
         'TestCase.php.stub' => 'tests/TestCase.php',

@@ -31,7 +31,7 @@ final readonly class Converter
     /**
      * The prefix for the test suite name.
      */
-    private const string PREFIX = 'P\\';
+    private const PREFIX = 'P\\';
 
     /**
      *  The state generator.
