@@ -52,11 +52,17 @@ abstract class Base
             // 返回 Linux 系统下的 libui 共享库文件路径
             return dirname(__DIR__) . '/lib/linux/libui.so';
         } elseif (PHP_OS_FAMILY === 'Darwin') {
-            // 返回 macOS 系统下的 libui 共享库文件路径
-            return dirname(__DIR__) . '/lib/macos/libui.dylib';
+            // 根据架构选择正确的libui.dylib文件
+            if (php_uname('m') === 'x86_64') {
+                // Intel架构使用x64版本
+                return dirname(__DIR__) . '/lib/macos/libui.dylib(x64)';
+            } else {
+                // ARM架构使用默认版本
+                return dirname(__DIR__) . '/lib/macos/libui.dylib';
+            }
         } else {
             // 若当前操作系统不被支持，抛出异常
-            throw new \RuntimeException("Unsupported operating system: " . PHP_OS_FAMILY . ": " . PHP_OS . "");
+            throw new \RuntimeException("Unsupported operating系统: " . PHP_OS_FAMILY . ": " . PHP_OS . "");
         }
     }
     
@@ -81,8 +87,16 @@ abstract class Base
             $libFile = 'lib/linux/libui.so';
             $extractedFile = $tempDir . '/libui.so';
         } elseif (PHP_OS_FAMILY === 'Darwin') {
-            $libFile = 'lib/macos/libui.dylib';
-            $extractedFile = $tempDir . '/libui.dylib';
+            // 根据架构选择正确的libui.dylib文件
+            if (php_uname('m') === 'x86_64') {
+                // Intel架构使用x64版本
+                $libFile = 'lib/macos/libui.dylib(x64)';
+                $extractedFile = $tempDir . '/libui.dylib';
+            } else {
+                // ARM架构使用默认版本
+                $libFile = 'lib/macos/libui.dylib';
+                $extractedFile = $tempDir . '/libui.dylib';
+            }
         } else {
             throw new \RuntimeException("Unsupported operating system: " . PHP_OS_FAMILY . ": " . PHP_OS . "");
         }

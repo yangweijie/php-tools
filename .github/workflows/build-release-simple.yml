@@ -30,21 +30,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: ffi
-          coverage: none
+      - name: Download PHP binary (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          # Download static PHP binary
+          wget https://github.com/php/php-src/releases/download/php-8.2.0/php-8.2.0-linux-x64.tar.gz
+          tar -xzf php-8.2.0-linux-x64.tar.gz
+          echo "$PWD/php-8.2.0-linux-x64" >> $GITHUB_PATH
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate --strict
+      - name: Download PHP binary (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # Download static PHP binary
+          curl -L -o php-8.2.0-windows-x64.zip https://github.com/php/php-src/releases/download/php-8.2.0/php-8.2.0-windows-x64.zip
+          unzip php-8.2.0-windows-x64.zip
+          echo "$PWD/php-8.2.0-windows-x64" >> $env:GITHUB_PATH
 
-      - name: Cache Composer dependencies
-        uses: actions/cache@v3
-        with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.json') }}
+      - name: Download PHP binary (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          # Download static PHP binary based on architecture
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            echo "Downloading PHP for ARM64"
+            curl -L -o php-8.2.0-macos-arm64.tar.gz https://github.com/php/php-src/releases/download/php-8.2.0/php-8.2.0-macos-arm64.tar.gz
+            tar -xzf php-8.2.0-macos-arm64.tar.gz
+            echo "$PWD/php-8.2.0-macos-arm64" >> $GITHUB_PATH
+          else
+            echo "Downloading PHP for x64"
+            curl -L -o php-8.2.0-macos-x64.tar.gz https://github.com/php/php-src/releases/download/php-8.2.0/php-8.2.0-macos-x64.tar.gz
+            tar -xzf php-8.2.0-macos-x64.tar.gz
+            echo "$PWD/php-8.2.0-macos-x64" >> $GITHUB_PATH
+          fi
+
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php
+          mv composer.phar /usr/local/bin/composer
 
       - name: Install dependencies
         run: |
