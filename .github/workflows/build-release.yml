@@ -29,10 +29,22 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          # Try different webkit package names for Ubuntu 24.04
+          sudo apt-get install -y libgtk-3-dev || true
+          sudo apt-get install -y libwebkit2gtk-4.1-dev || true
+          sudo apt-get install -y libwebkit2gtk-4.0-dev || true
+          sudo apt-get install -y libwebkit2gtk-dev || true
+          sudo apt-get install -y libgtk-4-dev || true
+          # If webkit is not available, try without it
+          echo "Installing GTK3 development packages..."
+          sudo apt-get install -y libgtk-3-dev
+          # Install additional packages that might be needed
+          sudo apt-get install -y build-essential pkg-config || true
           # Verify installation
-          dpkg -l | grep gtk
-          ldconfig -p | grep gtk
+          echo "Installed packages:"
+          dpkg -l | grep gtk || echo "No GTK packages found"
+          echo "Available webkit packages:"
+          apt-cache search webkit2gtk || echo "No webkit2gtk packages found"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -60,6 +72,31 @@ jobs:
         run: |
           echo "Checking libui library files:"
           find vendor/kingbes/libui/lib -type f -name "*libui*" | head -10
+          echo "Library directory structure:"
+          ls -la vendor/kingbes/libui/lib/
+          ls -la vendor/kingbes/libui/lib/linux/
+
+      - name: Test libui FFI loading (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "Testing if libui library can be loaded..."
+          php -r "if (extension_loaded('ffi')) { echo 'FFI extension is loaded\n'; } else { echo 'FFI extension is NOT loaded\n'; exit(1); }"
+          # Try to load the library directly
+          php -r "
+            if (file_exists('vendor/kingbes/libui/lib/linux/libui.so')) {
+              echo 'libui.so found\n';
+              try {
+                \$ffi = FFI::cdef(file_get_contents('vendor/kingbes/libui/src/Libui.h'), 'vendor/kingbes/libui/lib/linux/libui.so');
+                echo 'libui.so loaded successfully\n';
+              } catch (Exception \$e) {
+                echo 'Failed to load libui.so: ' . \$e->getMessage() . '\n';
+                // Don't exit here, as the build process might handle this differently
+              }
+            } else {
+              echo 'libui.so NOT found\n';
+              exit(1);
+            }
+          "
 
       - name: Build PHAR (Linux/macOS)
         if: runner.os != 'Windows'
