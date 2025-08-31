@@ -25,6 +25,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install libui dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          # Verify installation
+          dpkg -l | grep gtk
+          ldconfig -p | grep gtk
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -42,15 +51,31 @@ jobs:
           key: composer-${{ hashFiles('composer.json') }}
 
       - name: Install dependencies
-        run: composer install --no-dev --prefer-dist --no-progress --no-suggest
+        run: |
+          composer install --no-dev --prefer-dist --no-progress --no-suggest
+          # List installed packages for debugging
+          composer show
+
+      - name: Check libui library files
+        run: |
+          echo "Checking libui library files:"
+          find vendor/kingbes/libui/lib -type f -name "*libui*" | head -10
 
       - name: Build PHAR (Linux/macOS)
         if: runner.os != 'Windows'
-        run: php toolkit app:build tools --timeout=600
+        run: |
+          echo "Building on ${{ runner.os }}..."
+          php toolkit app:build tools --timeout=600
+          echo "Build completed. Checking builds directory:"
+          ls -la builds/
 
       - name: Build PHAR (Windows)
         if: runner.os == 'Windows'
-        run: php toolkit app:build tools.exe --timeout=600
+        run: |
+          echo "Building on ${{ runner.os }}..."
+          php toolkit app:build tools.exe --timeout=600
+          echo "Build completed. Checking builds directory:"
+          dir builds\
 
       - name: Set binary name (Linux)
         if: runner.os == 'Linux'
@@ -121,3 +146,4 @@ jobs:
           prerelease: false
           artifacts: "tools-linux/tools-linux,tools-windows/tools-windows.exe,tools-macos/tools-macos"
           artifactErrorsFailBuild: true
+          allowUpdates: true
