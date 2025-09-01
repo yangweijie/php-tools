@@ -48,9 +48,14 @@ class DateTimePicker extends Base
      */
     public static function onChanged(CData $dateTimePicker, callable $callback)
     {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($dateTimePicker);
+        $callbacks[$callbackId] = $callback;
+        
         self::ffi()->uiDateTimePickerOnChanged(
             $dateTimePicker,
-            function ($d, $dd) use ($dateTimePicker, $callback) {
+            function ($d, $dd) use ($dateTimePicker, $callback, &$callbacks, $callbackId) {
                 $callback($dateTimePicker);
             },
             null

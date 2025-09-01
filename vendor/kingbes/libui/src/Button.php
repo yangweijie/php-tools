@@ -52,7 +52,12 @@ class Button extends Base
      */
     public static function onClicked(CData $button, callable $callback): void
     {
-        self::ffi()->uiButtonOnClicked($button, function ($b, $d) use ($callback, $button) {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($button);
+        $callbacks[$callbackId] = $callback;
+        
+        self::ffi()->uiButtonOnClicked($button, function ($b, $d) use ($callback, $button, &$callbacks, $callbackId) {
             $callback($button);
         }, null);
     }

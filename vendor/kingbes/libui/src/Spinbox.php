@@ -41,8 +41,13 @@ class Spinbox extends Base
      */
     public static function onChanged(CData $spinbox, callable $callback): void
     {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($spinbox);
+        $callbacks[$callbackId] = $callback;
+        
         self::ffi()->uiSpinboxOnChanged($spinbox, function ($s, $d)
-        use ($callback, $spinbox) {
+        use ($callback, $spinbox, &$callbacks, $callbackId) {
             $callback($spinbox);
         }, null);
     }

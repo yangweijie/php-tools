@@ -63,9 +63,14 @@ class Radio extends Base
      */
     public static function onSelected(CData $radio, callable $callback): void
     {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($radio);
+        $callbacks[$callbackId] = $callback;
+        
         self::ffi()->uiRadioButtonsOnSelected(
             $radio,
-            function ($r, $d) use ($callback, $radio) {
+            function ($r, $d) use ($callback, $radio, &$callbacks, $callbackId) {
                 $callback($radio);
             },
             null

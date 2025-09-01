@@ -64,9 +64,14 @@ class Combobox extends Base
      */
     public static function onSelected(CData $combobox, callable $callback): void
     {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($combobox);
+        $callbacks[$callbackId] = $callback;
+        
         self::ffi()->uiComboboxOnSelected(
             $combobox,
-            function ($c, $d) use ($callback, $combobox) {
+            function ($c, $d) use ($callback, $combobox, &$callbacks, $callbackId) {
                 $callback($combobox);
             },
             null

@@ -53,8 +53,13 @@ class Slider extends Base
      */
     public static function onChanged(CData $slider, callable $callback): void
     {
+        // 保存回调函数引用以防止被垃圾回收
+        static $callbacks = [];
+        $callbackId = spl_object_hash($slider);
+        $callbacks[$callbackId] = $callback;
+        
         self::ffi()->uiSliderOnChanged($slider, function ($s, $d)
-        use ($callback, $slider) {
+        use ($callback, $slider, &$callbacks, $callbackId) {
             $callback($slider);
         }, null);
     }
