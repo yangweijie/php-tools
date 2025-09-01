@@ -49,7 +49,7 @@ class PortKiller
         Box::append($inputBox, $this->portEntry, true);
         
         // 查询按钮
-        $queryBtn = Button::create("查询占用进程");
+        $queryBtn = Button::create("查询占用");
         Button::onClicked($queryBtn, [$this, 'queryPort']);
         Box::append($inputBox, $queryBtn, false);
         
@@ -142,21 +142,47 @@ class PortKiller
         // 打印调试信息
         error_log("显示端口进程列表，数量: " . count($this->processes));
         
+        // 计算PID和User列的最大长度，用于对齐
+        $maxPidLength = 3; // 默认最小宽度为PID列标题的长度
+        $maxUserLength = 4; // 默认最小宽度为User列标题的长度
+        
+        foreach ($this->processes as $process) {
+            $pidLength = strlen($process['pid']);
+            $userLength = strlen($process['session'] ?? $process['protocol'] ?? "");
+            
+            if ($pidLength > $maxPidLength) {
+                $maxPidLength = $pidLength;
+            }
+            
+            if ($userLength > $maxUserLength) {
+                $maxUserLength = $userLength;
+            }
+        }
+        
+        // 增加一点额外空间作为间距
+        $maxPidLength += 2;
+        $maxUserLength += 2;
+        
         // 创建表头
         $headerBox = Box::newHorizontalBox();
         Box::setPadded($headerBox, true);
         
         // 复选框列（空标签，保持一致性）
-        $checkboxHeaderLabel = Label::create("");
+        $checkboxHeaderLabel = Label::create("       ");
         Box::append($headerBox, $checkboxHeaderLabel, false);
         
-        $pidHeaderLabel = Label::create("    PID");
-        Box::append($headerBox, $pidHeaderLabel, true);
+        // 缩短PID列宽度，但保持对齐
+        $pidHeaderText = str_pad("PID", $maxPidLength, " ");
+        $pidHeaderLabel = Label::create($pidHeaderText);
+        Box::append($headerBox, $pidHeaderLabel, false);
         
-        $userHeaderLabel = Label::create("  User");
-        Box::append($headerBox, $userHeaderLabel, true);
+        // 缩短User列宽度，但保持对齐
+        $userHeaderText = str_pad("User", $maxUserLength, " ");
+        $userHeaderLabel = Label::create($userHeaderText);
+        Box::append($headerBox, $userHeaderLabel, false);
         
-        $commandHeaderLabel = Label::create(" Command");
+        // 命令行列 - 增加宽度占比
+        $commandHeaderLabel = Label::create("  Command");
         Box::append($headerBox, $commandHeaderLabel, true);
         
         Box::append($this->checkboxContainer, $headerBox, false);
@@ -171,22 +197,33 @@ class PortKiller
             $this->checkboxes[$process['pid']] = $checkbox;
             Box::append($rowBox, $checkbox, false);
             
-            // PID
-            $pidLabel = Label::create($process['pid']);
-            Box::append($rowBox, $pidLabel, true);
+            // PID - 设置为固定宽度，并右补空格对齐
+            $pidText = str_pad($process['pid'], $maxPidLength, " ");
+            $pidLabel = Label::create($pidText);
+            Box::append($rowBox, $pidLabel, false);
             
-            // User - 对应协议或用户名
-            $userLabel = Label::create($process['session'] ?? $process['protocol'] ?? "");
-            Box::append($rowBox, $userLabel, true);
+            // User - 对应协议或用户名，设置为固定宽度，并右补空格对齐
+            $userText = str_pad($process['session'] ?? $process['protocol'] ?? "", $maxUserLength, " ");
+            $userLabel = Label::create($userText);
+            Box::append($rowBox, $userLabel, false);
             
-            // Command - 对应本地地址或进程名
+            // Command - 对应本地地址或进程名，使用Entry代替Label
             $commandText = isset($process['name']) ? $process['name'] : ($process['local_address'] ?? "");
-            // 限制命令长度以防止显示过长
-            if (strlen($commandText) > 50) {
-                $commandText = substr($commandText, 0, 47) . '...';
-            }
-            $commandLabel = Label::create($commandText);
-            Box::append($rowBox, $commandLabel, true);
+            
+            // 创建嵌入式容器，帮助调整垂直对齐
+            $commandContainer = Box::newVerticalBox();
+            Box::setPadded($commandContainer, false);
+            
+            // 创建文本框并添加到容器
+            $commandEntry = Entry::create();
+            Entry::setText($commandEntry, $commandText);
+            Entry::setReadOnly($commandEntry, true);
+            
+            // 添加文本框到容器
+            Box::append($commandContainer, $commandEntry, false);
+            
+            // 将命令行容器添加到行中，让它占据更多空间
+            Box::append($rowBox, $commandContainer, true);
             
             Box::append($this->checkboxContainer, $rowBox, false);
             $this->checkboxRows[] = $rowBox; // 保存行引用
@@ -298,6 +335,27 @@ class PortKiller
                         if (count($processParts) >= 3) {
                             $command = $processParts[0]; // 进程名称
                             $user = $processParts[2];    // 用户名
+                            
+                            // 使用PowerShell获取完整命令行
+                            $cmdOutput = [];
+                            $psCommand = "powershell.exe -Command \"Get-WmiObject Win32_Process -Filter \\\"ProcessId = {$pid}\\\" | Select-Object CommandLine | Format-List\"";
+                            exec($psCommand, $cmdOutput);
+                            
+                            // 解析PowerShell输出获取完整命令行
+                            if (!empty($cmdOutput)) {
+                                foreach ($cmdOutput as $outputLine) {
+                                    if (strpos($outputLine, 'CommandLine') !== false) {
+                                        // 提取冒号后的内容作为命令行
+                                        $cmdParts = explode(':', $outputLine, 2);
+                                        if (isset($cmdParts[1])) {
+                                            $command = trim($cmdParts[1]);
+                                            // 移除可能的空格和引号
+                                            $command = trim($command, " \t\n\r\0\x0B\"");
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     
@@ -334,7 +392,7 @@ class PortKiller
                         
                         // 获取进程的完整命令
                         $cmdOutput = [];
-                        $cmdCmd = "ps -p {$pid} -o comm=";
+                        $cmdCmd = "ps -p {$pid} -o command=";
                         exec($cmdCmd, $cmdOutput);
                         if (!empty($cmdOutput)) {
                             $command = $cmdOutput[0]; // 更新进程名称

@@ -3,7 +3,7 @@
         'name' => 'yangweijie/php-tools',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'd8646041b73be20edf8c9c7321ea6d0c0baa1f9d',
+        'reference' => '207618eeb7a40fa00e870f2cb8b0726aeb14288d',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -1180,7 +1180,7 @@
         'yangweijie/php-tools' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'd8646041b73be20edf8c9c7321ea6d0c0baa1f9d',
+            'reference' => '207618eeb7a40fa00e870f2cb8b0726aeb14288d',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

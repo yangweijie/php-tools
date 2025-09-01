@@ -142,21 +142,47 @@ class ProcessKiller
         // 打印调试信息
         error_log("显示进程列表，数量: " . count($this->processes));
         
+        // 计算PID和User列的最大长度，用于对齐
+        $maxPidLength = 3; // 默认最小宽度为PID列标题的长度
+        $maxUserLength = 4; // 默认最小宽度为User列标题的长度
+        
+        foreach ($this->processes as $process) {
+            $pidLength = strlen($process['pid']);
+            $userLength = strlen($process['session'] ?? "");
+            
+            if ($pidLength > $maxPidLength) {
+                $maxPidLength = $pidLength;
+            }
+            
+            if ($userLength > $maxUserLength) {
+                $maxUserLength = $userLength;
+            }
+        }
+        
+        // 增加一点额外空间作为间距
+        $maxPidLength += 2;
+        $maxUserLength += 2;
+        
         // 创建表头
         $headerBox = Box::newHorizontalBox();
         Box::setPadded($headerBox, true);
         
         // 复选框列（空标签，保持一致性）
-        $checkboxHeaderLabel = Label::create("");
+        $checkboxHeaderLabel = Label::create("       ");
         Box::append($headerBox, $checkboxHeaderLabel, false);
         
-        $pidHeaderLabel = Label::create("    PID");
-        Box::append($headerBox, $pidHeaderLabel, true);
+        // 缩短PID列宽度，但保持对齐
+        $pidHeaderText = str_pad("PID", $maxPidLength, " ");
+        $pidHeaderLabel = Label::create($pidHeaderText);
+        Box::append($headerBox, $pidHeaderLabel, false);
         
-        $userHeaderLabel = Label::create("  User");
-        Box::append($headerBox, $userHeaderLabel, true);
+        // 缩短User列宽度，但保持对齐
+        $userHeaderText = str_pad("User", $maxUserLength, " ");
+        $userHeaderLabel = Label::create($userHeaderText);
+        Box::append($headerBox, $userHeaderLabel, false);
         
-        $commandHeaderLabel = Label::create(" Command");
+        // 命令行列 - 增加宽度占比
+        $commandHeaderLabel = Label::create("  Command");
         Box::append($headerBox, $commandHeaderLabel, true);
         
         Box::append($this->checkboxContainer, $headerBox, false);
@@ -171,22 +197,33 @@ class ProcessKiller
             $this->checkboxes[$process['pid']] = $checkbox;
             Box::append($rowBox, $checkbox, false);
             
-            // PID
-            $pidLabel = Label::create($process['pid']);
-            Box::append($rowBox, $pidLabel, true);
+            // PID - 设置为固定宽度，并右补空格对齐
+            $pidText = str_pad($process['pid'], $maxPidLength, " ");
+            $pidLabel = Label::create($pidText);
+            Box::append($rowBox, $pidLabel, false);
             
-            // User列 - 使用session或user信息
-            $userLabel = Label::create($process['session'] ?? "");
-            Box::append($rowBox, $userLabel, true);
+            // User列 - 设置为固定宽度，并右补空格对齐
+            $userText = str_pad($process['session'] ?? "", $maxUserLength, " ");
+            $userLabel = Label::create($userText);
+            Box::append($rowBox, $userLabel, false);
             
-            // Command列 - 使用完整命令行或进程名
+            // Command列 - 使用Entry代替Label以在一行显示，同时解决垂直对齐问题
             $commandText = isset($process['command']) ? $process['command'] : $process['name'];
-            // 限制命令长度以防止显示过长
-            if (strlen($commandText) > 50) {
-                $commandText = substr($commandText, 0, 47) . '...';
-            }
-            $commandLabel = Label::create($commandText);
-            Box::append($rowBox, $commandLabel, true);
+            
+            // 创建嵌入式容器，帮助调整垂直对齐
+            $commandContainer = Box::newVerticalBox();
+            Box::setPadded($commandContainer, false);
+            
+            // 创建文本框并添加到容器
+            $commandEntry = Entry::create();
+            Entry::setText($commandEntry, $commandText);
+            Entry::setReadOnly($commandEntry, true);
+            
+            // 添加文本框到容器
+            Box::append($commandContainer, $commandEntry, false);
+            
+            // 将命令行容器添加到行中，让它占据更多空间
+            Box::append($rowBox, $commandContainer, true);
             
             Box::append($this->checkboxContainer, $rowBox, false);
             $this->checkboxRows[] = $rowBox; // 保存行引用
@@ -298,14 +335,26 @@ class ProcessKiller
                     $sessionName = trim($parts[2]);
                     $memory = trim($parts[4]);
                     
-                    // 尝试获取完整命令行
+                    // 尝试获取完整命令行 - 使用PowerShell命令
                     $cmdOutput = [];
-                    exec("wmic process where processid={$pid} get commandline", $cmdOutput);
-                    $command = $processName; // 默认使用进程名
+                    $psCommand = "powershell.exe -Command \"Get-WmiObject Win32_Process -Filter \\\"ProcessId = {$pid}\\\" | Select-Object CommandLine | Format-List\"";
+                    exec($psCommand, $cmdOutput);
+                    $commandLine = $processName; // 默认使用进程名
                     
-                    // 如果有完整命令行，使用它
-                    if (count($cmdOutput) > 1) {
-                        $command = trim($cmdOutput[1]);
+                    // 解析PowerShell输出获取完整命令行
+                    if (!empty($cmdOutput)) {
+                        foreach ($cmdOutput as $outputLine) {
+                            if (strpos($outputLine, 'CommandLine') !== false) {
+                                // 提取冒号后的内容作为命令行
+                                $parts = explode(':', $outputLine, 2);
+                                if (isset($parts[1])) {
+                                    $commandLine = trim($parts[1]);
+                                    // 移除可能的空格和引号
+                                    $commandLine = trim($commandLine, " \t\n\r\0\x0B\"");
+                                    break;
+                                }
+                            }
+                        }
                     }
                     
                     $processes[] = [
@@ -313,7 +362,7 @@ class ProcessKiller
                         'pid' => $pid,
                         'session' => $sessionName,
                         'memory' => $memory,
-                        'command' => $command
+                        'command' => $commandLine
                     ];
                 }
             }
@@ -346,11 +395,11 @@ class ProcessKiller
                     // 获取完整命令行
                     $cmdOutput = [];
                     exec("ps -p {$pid} -o command=", $cmdOutput);
-                    $command = $processName; // 默认值
+                    $commandLine = $processName; // 默认值
                     
                     // 如果有完整命令行，使用它
                     if (!empty($cmdOutput)) {
-                        $command = trim($cmdOutput[0]);
+                        $commandLine = trim($cmdOutput[0]);
                     }
                     
                     $processes[] = [
@@ -358,7 +407,7 @@ class ProcessKiller
                         'pid' => $pid,
                         'session' => $user,
                         'memory' => $memory,
-                        'command' => $command
+                        'command' => $commandLine
                     ];
                 }
             }
