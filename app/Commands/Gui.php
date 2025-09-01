@@ -7,6 +7,7 @@ use LaravelZero\Framework\Commands\Command;
 use App\App;
 use App\PortKiller;
 use App\ProcessKiller;
+use App\ExampleTab;
 
 class Gui extends Command
 {
@@ -39,6 +40,10 @@ class Gui extends Command
         // 创建进程查杀工具
         $processKiller = new ProcessKiller();
         $application->addTab("进程查杀", $processKiller->getControl());
+
+        // 创建示例tab
+        $exampleTab = new ExampleTab();
+        $application->addTab("示例", $exampleTab->getControl());
 
         // 运行应用
         $application->run();
