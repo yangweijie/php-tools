@@ -16,8 +16,8 @@ use Kingbes\Libui\Radio;
 use Kingbes\Libui\MultilineEntry;
 use Kingbes\Libui\Group;
 use Kingbes\Libui\Control;
-use Kingbes\Libui\ColorButton;
-use Kingbes\Libui\FontButton;
+use Kingbes\Libui\Table;
+use Kingbes\Libui\TableValueType;
 
 class ExampleTab
 {
@@ -53,6 +53,9 @@ class ExampleTab
         
         // 添加各种组件到右侧栏
         $this->addAdvancedControls($rightBox);
+        
+        // 添加表格控件到右侧栏
+        $this->addSimpleTableControls($rightBox);
     }
     
     private function addBasicControls($container)
@@ -197,24 +200,114 @@ class ExampleTab
         });
         Box::append($advancedBox, $multiline, true);
         
-        // 颜色按钮
-        $colorLabel = Label::create("颜色按钮:");
-        Box::append($advancedBox, $colorLabel, false);
-        $colorButton = ColorButton::create();
-        ColorButton::setColor($colorButton, 1.0, 0.0, 0.0, 1.0); // 红色
-        ColorButton::onChanged($colorButton, function ($cb) {
-            // 颜色按钮颜色改变事件
-        });
-        Box::append($advancedBox, $colorButton, false);
+    }
+    
+    private function addTableControls($container)
+    {
+        // 表格控件组
+        $tableGroup = Group::create("表格控件");
+        Group::setMargined($tableGroup, true);
+        Box::append($container, $tableGroup, true);
         
-        // 字体按钮
-        $fontLabel = Label::create("字体按钮:");
-        Box::append($advancedBox, $fontLabel, false);
-        $fontButton = FontButton::create();
-        FontButton::onChanged($fontButton, function ($fb) {
-            // 字体按钮字体改变事件
+        $tableBox = Box::newVerticalBox();
+        Box::setPadded($tableBox, true);
+        Group::setChild($tableGroup, $tableBox);
+        
+        // 创建表格模型处理程序
+        $handlerStruct = Table::modelHandler();
+        $handler = \FFI::addr($handlerStruct);
+        
+        // 设置回调函数 (使用静态数据，避免使用use clause)
+        $handler->NumColumns = function ($h, $m) {
+            return 4; // ID, 选择框, 姓名, 年龄
+        };
+        
+        $handler->ColumnType = function ($h, $m, $column) {
+            if ($column == 0) { // ID
+                return TableValueType::String->value; // 使用字符串类型避免混合类型问题
+            } elseif ($column == 1) { // 选择框
+                return TableValueType::String->value; // 使用字符串类型避免混合类型问题
+            } else { // 姓名, 年龄
+                return TableValueType::String->value;
+            }
+        };
+        
+        $handler->NumRows = function ($h, $m) {
+            return 3; // 固定3行
+        };
+        
+        $handler->CellValue = function ($h, $m, $row, $column) {
+            // 静态测试数据
+            switch ($column) {
+                case 0: // ID
+                    return Table::createValueStr((string)($row + 1));
+                case 1: // 选择框
+                    return Table::createValueStr("0");
+                case 2: // 姓名
+                    $names = ["张三", "李四", "王五"];
+                    return Table::createValueStr($names[$row]);
+                case 3: // 年龄
+                    $ages = [25, 30, 28];
+                    return Table::createValueStr((string)$ages[$row]);
+                default:
+                    return Table::createValueStr("");
+            }
+        };
+        
+        $handler->SetCellValue = function ($h, $m, $row, $column, $value) {
+            // 简单的设置处理
+            return 0;
+        };
+        
+        // 创建表格模型
+        $model = Table::createModel($handler);
+        
+        // 创建表格参数
+        $params = \Kingbes\Libui\Base::ffi()->new("uiTableParams");
+        $params->Model = $model;
+        $params->RowBackgroundColorModelColumn = -1;
+        
+        // 创建表格
+        $table = Table::create($params);
+        
+        // 添加列 (全部使用文本列避免混合类型问题)
+        $textParams = \Kingbes\Libui\Base::ffi()->new("uiTableTextColumnOptionalParams");
+        Table::appendTextColumn($table, "ID", 0, -1, \FFI::addr($textParams));
+        Table::appendTextColumn($table, "选择", 1, -1, \FFI::addr($textParams));
+        Table::appendTextColumn($table, "姓名", 2, -1, \FFI::addr($textParams));
+        Table::appendTextColumn($table, "年龄", 3, -1, \FFI::addr($textParams));
+        
+        Box::append($tableBox, $table, true);
+        
+        // 按钮：显示信息
+        $btn = Button::create("显示信息");
+        Button::onClicked($btn, function () {
+            echo "表格按钮被点击\n";
         });
-        Box::append($advancedBox, $fontButton, false);
+        Box::append($tableBox, $btn, false);
+    }
+    
+    private function addSimpleTableControls($container)
+    {
+        // 表格控件组
+        $tableGroup = Group::create("表格控件");
+        Group::setMargined($tableGroup, true);
+        Box::append($container, $tableGroup, false);
+        
+        $tableBox = Box::newVerticalBox();
+        Box::setPadded($tableBox, true);
+        Group::setChild($tableGroup, $tableBox);
+        
+        // 添加说明标签
+        $label = Label::create("表格功能演示 (简化版本)");
+        Box::append($tableBox, $label, false);
+        
+        // 按钮：显示信息
+        $btn = Button::create("表格功能说明");
+        Button::onClicked($btn, function () {
+            echo "表格功能说明：完整的表格实现需要复杂的回调函数，这里展示简化版本\n";
+        });
+        Box::append($tableBox, $btn, false);
     }
     
     public function getControl()
