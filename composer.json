@@ -25,6 +25,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "illuminate/log": "^12.17",
         "kingbes/libui": "0.0.1",
         "laravel-zero/framework": "^12.0"
     },

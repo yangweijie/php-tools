@@ -3,7 +3,7 @@
         'name' => 'yangweijie/php-tools',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '207618eeb7a40fa00e870f2cb8b0726aeb14288d',
+        'reference' => '585699cb1f63a868a2a02b1f08a9c8ef9e0cd300',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -229,6 +229,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'illuminate/log' => array(
+            'pretty_version' => 'v12.27.0',
+            'version' => '12.27.0.0',
+            'reference' => 'bcd4c0ac05b47c45f0693a83704b46399fec6414',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../illuminate/log',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'illuminate/macroable' => array(
             'pretty_version' => 'v12.26.4',
             'version' => '12.26.4.0',
@@ -396,6 +405,15 @@
             'install_path' => __DIR__ . '/../mockery/mockery',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'monolog/monolog' => array(
+            'pretty_version' => '3.9.0',
+            'version' => '3.9.0.0',
+            'reference' => '10d85740180ecba7896c87e06a166e0c95a0e3b6',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../monolog/monolog',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'mtdowling/cron-expression' => array(
             'dev_requirement' => false,
@@ -731,6 +749,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '1.0|2.0|3.0',
+                1 => '3.0.0',
             ),
         ),
         'psr/simple-cache' => array(
@@ -1180,7 +1199,7 @@
         'yangweijie/php-tools' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '207618eeb7a40fa00e870f2cb8b0726aeb14288d',
+            'reference' => '585699cb1f63a868a2a02b1f08a9c8ef9e0cd300',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
