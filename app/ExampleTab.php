@@ -16,12 +16,14 @@ use Kingbes\Libui\Radio;
 use Kingbes\Libui\MultilineEntry;
 use Kingbes\Libui\Group;
 use Kingbes\Libui\Control;
+use Kingbes\Libui\Separator;
 use Kingbes\Libui\Table;
 use Kingbes\Libui\TableValueType;
 
 class ExampleTab
 {
     private $box;
+    private $tableData = [];
     
     public function __construct()
     {
@@ -30,32 +32,11 @@ class ExampleTab
         Box::setPadded($this->box, true);
         
         // 添加标题
-        $titleLabel = Label::create("UI组件示例");
+        $titleLabel = Label::create("进程表格示例");
         Box::append($this->box, $titleLabel, false);
         
-        // 创建水平容器用于分栏
-        $mainBox = Box::newHorizontalBox();
-        Box::setPadded($mainBox, true);
-        Box::append($this->box, $mainBox, true);
-        
-        // 左侧栏
-        $leftBox = Box::newVerticalBox();
-        Box::setPadded($leftBox, true);
-        Box::append($mainBox, $leftBox, true);
-        
-        // 右侧栏
-        $rightBox = Box::newVerticalBox();
-        Box::setPadded($rightBox, true);
-        Box::append($mainBox, $rightBox, true);
-        
-        // 添加各种组件到左侧栏
-        $this->addBasicControls($leftBox);
-        
-        // 添加各种组件到右侧栏
-        $this->addAdvancedControls($rightBox);
-        
-        // 添加表格控件到右侧栏
-        $this->addSimpleTableControls($rightBox);
+        // 直接添加表格控件，不再分栏，让表格占用全部宽度
+        $this->addSimpleTableControls($this->box);
     }
     
     private function addBasicControls($container)
@@ -256,11 +237,11 @@ class ExampleTab
         
         $handler->SetCellValue = function ($h, $m, $row, $column, $value) {
             // 简单的设置处理
-            return 0;
+            return $m->SetCellValue($row, $column, Table::createValueStr($value));
         };
         
-        // 创建表格模型
-        $model = Table::createModel($handler);
+        // 创建表格模型 - 使用正确的 Table::createModel 方法
+        $model = Table::createModel(\FFI::addr($handler));
         
         // 创建表格参数
         $params = \Kingbes\Libui\Base::ffi()->new("uiTableParams");
@@ -277,7 +258,23 @@ class ExampleTab
         Table::appendTextColumn($table, "姓名", 2, -1, \FFI::addr($textParams));
         Table::appendTextColumn($table, "年龄", 3, -1, \FFI::addr($textParams));
         
-        Box::append($tableBox, $table, true);
+        // 添加操作按钮
+        $actionBox = Box::newHorizontalBox();
+        Box::setPadded($actionBox, true);
+        
+        $selectAllBtn = Button::create("全选");
+        Button::onClicked($selectAllBtn, function() {
+            echo "全选按钮被点击\n";
+        });
+        
+        $clearBtn = Button::create("清空选择");
+        Button::onClicked($clearBtn, function() {
+            echo "清空选择按钮被点击\n";
+        });
+        
+        Box::append($actionBox, $selectAllBtn, false);
+        Box::append($actionBox, $clearBtn, false);
+        Box::append($tableBox, $actionBox, false);
         
         // 按钮：显示信息
         $btn = Button::create("显示信息");
@@ -290,26 +287,100 @@ class ExampleTab
     private function addSimpleTableControls($container)
     {
         // 表格控件组
-        $tableGroup = Group::create("表格控件");
+        $tableGroup = Group::create("进程表格 (libui Table)");
         Group::setMargined($tableGroup, true);
-        Box::append($container, $tableGroup, false);
+        Box::append($container, $tableGroup, true);
         
         $tableBox = Box::newVerticalBox();
         Box::setPadded($tableBox, true);
         Group::setChild($tableGroup, $tableBox);
         
-        // 添加说明标签
-        $label = Label::create("表格功能演示 (简化版本)");
-        Box::append($tableBox, $label, false);
-        
-        // 按钮：显示信息
-        $btn = Button::create("表格功能说明");
-        Button::onClicked($btn, function () {
-            echo "表格功能说明：完整的表格实现需要复杂的回调函数，这里展示简化版本\n";
-        });
-        Box::append($tableBox, $btn, false);
+        try {
+            // 创建表格模型处理器
+            $handler = \Kingbes\Libui\Base::ffi()->new("uiTableModelHandler");
+            
+            // 定义回调函数
+            $numColumnsFunc = function($h, $m) {
+                return 4; // ID, PID, User, Command
+            };
+            
+            $columnTypeFunc = function($h, $m, $column) {
+                // 所有列都使用字符串类型
+                return TableValueType::String->value;
+            };
+            
+            $numRowsFunc = function($h, $m) {
+                return 3; // 固定3行数据
+            };
+            
+            $cellValueFunc = function($h, $m, $row, $column) {
+                // 模拟数据
+                $mockData = [
+                    ['1', '1234', 'root', '/usr/bin/systemd'],
+                    ['2', '5678', 'www-data', 'nginx: worker process'],
+                    ['3', '9012', 'mysql', '/usr/sbin/mysqld']
+                ];
+                
+                // 确保行索引不超出范围
+                $rowIndex = min($row, count($mockData) - 1);
+                
+                // 返回对应单元格的数据
+                if (isset($mockData[$rowIndex][$column])) {
+                    return Table::createValueStr($mockData[$rowIndex][$column]);
+                }
+                
+                return Table::createValueStr('');
+            };
+            
+            $setCellValueFunc = function($h, $m, $row, $column, $value) {
+                // 简单的设置处理
+                return 0;
+            };
+
+            // 设置回调函数
+            $handler->NumColumns = $numColumnsFunc;
+            $handler->ColumnType = $columnTypeFunc;
+            $handler->NumRows = $numRowsFunc;
+            $handler->CellValue = $cellValueFunc;
+            $handler->SetCellValue = $setCellValueFunc;
+
+            // 创建文本列参数
+            $textParams = \Kingbes\Libui\Base::ffi()->new("uiTableTextColumnOptionalParams");
+            $textParamsPtr = \FFI::addr($textParams);
+
+            // 创建表格模型
+            $model = Table::createModel(\FFI::addr($handler));
+
+            // 创建表格参数
+            $params = \Kingbes\Libui\Base::ffi()->new("uiTableParams");
+            $params->Model = $model;
+            $params->RowBackgroundColorModelColumn = -1;
+
+            // 创建表格
+            $table = Table::create($params);
+
+            // 添加列
+            Table::appendTextColumn($table, "ID", 0, -1, $textParamsPtr);
+            Table::appendTextColumn($table, "PID", 1, -1, $textParamsPtr);
+            Table::appendTextColumn($table, "User", 2, -1, $textParamsPtr);
+            Table::appendTextColumn($table, "Command", 3, -1, $textParamsPtr);
+
+            // 将表格添加到容器
+            Box::append($tableBox, $table, true);
+            
+            // 添加说明标签
+            $infoLabel = Label::create("这是简单的表格示例 - 显示ID、PID、User、Command四列");
+            Box::append($tableBox, $infoLabel, false);
+            
+        } catch (\Exception $e) {
+            // 如果表格创建失败，显示错误信息
+            $errorLabel = Label::create("表格创建失败: " . $e->getMessage());
+            Box::append($tableBox, $errorLabel, false);
+        }
     }
     
+
+
     public function getControl()
     {
         return $this->box;

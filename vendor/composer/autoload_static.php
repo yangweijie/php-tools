@@ -558,6 +558,7 @@ class ComposerStaticInit3a9cb937a366b1b40df19f1b7282c763
     public static $classMap = array (
         'App\\App' => __DIR__ . '/../..' . '/app/App.php',
         'App\\Commands\\Gui' => __DIR__ . '/../..' . '/app/Commands/Gui.php',
+        'App\\ExampleTab' => __DIR__ . '/../..' . '/app/ExampleTab.php',
         'App\\PortKiller' => __DIR__ . '/../..' . '/app/PortKiller.php',
         'App\\ProcessKiller' => __DIR__ . '/../..' . '/app/ProcessKiller.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
@@ -573,6 +574,7 @@ class ComposerStaticInit3a9cb937a366b1b40df19f1b7282c763
         'Brick\\Math\\Exception\\NumberFormatException' => __DIR__ . '/..' . '/brick/math/src/Exception/NumberFormatException.php',
         'Brick\\Math\\Exception\\RoundingNecessaryException' => __DIR__ . '/..' . '/brick/math/src/Exception/RoundingNecessaryException.php',
         'Brick\\Math\\Internal\\Calculator' => __DIR__ . '/..' . '/brick/math/src/Internal/Calculator.php',
+        'Brick\\Math\\Internal\\CalculatorRegistry' => __DIR__ . '/..' . '/brick/math/src/Internal/CalculatorRegistry.php',
         'Brick\\Math\\Internal\\Calculator\\BcMathCalculator' => __DIR__ . '/..' . '/brick/math/src/Internal/Calculator/BcMathCalculator.php',
         'Brick\\Math\\Internal\\Calculator\\GmpCalculator' => __DIR__ . '/..' . '/brick/math/src/Internal/Calculator/GmpCalculator.php',
         'Brick\\Math\\Internal\\Calculator\\NativeCalculator' => __DIR__ . '/..' . '/brick/math/src/Internal/Calculator/NativeCalculator.php',
