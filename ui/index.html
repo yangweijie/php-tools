@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统管理工具箱</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Segoe UI", Arial, sans-serif; background: #f5f7fa; }
+        .container { display: flex; height: 100vh; }
+        
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .nav-menu {
+            padding: 20px 0;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #fff;
+        }
+        
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #fff;
+        }
+        
+        .nav-item .icon {
+            font-size: 20px;
+            margin-right: 12px;
+            width: 24px;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        
+        .tool-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tool-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-header {
+            margin-bottom: 30px;
+        }
+        
+        .section-header h2 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .section-header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .results-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .results-header h3 {
+            color: #2c3e50;
+            font-size: 18px;
+        }
+        
+        .process-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .process-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .process-table th {
+            background: #f8f9fa;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #e1e8ed;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .process-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: top;
+        }
+        
+        .process-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .process-table .checkbox-col {
+            width: 40px;
+            text-align: center;
+        }
+        
+        .process-table .pid-col {
+            width: 80px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .process-table .name-col {
+            width: 150px;
+            font-weight: 500;
+        }
+        
+        .process-table .memory-col {
+            width: 100px;
+            text-align: right;
+            font-family: monospace;
+        }
+        
+        .process-table .session-col {
+            width: 100px;
+        }
+        
+        .process-table .command-col {
+            max-width: 300px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .batch-actions {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e1e8ed;
+            display: none;
+        }
+        
+        .batch-actions.show {
+            display: block;
+        }
+        
+        .batch-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: transform 0.2s ease;
+        }
+        
+        .batch-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .batch-btn.select-all {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .batch-info {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-left: 15px;
+        }
+        
+        .process-checkbox {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px 25px;
+            color: #7f8c8d;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 25px;
+            color: #667eea;
+        }
+        
+        .status-message {
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>🛠️ 工具箱</h1>
+                <p>系统管理工具集合</p>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" onclick="showTool('port')">
+                    <span class="icon">🔌</span>
+                    <span>端口查杀</span>
+                </div>
+                <div class="nav-item" onclick="showTool('process')">
+                    <span class="icon">⚙️</span>
+                    <span>进程查杀</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div id="port-tool" class="tool-section active">
+                <div class="section-header">
+                    <h2>端口查杀</h2>
+                    <p>查找并终止占用指定端口的进程</p>
+                </div>
+                
+                <div class="search-box">
+                    <div class="input-group">
+                        <input type="number" id="port-input" placeholder="请输入端口号 (例如: 8080)" min="1" max="65535" />
+                        <button class="btn" onclick="searchPort()">🔍 查询进程</button>
+                    </div>
+                </div>
+                
+                <div id="port-results" class="results-container" style="display: none;">
+                    <div class="results-header">
+                        <h3>查询结果</h3>
+                    </div>
+                    <div id="port-list" class="process-list"></div>
+                </div>
+            </div>
+            
+            <div id="process-tool" class="tool-section">
+                <div class="section-header">
+                    <h2>进程查杀</h2>
+                    <p>根据进程名称查找并终止进程</p>
+                </div>
+                
+                <div class="search-box">
+                    <div class="input-group">
+                        <input type="text" id="process-input" placeholder="请输入进程名关键词 (例如: chrome)" />
+                        <button class="btn" onclick="searchProcess()">🔍 查询进程</button>
+                    </div>
+                </div>
+                
+                <div id="process-results" class="results-container" style="display: none;">
+                    <div class="results-header">
+                        <h3>查询结果</h3>
+                    </div>
+                    <div id="process-list" class="process-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTool(tool) {
+            // Update navigation
+            document.querySelectorAll('.tool-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tool + '-tool').classList.add('active');
+            event.target.classList.add('active');
+            
+            // Hide results when switching tools
+            document.getElementById(tool + '-results').style.display = 'none';
+        }
+
+        async function searchPort() {
+            const port = document.getElementById('port-input').value;
+            if (!port) {
+                alert('请输入端口号');
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('port-results');
+            const resultsList = document.getElementById('port-list');
+            
+            resultsContainer.style.display = 'block';
+            resultsList.innerHTML = '<div class="loading">🔄 正在查询端口 ' + port + ' 的进程...</div>';
+            
+            try {
+                const response = await fetch('api.php?action=searchByPort&port=' + encodeURIComponent(port));
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults('port-list', data.processes, 'port');
+                } else {
+                    resultsList.innerHTML = '<div class="no-results">❌ 查询失败: ' + (data.message || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                resultsList.innerHTML = '<div class="no-results">❌ 网络错误: ' + error.message + '</div>';
+            }
+        }
+
+        async function searchProcess() {
+            const keyword = document.getElementById('process-input').value;
+            if (!keyword) {
+                alert('请输入进程名关键词');
+                return;
+            }
+            
+            const resultsContainer = document.getElementById('process-results');
+            const resultsList = document.getElementById('process-list');
+            
+            resultsContainer.style.display = 'block';
+            resultsList.innerHTML = '<div class="loading">🔄 正在查询包含 "' + keyword + '" 的进程...</div>';
+            
+            try {
+                const response = await fetch('api.php?action=searchByProcess&keyword=' + encodeURIComponent(keyword));
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults('process-list', data.processes, 'process');
+                } else {
+                    resultsList.innerHTML = '<div class="no-results">❌ 查询失败: ' + (data.message || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                resultsList.innerHTML = '<div class="no-results">❌ 网络错误: ' + error.message + '</div>';
+            }
+        }
+
+        function displayResults(containerId, processes, type) {
+            const container = document.getElementById(containerId);
+            
+            if (processes.length === 0) {
+                container.innerHTML = '<div class="no-results">📭 未找到相关进程</div>';
+                return;
+            }
+            
+            // Create batch actions bar
+            const batchActionsHtml = `
+                <div class="batch-actions" id="${type}-batch-actions">
+                    <button class="batch-btn select-all" onclick="toggleSelectAll('${type}')">
+                        <span id="${type}-select-text">✅ 全选</span>
+                    </button>
+                    <button class="batch-btn" onclick="killSelectedProcesses('${type}')">
+                        🗑️ 批量终止
+                    </button>
+                    <span class="batch-info">
+                        已选择 <span id="${type}-selected-count">0</span> 个进程
+                    </span>
+                </div>
+            `;
+            
+            // Create table
+            const tableHtml = `
+                <table class="process-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col">
+                                <input type="checkbox" id="${type}-select-all-checkbox" onchange="toggleSelectAll('${type}')" class="process-checkbox">
+                            </th>
+                            <th class="pid-col">PID</th>
+                            <th class="name-col">进程名</th>
+                            <th class="memory-col">内存</th>
+                            ${processes.some(p => p.session) ? '<th class="session-col">会话</th>' : ''}
+                            <th class="command-col">命令行</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${processes.map(proc => `
+                            <tr>
+                                <td class="checkbox-col">
+                                    <input type="checkbox" class="process-checkbox ${type}-process-checkbox" 
+                                           value="${proc.pid}" onchange="updateBatchActions('${type}')">
+                                </td>
+                                <td class="pid-col">${proc.pid}</td>
+                                <td class="name-col">🔹 ${proc.name}</td>
+                                <td class="memory-col">${proc.memory}</td>
+                                ${processes.some(p => p.session) ? `<td class="session-col">${proc.session || '-'}</td>` : ''}
+                                <td class="command-col">
+                                    ${proc.command && proc.command !== proc.name ? 
+                                        `<div title="${proc.command}">${proc.command.length > 60 ? proc.command.substring(0, 60) + '...' : proc.command}</div>` : 
+                                        `<span style="color: #999;">-</span>`
+                                    }
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = batchActionsHtml + tableHtml;
+            
+            // Show batch actions if there are processes
+            if (processes.length > 0) {
+                document.getElementById(`${type}-batch-actions`).classList.add('show');
+            }
+        }
+
+        function toggleSelectAll(type) {
+            const selectAllCheckbox = document.getElementById(`${type}-select-all-checkbox`);
+            const processCheckboxes = document.querySelectorAll(`.${type}-process-checkbox`);
+            const selectText = document.getElementById(`${type}-select-text`);
+            
+            const shouldSelectAll = !selectAllCheckbox.checked;
+            
+            selectAllCheckbox.checked = shouldSelectAll;
+            processCheckboxes.forEach(checkbox => {
+                checkbox.checked = shouldSelectAll;
+            });
+            
+            selectText.textContent = shouldSelectAll ? '❌ 取消全选' : '✅ 全选';
+            updateBatchActions(type);
+        }
+
+        function updateBatchActions(type) {
+            const processCheckboxes = document.querySelectorAll(`.${type}-process-checkbox`);
+            const selectedCheckboxes = document.querySelectorAll(`.${type}-process-checkbox:checked`);
+            const selectAllCheckbox = document.getElementById(`${type}-select-all-checkbox`);
+            const selectText = document.getElementById(`${type}-select-text`);
+            const selectedCount = document.getElementById(`${type}-selected-count`);
+            
+            const selectedLength = selectedCheckboxes.length;
+            const totalLength = processCheckboxes.length;
+            
+            // Update selected count
+            selectedCount.textContent = selectedLength;
+            
+            // Update select all checkbox state
+            if (selectedLength === 0) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = false;
+                selectText.textContent = '✅ 全选';
+            } else if (selectedLength === totalLength) {
+                selectAllCheckbox.indeterminate = false;
+                selectAllCheckbox.checked = true;
+                selectText.textContent = '❌ 取消全选';
+            } else {
+                selectAllCheckbox.indeterminate = true;
+                selectText.textContent = '➖ 部分选择';
+            }
+        }
+
+        function killSelectedProcesses(type) {
+            const selectedCheckboxes = document.querySelectorAll(`.${type}-process-checkbox:checked`);
+            const selectedPids = Array.from(selectedCheckboxes).map(cb => cb.value);
+            
+            if (selectedPids.length === 0) {
+                alert('⚠️ 请先选择要终止的进程');
+                return;
+            }
+            
+            const confirmMessage = `⚠️ 确定要终止以下 ${selectedPids.length} 个进程吗？\n\nPID: ${selectedPids.join(', ')}\n\n此操作不可撤销，请谨慎操作！`;
+            
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Kill processes one by one
+            killProcessesBatch(selectedPids, type, 0);
+        }
+
+        async function killProcessesBatch(pids, type, index) {
+            if (index >= pids.length) {
+                showStatusMessage(`✅ 批量操作完成！已处理 ${pids.length} 个进程`, 'success');
+                // Refresh results after batch operation
+                setTimeout(() => {
+                    if (type === 'port') {
+                        searchPort();
+                    } else {
+                        searchProcess();
+                    }
+                }, 1000);
+                return;
+            }
+            
+            const pid = pids[index];
+            showStatusMessage(`🔄 正在终止进程 ${pid} (${index + 1}/${pids.length})...`, 'info');
+            
+            try {
+                const response = await fetch(`api.php?action=killProcess&pid=${encodeURIComponent(pid)}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    showStatusMessage(`❌ 终止进程 ${pid} 失败: ${data.message}`, 'error');
+                }
+                
+                // Continue with next process after a short delay
+                setTimeout(() => {
+                    killProcessesBatch(pids, type, index + 1);
+                }, 500);
+                
+            } catch (error) {
+                showStatusMessage(`❌ 终止进程 ${pid} 时发生错误: ${error.message}`, 'error');
+                // Continue with next process even if one fails
+                setTimeout(() => {
+                    killProcessesBatch(pids, type, index + 1);
+                }, 500);
+            }
+        }
+
+        async function killProcess(pid, type) {
+            if (!confirm(`⚠️ 确定要终止进程 ${pid} 吗？\n\n此操作不可撤销，请谨慎操作！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('api.php?action=killProcess&pid=' + encodeURIComponent(pid));
+                const data = await response.json();
+                
+                // Show status message
+                showStatusMessage(data.message, data.success ? 'success' : 'error');
+                
+                if (data.success) {
+                    // Refresh current results
+                    if (type === 'port') {
+                        setTimeout(searchPort, 1000);
+                    } else {
+                        setTimeout(searchProcess, 1000);
+                    }
+                }
+            } catch (error) {
+                showStatusMessage('操作失败: ' + error.message, 'error');
+            }
+        }
+
+        function showStatusMessage(message, type) {
+            // Remove existing status messages
+            document.querySelectorAll('.status-message').forEach(el => el.remove());
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            const activeSection = document.querySelector('.tool-section.active .search-box');
+            activeSection.appendChild(statusDiv);
+            
+            // Auto remove after appropriate time based on type
+            const autoRemoveTime = type === 'info' ? 2000 : 5000;
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.remove();
+                }
+            }, autoRemoveTime);
+        }
+
+        // Enter key support
+        document.getElementById('port-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchPort();
+        });
+
+        document.getElementById('process-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchProcess();
+        });
+    </script>
+</body>
+</html>

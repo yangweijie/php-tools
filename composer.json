@@ -1,0 +1,8 @@
+{
+    "name": "gui-toolbox/system-admin",
+    "description": "System Administration Toolbox with GUI",
+    "type": "project",
+    "require": {
+        "kingbes/webui": "^0.0.7"
+    }
+}

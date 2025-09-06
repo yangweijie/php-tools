@@ -1,0 +1,195 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "1668b11ecfd775bb0a38100bba49e6f5",
+    "packages": [
+        {
+            "name": "ffi/env",
+            "version": "1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-ffi/env.git",
+                "reference": "ce5b90f1c379ab99b9b030c492c4618240ccdd39"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-ffi/env/zipball/ce5b90f1c379ab99b9b030c492c4618240ccdd39",
+                "reference": "ce5b90f1c379ab99b9b030c492c4618240ccdd39",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.53",
+                "phpstan/phpstan": "^2.0",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.0.x-dev",
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "FFI\\Env\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nesmeyanov Kirill",
+                    "email": "nesk@xakep.ru",
+                    "homepage": "https://nesk.me",
+                    "role": "maintainer"
+                }
+            ],
+            "description": "PHP FFI Environment",
+            "keywords": [
+                "env",
+                "environment",
+                "ffi"
+            ],
+            "support": {
+                "docs": "https://github.com/php-ffi/env/blob/master/README.md",
+                "issues": "https://github.com/php-ffi/env/issues",
+                "source": "https://github.com/php-ffi/env"
+            },
+            "time": "2025-05-08T15:03:58+00:00"
+        },
+        {
+            "name": "ffi/work-directory",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-ffi/work-directory.git",
+                "reference": "e3aaea735b2f170a0086a7600666cfc20e8cdb1a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-ffi/work-directory/zipball/e3aaea735b2f170a0086a7600666cfc20e8cdb1a",
+                "reference": "e3aaea735b2f170a0086a7600666cfc20e8cdb1a",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ffi": "*",
+                "ext-mbstring": "*",
+                "ffi/env": "^1.0",
+                "php": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.22",
+                "phpunit/phpunit": "^9.6",
+                "vimeo/psalm": "^5.14"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.0.x-dev",
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "FFI\\WorkDirectory\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nesmeyanov Kirill",
+                    "email": "nesk@xakep.ru",
+                    "homepage": "https://nesk.me",
+                    "role": "maintainer"
+                }
+            ],
+            "description": "PHP library for interact with working directory",
+            "keywords": [
+                "bin",
+                "chdir",
+                "cwd",
+                "ffi",
+                "getcwd",
+                "location",
+                "utility"
+            ],
+            "support": {
+                "docs": "https://github.com/php-ffi/work-directory/blob/master/README.md",
+                "issues": "https://github.com/php-ffi/work-directory/issues",
+                "source": "https://github.com/php-ffi/work-directory"
+            },
+            "time": "2023-08-09T17:03:13+00:00"
+        },
+        {
+            "name": "kingbes/webui",
+            "version": "v0.0.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/KingBes/php-webui-composer.git",
+                "reference": "5b8c471d7909d5ef75b9b3393d25a099ca008103"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/KingBes/php-webui-composer/zipball/5b8c471d7909d5ef75b9b3393d25a099ca008103",
+                "reference": "5b8c471d7909d5ef75b9b3393d25a099ca008103",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ffi": "*",
+                "ffi/work-directory": "^1.0",
+                "php": ">=8.1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Kingbes\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "kingbes",
+                    "email": "1164601554@qq.com"
+                }
+            ],
+            "description": "webui 绑定 php 实现跨平台桌面应用",
+            "keywords": [
+                "WebUI",
+                "composer",
+                "desktop",
+                "ffi",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/KingBes/php-webui-composer/issues",
+                "source": "https://github.com/KingBes/php-webui-composer/tree/v0.0.7"
+            },
+            "time": "2025-05-23T09:15:08+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {},
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}

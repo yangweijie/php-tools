@@ -1,0 +1,22 @@
+/* Lucide Icons - Minimal CSS for System Administration Toolbox */
+.lucide {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+[data-lucide] {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
