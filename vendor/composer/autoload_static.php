@@ -561,6 +561,7 @@ class ComposerStaticInit3a9cb937a366b1b40df19f1b7282c763
         'App\\ExampleTab' => __DIR__ . '/../..' . '/app/ExampleTab.php',
         'App\\PortKiller' => __DIR__ . '/../..' . '/app/PortKiller.php',
         'App\\ProcessKiller' => __DIR__ . '/../..' . '/app/ProcessKiller.php',
+        'App\\ProcessRow' => __DIR__ . '/../..' . '/app/ProcessRow.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Brick\\Math\\BigDecimal' => __DIR__ . '/..' . '/brick/math/src/BigDecimal.php',

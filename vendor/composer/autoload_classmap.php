@@ -11,6 +11,7 @@ return array(
     'App\\ExampleTab' => $baseDir . '/app/ExampleTab.php',
     'App\\PortKiller' => $baseDir . '/app/PortKiller.php',
     'App\\ProcessKiller' => $baseDir . '/app/ProcessKiller.php',
+    'App\\ProcessRow' => $baseDir . '/app/ProcessRow.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Brick\\Math\\BigDecimal' => $vendorDir . '/brick/math/src/BigDecimal.php',
