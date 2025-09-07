@@ -9,6 +9,8 @@ use Kingbes\Libui\Entry;
 use Kingbes\Libui\Label;
 use Kingbes\Libui\MultilineEntry;
 use Kingbes\Libui\Checkbox;
+use Kingbes\Libui\Table;
+use Kingbes\Libui\TableValueType;
 
 class ProcessKiller
 {
@@ -20,6 +22,8 @@ class ProcessKiller
     private $checkboxRows = []; // 存储行容器引用
     private $checkboxContainer;
     private $containerParent; // 存储容器的父容器
+    private $selectAllBtn = null; // 存储全选按钮引用
+    private $allSelected = false; // 跟踪是否全选
     
     public function __construct()
     {
@@ -133,127 +137,133 @@ class ProcessKiller
      */
     private function displayProcessList()
     {
+        error_log("开始显示进程列表，进程数量: " . count($this->processes));
+        
+        // 清除旧的内容
+        $this->clearCheckboxes();
+        
         if (empty($this->processes)) {
-            $label = Label::create("未找到匹配的进程");
+            error_log("没有数据，显示 No Data 标签");
+            $label = Label::create("No Data");
             Box::append($this->checkboxContainer, $label, false);
             return;
         }
         
-        // 打印调试信息
-        error_log("显示进程列表，数量: " . count($this->processes));
-        
-        // 计算PID和User列的最大长度，用于对齐
-        $maxPidLength = 3; // 默认最小宽度为PID列标题的长度
-        $maxUserLength = 4; // 默认最小宽度为User列标题的长度
-        
-        foreach ($this->processes as $process) {
-            $pidLength = strlen($process['pid']);
-            $userLength = strlen($process['session'] ?? "");
+        error_log("开始创建表格");
+        try {
+            // 保存进程数据以便在回调中使用
+            $processesRef = &$this->processes;
             
-            if ($pidLength > $maxPidLength) {
-                $maxPidLength = $pidLength;
-            }
+            // 创建表格模型处理器
+            $handler = Table::modelHandler(
+                4, // 列数：PID、用户、命令、复选框
+                TableValueType::String, // 列类型（使用String作为默认类型）
+                count($this->processes), // 行数
+                function ($handler, $row, $column) use ($processesRef) {
+                    if ($row < 0 || $row >= count($processesRef)) {
+                        return Table::createValueStr('');
+                    }
+                    
+                    $process = $processesRef[$row];
+                    
+                    switch ($column) {
+                        case 0: // PID列
+                            return Table::createValueStr($process['pid'] ?? '');
+                        case 1: // 用户列
+                            return Table::createValueStr($process['session'] ?? '');
+                        case 2: // 命令列
+                            return Table::createValueStr(isset($process['command']) ? $process['command'] : $process['name']);
+                        case 3: // 复选框列
+                            $pid = $process['pid'] ?? '';
+                            $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
+                            return Table::createValueInt($isChecked);
+                        default:
+                            return Table::createValueStr('');
+                    }
+                },
+                function ($handler, $row, $column, $value) use ($processesRef) {
+                    if ($column == 3 && $value !== null) { // 复选框列
+                        $checked = Table::valueInt($value);
+                        $pid = $processesRef[$row]['pid'] ?? '';
+                        if (!empty($pid)) {
+                            if ($checked) {
+                                // 选中进程
+                                $this->checkboxes[$pid] = true;
+                            } else {
+                                // 取消选中进程
+                                if (isset($this->checkboxes[$pid])) {
+                                    unset($this->checkboxes[$pid]);
+                                }
+                            }
+                        }
+                    }
+                    return 1; // 返回1表示处理成功
+                }
+            );
+
+            // 创建表格模型
+            $tableModel = Table::createModel($handler);
+            // 创建表格
+            $table = Table::create($tableModel, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "PID", 0, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "User", 1, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "Command", 2, -1);
+            // 表格追加复选框列（第4个参数为0表示可编辑）
+            Table::appendCheckboxColumn($table, "", 3, 0);
+
+            // 将表格添加到容器
+            Box::append($this->checkboxContainer, $table, true);
             
-            if ($userLength > $maxUserLength) {
-                $maxUserLength = $userLength;
-            }
+            // 添加按钮
+            $buttonBox = Box::newHorizontalBox();
+            Box::setPadded($buttonBox, true);
+            
+            // 杀选中进程按钮
+            $killBtn = Button::create("清除选择");
+            Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
+            Box::append($buttonBox, $killBtn, true);
+            
+            // 全选按钮
+            $this->selectAllBtn = Button::create("全选");
+            Button::onClicked($this->selectAllBtn, [$this, 'toggleSelectAllProcesses']);
+            Box::append($buttonBox, $this->selectAllBtn, true);
+            
+            Box::append($this->checkboxContainer, $buttonBox, false);
+            
+        } catch (\Exception $e) {
+            // 如果表格创建失败，显示错误信息
+            error_log("表格创建失败: " . $e->getMessage());
+            $errorLabel = Label::create("表格创建失败: " . $e->getMessage());
+            Box::append($this->checkboxContainer, $errorLabel, false);
         }
-        
-        // 增加一点额外空间作为间距
-        $maxPidLength += 2;
-        $maxUserLength += 2;
-        
-        // 创建表头
-        $headerBox = Box::newHorizontalBox();
-        Box::setPadded($headerBox, true);
-        
-        // 复选框列（空标签，保持一致性）
-        $checkboxHeaderLabel = Label::create("       ");
-        Box::append($headerBox, $checkboxHeaderLabel, false);
-        
-        // 缩短PID列宽度，但保持对齐
-        $pidHeaderText = str_pad("PID", $maxPidLength, " ");
-        $pidHeaderLabel = Label::create($pidHeaderText);
-        Box::append($headerBox, $pidHeaderLabel, false);
-        
-        // 缩短User列宽度，但保持对齐
-        $userHeaderText = str_pad("User", $maxUserLength, " ");
-        $userHeaderLabel = Label::create($userHeaderText);
-        Box::append($headerBox, $userHeaderLabel, false);
-        
-        // 命令行列 - 增加宽度占比
-        $commandHeaderLabel = Label::create("  Command");
-        Box::append($headerBox, $commandHeaderLabel, true);
-        
-        Box::append($this->checkboxContainer, $headerBox, false);
-        
-        // 添加进程行
-        foreach ($this->processes as $process) {
-            $rowBox = Box::newHorizontalBox();
-            Box::setPadded($rowBox, true);
-            
-            // 创建复选框
-            $checkbox = Checkbox::create("");
-            $this->checkboxes[$process['pid']] = $checkbox;
-            Box::append($rowBox, $checkbox, false);
-            
-            // PID - 设置为固定宽度，并右补空格对齐
-            $pidText = str_pad($process['pid'], $maxPidLength, " ");
-            $pidLabel = Label::create($pidText);
-            Box::append($rowBox, $pidLabel, false);
-            
-            // User列 - 设置为固定宽度，并右补空格对齐
-            $userText = str_pad($process['session'] ?? "", $maxUserLength, " ");
-            $userLabel = Label::create($userText);
-            Box::append($rowBox, $userLabel, false);
-            
-            // Command列 - 使用Entry代替Label以在一行显示，同时解决垂直对齐问题
-            $commandText = isset($process['command']) ? $process['command'] : $process['name'];
-            
-            // 创建嵌入式容器，帮助调整垂直对齐
-            $commandContainer = Box::newVerticalBox();
-            Box::setPadded($commandContainer, false);
-            
-            // 创建文本框并添加到容器
-            $commandEntry = Entry::create();
-            Entry::setText($commandEntry, $commandText);
-            Entry::setReadOnly($commandEntry, true);
-            
-            // 添加文本框到容器
-            Box::append($commandContainer, $commandEntry, false);
-            
-            // 将命令行容器添加到行中，让它占据更多空间
-            Box::append($rowBox, $commandContainer, true);
-            
-            Box::append($this->checkboxContainer, $rowBox, false);
-            $this->checkboxRows[] = $rowBox; // 保存行引用
-        }
-        
-        // 添加按钮
-        $buttonBox = Box::newHorizontalBox();
-        Box::setPadded($buttonBox, true);
-        
-        // 杀选中进程按钮
-        $killBtn = Button::create("清除选择");
-        Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
-        Box::append($buttonBox, $killBtn, true);
-        
-        // 全选按钮
-        $selectAllBtn = Button::create("全选");
-        Button::onClicked($selectAllBtn, [$this, 'selectAllProcesses']);
-        Box::append($buttonBox, $selectAllBtn, true);
-        
-        Box::append($this->checkboxContainer, $buttonBox, false);
     }
     
     /**
-     * 全选进程
+     * 切换全选/全否进程
      */
-    public function selectAllProcesses()
+    public function toggleSelectAllProcesses()
     {
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            Checkbox::setChecked($checkbox, true);
+        if ($this->allSelected) {
+            // 当前是全选状态，切换到全否
+            $this->checkboxes = [];
+            $this->allSelected = false;
+            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
+        } else {
+            // 当前是全否状态，切换到全选
+            foreach ($this->processes as $process) {
+                $pid = $process['pid'] ?? '';
+                if (!empty($pid)) {
+                    $this->checkboxes[$pid] = true;
+                }
+            }
+            $this->allSelected = true;
+            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
         }
+        // 重新显示进程列表以更新表格
+        $this->displayProcessList();
     }
     
     /**
@@ -261,9 +271,8 @@ class ProcessKiller
      */
     public function selectNoneProcesses()
     {
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            Checkbox::setChecked($checkbox, false);
-        }
+        // 清空选中的进程
+        $this->checkboxes = [];
     }
     
     /**
@@ -271,13 +280,7 @@ class ProcessKiller
      */
     public function killSelectedProcesses()
     {
-        $selectedPids = [];
-        
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            if (Checkbox::checked($checkbox)) {
-                $selectedPids[] = $pid;
-            }
-        }
+        $selectedPids = array_keys($this->checkboxes);
         
         if (empty($selectedPids)) {
             // 显示提示消息
@@ -290,6 +293,9 @@ class ProcessKiller
         foreach ($selectedPids as $pid) {
             $results[] = $this->killProcessById($pid);
         }
+        
+        // 清空选中状态
+        $this->checkboxes = [];
         
         // 重新查询进程
         $this->queryProcess();
@@ -370,10 +376,10 @@ class ProcessKiller
             // macOS或Linux系统
             if (is_numeric($process)) {
                 // 按PID查询
-                $command = "ps -p {$process} -o pid,user,comm,%mem";
+                $command = "ps -p {$process} -o pid,user,comm,%mem 2>/dev/null";
             } else {
                 // 按进程名查询
-                $command = "ps -e | grep {$process} | grep -v grep";
+                $command = "ps aux | grep {$process} | grep -v grep 2>/dev/null";
             }
             
             error_log("执行命令: {$command}");
@@ -385,30 +391,68 @@ class ProcessKiller
                 $line = trim($line);
                 if (empty($line)) continue;
                 
-                $parts = preg_split('/\s+/', $line, 4); // 限制分割为4部分
-                if (count($parts) >= 2) {
-                    $pid = $parts[0];
-                    $processName = isset($parts[2]) ? $parts[2] : $parts[1];
-                    $user = isset($parts[1]) ? $parts[1] : 'unknown';
-                    $memory = isset($parts[3]) ? $parts[3] : '';
-                    
-                    // 获取完整命令行
-                    $cmdOutput = [];
-                    exec("ps -p {$pid} -o command=", $cmdOutput);
-                    $commandLine = $processName; // 默认值
-                    
-                    // 如果有完整命令行，使用它
-                    if (!empty($cmdOutput)) {
-                        $commandLine = trim($cmdOutput[0]);
+                if (is_numeric($process)) {
+                    // 按PID查询的解析
+                    $parts = preg_split('/\s+/', $line, 4); // 限制分割为4部分
+                    if (count($parts) >= 4) {
+                        $pid = $parts[0];
+                        $user = $parts[1];
+                        $processName = $parts[2];
+                        $memory = $parts[3];
+                        
+                        // 获取完整命令行
+                        $cmdOutput = [];
+                        exec("ps -p {$pid} -o command= 2>/dev/null", $cmdOutput);
+                        $commandLine = $processName; // 默认值
+                        
+                        // 如果有完整命令行，使用它
+                        if (!empty($cmdOutput)) {
+                            $commandLine = trim($cmdOutput[0]);
+                        }
+                        
+                        $processes[] = [
+                            'name' => $processName,
+                            'pid' => $pid,
+                            'session' => $user,
+                            'memory' => $memory,
+                            'command' => $commandLine
+                        ];
                     }
-                    
-                    $processes[] = [
-                        'name' => $processName,
-                        'pid' => $pid,
-                        'session' => $user,
-                        'memory' => $memory,
-                        'command' => $commandLine
-                    ];
+                } else {
+                    // 按进程名查询的解析 (ps aux 格式)
+                    $parts = preg_split('/\s+/', $line);
+                    error_log("进程查询行解析: " . print_r($parts, true));
+                    if (count($parts) >= 11) {
+                        $user = $parts[0];
+                        $pid = $parts[1];
+                        $cpu = $parts[2];
+                        $mem = $parts[3];
+                        // $vsz = $parts[4]; // 不需要
+                        // $rss = $parts[5]; // 不需要
+                        // $tty = $parts[6]; // 不需要
+                        // $stat = $parts[7]; // 不需要
+                        // $start = $parts[8]; // 不需要
+                        // $time = $parts[9]; // 不需要
+                        $commandName = $parts[10]; // 命令名
+                        $commandLine = implode(' ', array_slice($parts, 10)); // 命令行是剩余部分
+                        
+                        // 获取完整命令行
+                        $cmdOutput = [];
+                        exec("ps -p {$pid} -o command= 2>/dev/null", $cmdOutput);
+                        if (!empty($cmdOutput)) {
+                            $commandLine = trim($cmdOutput[0]);
+                        }
+                        
+                        $processes[] = [
+                            'name' => $commandName,
+                            'pid' => $pid,
+                            'session' => $user,
+                            'memory' => $mem,
+                            'command' => $commandLine
+                        ];
+                    } else {
+                        error_log("进程查询行解析失败，部分数不足: " . count($parts));
+                    }
                 }
             }
         }

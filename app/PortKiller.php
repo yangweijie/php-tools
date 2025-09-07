@@ -9,6 +9,8 @@ use Kingbes\Libui\Entry;
 use Kingbes\Libui\Label;
 use Kingbes\Libui\MultilineEntry;
 use Kingbes\Libui\Checkbox;
+use Kingbes\Libui\Table;
+use Kingbes\Libui\TableValueType;
 
 class PortKiller
 {
@@ -20,6 +22,8 @@ class PortKiller
     private $checkboxRows = []; // 存储行容器引用
     private $checkboxContainer;
     private $containerParent; // 存储容器的父容器
+    private $selectAllBtn = null; // 存储全选按钮引用
+    private $allSelected = false; // 跟踪是否全选
     
     public function __construct()
     {
@@ -118,7 +122,7 @@ class PortKiller
         $newContainer = Box::newVerticalBox();
         Box::setPadded($newContainer, true);
         
-        // 移除旧容器（在索引3的位置）
+        // 移除旧容器（在索引2的位置）
         Box::delete($this->containerParent, 2);
         
         // 添加新容器
@@ -133,127 +137,129 @@ class PortKiller
      */
     private function displayProcessList()
     {
+        // 清除旧的内容
+        $this->clearCheckboxes();
+        
         if (empty($this->processes)) {
-            $label = Label::create("未找到占用该端口的进程");
+            $label = Label::create("No Data");
             Box::append($this->checkboxContainer, $label, false);
             return;
         }
         
-        // 打印调试信息
-        error_log("显示端口进程列表，数量: " . count($this->processes));
-        
-        // 计算PID和User列的最大长度，用于对齐
-        $maxPidLength = 3; // 默认最小宽度为PID列标题的长度
-        $maxUserLength = 4; // 默认最小宽度为User列标题的长度
-        
-        foreach ($this->processes as $process) {
-            $pidLength = strlen($process['pid']);
-            $userLength = strlen($process['session'] ?? $process['protocol'] ?? "");
+        try {
+            // 保存进程数据以便在回调中使用
+            $processesRef = &$this->processes;
             
-            if ($pidLength > $maxPidLength) {
-                $maxPidLength = $pidLength;
-            }
+            // 创建表格模型处理器
+            $handler = Table::modelHandler(
+                4, // 列数：PID、用户、命令、复选框
+                TableValueType::String, // 列类型（使用String作为默认类型）
+                count($this->processes), // 行数
+                function ($handler, $row, $column) use ($processesRef) {
+                    if ($row < 0 || $row >= count($processesRef)) {
+                        return Table::createValueStr('');
+                    }
+                    
+                    $process = $processesRef[$row];
+                    
+                    switch ($column) {
+                        case 0: // PID列
+                            return Table::createValueStr($process['pid'] ?? '');
+                        case 1: // 用户列
+                            return Table::createValueStr($process['session'] ?? $process['protocol'] ?? '');
+                        case 2: // 命令列
+                            return Table::createValueStr(isset($process['name']) ? $process['name'] : ($process['local_address'] ?? ''));
+                        case 3: // 复选框列
+                            $pid = $process['pid'] ?? '';
+                            $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
+                            return Table::createValueInt($isChecked);
+                        default:
+                            return Table::createValueStr('');
+                    }
+                },
+                function ($handler, $row, $column, $value) use ($processesRef) {
+                    if ($column == 3 && $value !== null) { // 复选框列
+                        $checked = Table::valueInt($value);
+                        $pid = $processesRef[$row]['pid'] ?? '';
+                        if (!empty($pid)) {
+                            if ($checked) {
+                                // 选中进程
+                                $this->checkboxes[$pid] = true;
+                            } else {
+                                // 取消选中进程
+                                if (isset($this->checkboxes[$pid])) {
+                                    unset($this->checkboxes[$pid]);
+                                }
+                            }
+                        }
+                    }
+                    return 1; // 返回1表示处理成功
+                }
+            );
+
+            // 创建表格模型
+            $tableModel = Table::createModel($handler);
+            // 创建表格
+            $table = Table::create($tableModel, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "PID", 0, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "User", 1, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "Command", 2, -1);
+            // 表格追加复选框列（第4个参数为0表示可编辑）
+            Table::appendCheckboxColumn($table, "", 3, 0);
+
+            // 将表格添加到容器
+            Box::append($this->checkboxContainer, $table, true);
             
-            if ($userLength > $maxUserLength) {
-                $maxUserLength = $userLength;
-            }
+            // 添加按钮
+            $buttonBox = Box::newHorizontalBox();
+            Box::setPadded($buttonBox, true);
+            
+            // 杀选中进程按钮
+            $killBtn = Button::create("清除选择");
+            Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
+            Box::append($buttonBox, $killBtn, true);
+            
+            // 全选按钮
+            $this->selectAllBtn = Button::create("全选");
+            Button::onClicked($this->selectAllBtn, [$this, 'toggleSelectAllProcesses']);
+            Box::append($buttonBox, $this->selectAllBtn, true);
+            
+            Box::append($this->checkboxContainer, $buttonBox, false);
+            
+        } catch (\Exception $e) {
+            // 如果表格创建失败，显示错误信息
+            error_log("表格创建失败: " . $e->getMessage());
+            $errorLabel = Label::create("表格创建失败: " . $e->getMessage());
+            Box::append($this->checkboxContainer, $errorLabel, false);
         }
-        
-        // 增加一点额外空间作为间距
-        $maxPidLength += 2;
-        $maxUserLength += 2;
-        
-        // 创建表头
-        $headerBox = Box::newHorizontalBox();
-        Box::setPadded($headerBox, true);
-        
-        // 复选框列（空标签，保持一致性）
-        $checkboxHeaderLabel = Label::create("       ");
-        Box::append($headerBox, $checkboxHeaderLabel, false);
-        
-        // 缩短PID列宽度，但保持对齐
-        $pidHeaderText = str_pad("PID", $maxPidLength, " ");
-        $pidHeaderLabel = Label::create($pidHeaderText);
-        Box::append($headerBox, $pidHeaderLabel, false);
-        
-        // 缩短User列宽度，但保持对齐
-        $userHeaderText = str_pad("User", $maxUserLength, " ");
-        $userHeaderLabel = Label::create($userHeaderText);
-        Box::append($headerBox, $userHeaderLabel, false);
-        
-        // 命令行列 - 增加宽度占比
-        $commandHeaderLabel = Label::create("  Command");
-        Box::append($headerBox, $commandHeaderLabel, true);
-        
-        Box::append($this->checkboxContainer, $headerBox, false);
-        
-        // 添加进程行
-        foreach ($this->processes as $process) {
-            $rowBox = Box::newHorizontalBox();
-            Box::setPadded($rowBox, true);
-            
-            // 创建复选框
-            $checkbox = Checkbox::create("");
-            $this->checkboxes[$process['pid']] = $checkbox;
-            Box::append($rowBox, $checkbox, false);
-            
-            // PID - 设置为固定宽度，并右补空格对齐
-            $pidText = str_pad($process['pid'], $maxPidLength, " ");
-            $pidLabel = Label::create($pidText);
-            Box::append($rowBox, $pidLabel, false);
-            
-            // User - 对应协议或用户名，设置为固定宽度，并右补空格对齐
-            $userText = str_pad($process['session'] ?? $process['protocol'] ?? "", $maxUserLength, " ");
-            $userLabel = Label::create($userText);
-            Box::append($rowBox, $userLabel, false);
-            
-            // Command - 对应本地地址或进程名，使用Entry代替Label
-            $commandText = isset($process['name']) ? $process['name'] : ($process['local_address'] ?? "");
-            
-            // 创建嵌入式容器，帮助调整垂直对齐
-            $commandContainer = Box::newVerticalBox();
-            Box::setPadded($commandContainer, false);
-            
-            // 创建文本框并添加到容器
-            $commandEntry = Entry::create();
-            Entry::setText($commandEntry, $commandText);
-            Entry::setReadOnly($commandEntry, true);
-            
-            // 添加文本框到容器
-            Box::append($commandContainer, $commandEntry, false);
-            
-            // 将命令行容器添加到行中，让它占据更多空间
-            Box::append($rowBox, $commandContainer, true);
-            
-            Box::append($this->checkboxContainer, $rowBox, false);
-            $this->checkboxRows[] = $rowBox; // 保存行引用
-        }
-        
-        // 添加按钮
-        $buttonBox = Box::newHorizontalBox();
-        Box::setPadded($buttonBox, true);
-        
-        // 杀选中进程按钮
-        $killBtn = Button::create("清除选择");
-        Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
-        Box::append($buttonBox, $killBtn, true);
-        
-        // 全选按钮
-        $selectAllBtn = Button::create("全选");
-        Button::onClicked($selectAllBtn, [$this, 'selectAllProcesses']);
-        Box::append($buttonBox, $selectAllBtn, true);
-        
-        Box::append($this->checkboxContainer, $buttonBox, false);
     }
     
     /**
-     * 全选进程
+     * 切换全选/全否进程
      */
-    public function selectAllProcesses()
+    public function toggleSelectAllProcesses()
     {
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            Checkbox::setChecked($checkbox, true);
+        if ($this->allSelected) {
+            // 当前是全选状态，切换到全否
+            $this->checkboxes = [];
+            $this->allSelected = false;
+            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
+        } else {
+            // 当前是全否状态，切换到全选
+            foreach ($this->processes as $process) {
+                $pid = $process['pid'] ?? '';
+                if (!empty($pid)) {
+                    $this->checkboxes[$pid] = true;
+                }
+            }
+            $this->allSelected = true;
+            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
         }
+        // 重新显示进程列表以更新表格
+        $this->displayProcessList();
     }
     
     /**
@@ -261,9 +267,8 @@ class PortKiller
      */
     public function selectNoneProcesses()
     {
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            Checkbox::setChecked($checkbox, false);
-        }
+        // 清空选中的进程
+        $this->checkboxes = [];
     }
     
     /**
@@ -271,13 +276,7 @@ class PortKiller
      */
     public function killSelectedProcesses()
     {
-        $selectedPids = [];
-        
-        foreach ($this->checkboxes as $pid => $checkbox) {
-            if (Checkbox::checked($checkbox)) {
-                $selectedPids[] = $pid;
-            }
-        }
+        $selectedPids = array_keys($this->checkboxes);
         
         if (empty($selectedPids)) {
             // 显示提示消息
@@ -290,6 +289,9 @@ class PortKiller
         foreach ($selectedPids as $pid) {
             $results[] = $this->killProcessById($pid);
         }
+        
+        // 清空选中状态
+        $this->checkboxes = [];
         
         // 重新查询进程
         $this->queryPort();
@@ -372,7 +374,7 @@ class PortKiller
             }
         } elseif ($os === 'DAR' || $os === 'LIN') {
             // macOS或Linux系统
-            $command = "lsof -i :{$port} -n -P";
+            $command = "lsof -i :{$port} -n -P 2>/dev/null";
             exec($command, $output);
             error_log("执行命令: {$command}");
             error_log("端口命令输出: " . print_r($output, true));
@@ -381,31 +383,44 @@ class PortKiller
             if (count($output) > 1) {
                 for ($i = 1; $i < count($output); $i++) {
                     $line = trim($output[$i]);
+                    // 跳过标题行和其他无关行
+                    if (empty($line) || strpos($line, 'COMMAND') !== false) {
+                        continue;
+                    }
+                    
                     $parts = preg_split('/\s+/', $line);
                     
+                    // lsof 输出格式: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
+                    // 我们需要至少9个字段
                     if (count($parts) >= 9) {
-                        $command = $parts[0]; // 进程名称
+                        $processName = $parts[0]; // 进程名称
                         $pid = $parts[1];    // 进程 ID
                         $user = $parts[2];    // 用户名
-                        $protocol = $parts[4]; // 协议
-                        $localAddr = $parts[8]; // 本地地址
+                        // $fd = $parts[3];   // 文件描述符
+                        // $type = $parts[4]; // 类型 (IPv4/IPv6)
+                        // $device = $parts[5]; // 设备
+                        // $size = $parts[6]; // 大小
+                        // $node = $parts[7]; // 节点
+                        $protocol = isset($parts[4]) ? $parts[4] : ''; // 协议类型
+                        $localAddr = isset($parts[8]) ? $parts[8] : ''; // 本地地址和端口
                         
                         // 获取进程的完整命令
                         $cmdOutput = [];
-                        $cmdCmd = "ps -p {$pid} -o command=";
+                        $cmdCmd = "ps -p {$pid} -o command= 2>/dev/null";
                         exec($cmdCmd, $cmdOutput);
+                        $commandLine = $processName; // 默认使用进程名称
                         if (!empty($cmdOutput)) {
-                            $command = $cmdOutput[0]; // 更新进程名称
+                            $commandLine = trim($cmdOutput[0]); // 更新为完整命令行
                         }
                         
                         $processes[] = [
                             'protocol' => $protocol,
                             'local_address' => $localAddr,
-                            'remote_address' => isset($parts[9]) ? $parts[9] : '',
-                            'state' => isset($parts[9]) ? $parts[9] : '',
+                            'remote_address' => '',
+                            'state' => 'LISTEN',
                             'pid' => $pid,
                             'session' => $user,   // 用于User列
-                            'name' => $command    // 用于Command列
+                            'name' => $commandLine    // 用于Command列
                         ];
                     }
                 }
