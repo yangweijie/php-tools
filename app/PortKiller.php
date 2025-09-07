@@ -166,22 +166,22 @@ class PortKiller
                     $process = $processesRef[$row];
                     
                     switch ($column) {
-                        case 0: // PID列
-                            return Table::createValueStr($process['pid'] ?? '');
-                        case 1: // 用户列
-                            return Table::createValueStr($process['session'] ?? $process['protocol'] ?? '');
-                        case 2: // 命令列
-                            return Table::createValueStr(isset($process['name']) ? $process['name'] : ($process['local_address'] ?? ''));
-                        case 3: // 复选框列
+                        case 0: // 复选框列
                             $pid = $process['pid'] ?? '';
                             $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
                             return Table::createValueInt($isChecked);
+                        case 1: // PID列
+                            return Table::createValueStr($process['pid'] ?? '');
+                        case 2: // 用户列
+                            return Table::createValueStr($process['session'] ?? $process['protocol'] ?? '');
+                        case 3: // 命令列
+                            return Table::createValueStr(isset($process['name']) ? $process['name'] : ($process['local_address'] ?? ''));
                         default:
                             return Table::createValueStr('');
                     }
                 },
                 function ($handler, $row, $column, $value) use ($processesRef) {
-                    if ($column == 3 && $value !== null) { // 复选框列
+                    if ($column == 0 && $value !== null) { // 复选框列
                         $checked = Table::valueInt($value);
                         $pid = $processesRef[$row]['pid'] ?? '';
                         if (!empty($pid)) {
@@ -208,14 +208,14 @@ class PortKiller
             // 创建表格
             error_log("端口查询: 创建表格，进程数量: " . count($this->processes));
             $table = Table::create($this->tableModel, -1);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "PID", 0, -1);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "User", 1, -1);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "Command", 2, -1);
             // 表格追加复选框列（第4个参数为0表示可编辑）
-            Table::appendCheckboxColumn($table, "", 3, 0);
+            Table::appendCheckboxColumn($table, "", 0, 0);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "PID", 1, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "User", 2, -1);
+            // 表格追加文本列
+            Table::appendTextColumn($table, "Command", 3, -1);
 
             // 将表格添加到容器
             Box::append($this->checkboxContainer, $table, true);
@@ -224,16 +224,16 @@ class PortKiller
             $buttonBox = Box::newHorizontalBox();
             Box::setPadded($buttonBox, true);
             
-            // 杀选中进程按钮
-            $killBtn = Button::create("清除选择");
-            Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
-            Box::append($buttonBox, $killBtn, true);
-            
             // 全选按钮
             $buttonText = $this->getSelectAllButtonText();
             $this->selectAllBtn = Button::create($buttonText);
             Button::onClicked($this->selectAllBtn, [$this, 'toggleSelectAllProcesses']);
             Box::append($buttonBox, $this->selectAllBtn, true);
+            
+            // 杀选中进程按钮 (红色背景，白色字体)
+            $killBtn = Button::create("清除选择");
+            Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
+            Box::append($buttonBox, $killBtn, true);
             
             Box::append($this->checkboxContainer, $buttonBox, false);
             
