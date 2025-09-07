@@ -23,6 +23,7 @@ class PortKiller
     private $checkboxContainer;
     private $containerParent; // 存储容器的父容器
     private $selectAllBtn = null; // 存储全选按钮引用
+    private $tableModel = null; // 存储表格模型引用
     private $allSelected = false; // 跟踪是否全选
     
     public function __construct()
@@ -137,6 +138,8 @@ class PortKiller
      */
     private function displayProcessList()
     {
+        error_log("端口查询: 开始显示进程列表，进程数量: " . count($this->processes));
+        
         // 清除旧的内容
         $this->clearCheckboxes();
         
@@ -191,6 +194,9 @@ class PortKiller
                                     unset($this->checkboxes[$pid]);
                                 }
                             }
+                            
+                            // 更新全选按钮文本
+                            $this->updateSelectAllButtonText();
                         }
                     }
                     return 1; // 返回1表示处理成功
@@ -198,9 +204,10 @@ class PortKiller
             );
 
             // 创建表格模型
-            $tableModel = Table::createModel($handler);
+            $this->tableModel = Table::createModel($handler);
             // 创建表格
-            $table = Table::create($tableModel, -1);
+            error_log("端口查询: 创建表格，进程数量: " . count($this->processes));
+            $table = Table::create($this->tableModel, -1);
             // 表格追加文本列
             Table::appendTextColumn($table, "PID", 0, -1);
             // 表格追加文本列
@@ -223,7 +230,8 @@ class PortKiller
             Box::append($buttonBox, $killBtn, true);
             
             // 全选按钮
-            $this->selectAllBtn = Button::create("全选");
+            $buttonText = $this->getSelectAllButtonText();
+            $this->selectAllBtn = Button::create($buttonText);
             Button::onClicked($this->selectAllBtn, [$this, 'toggleSelectAllProcesses']);
             Box::append($buttonBox, $this->selectAllBtn, true);
             
@@ -238,28 +246,96 @@ class PortKiller
     }
     
     /**
+     * 获取全选按钮的文本
+     */
+    private function getSelectAllButtonText() {
+        // 检查是否所有进程都被选中
+        $allChecked = true;
+        $hasProcesses = count($this->processes) > 0;
+        if ($hasProcesses) {
+            foreach ($this->processes as $process) {
+                $pid = $process['pid'] ?? '';
+                if (!empty($pid) && !isset($this->checkboxes[$pid])) {
+                    $allChecked = false;
+                    break;
+                }
+            }
+        }
+        $hasChecked = count($this->checkboxes) > 0;
+        return ($allChecked && $hasChecked && $hasProcesses) ? "全否" : "全选";
+    }
+    
+    /**
+     * 更新全选按钮文本
+     */
+    private function updateSelectAllButtonText() {
+        if ($this->selectAllBtn !== null) {
+            $buttonText = $this->getSelectAllButtonText();
+            Button::setText($this->selectAllBtn, $buttonText);
+        }
+    }
+    
+    /**
      * 切换全选/全否进程
      */
     public function toggleSelectAllProcesses()
     {
-        if ($this->allSelected) {
+        // 检查是否所有进程都被选中
+        $allChecked = true;
+        $hasProcesses = count($this->processes) > 0;
+        
+        // 如果没有进程，直接返回
+        if (!$hasProcesses) {
+            return;
+        }
+        
+        // 检查是否所有进程都被选中
+        foreach ($this->processes as $process) {
+            $pid = $process['pid'] ?? '';
+            if (!empty($pid) && !isset($this->checkboxes[$pid])) {
+                $allChecked = false;
+                break;
+            }
+        }
+        
+        // 检查是否有任何进程被选中
+        $hasChecked = count($this->checkboxes) > 0;
+        
+        if ($allChecked && $hasChecked) {
             // 当前是全选状态，切换到全否
             $this->checkboxes = [];
-            $this->allSelected = false;
-            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
         } else {
-            // 当前是全否状态，切换到全选
+            // 当前不是全选状态，切换到全选
             foreach ($this->processes as $process) {
                 $pid = $process['pid'] ?? '';
                 if (!empty($pid)) {
                     $this->checkboxes[$pid] = true;
                 }
             }
-            $this->allSelected = true;
-            // 注意：我们不直接更新按钮文本，因为 displayProcessList 会重新创建按钮
         }
-        // 重新显示进程列表以更新表格
-        $this->displayProcessList();
+        
+        // 更新全选按钮文本
+        $this->updateSelectAllButtonText();
+        
+        // 更新表格中的复选框状态
+        $this->updateTableCheckboxStates();
+    }
+    
+    /**
+     * 更新表格中的复选框状态
+     */
+    private function updateTableCheckboxStates() {
+        // 更新表格中的复选框状态
+        error_log("端口查询: 更新表格复选框状态");
+        
+        // 如果有表格模型引用，则更新所有行的复选框状态
+        if ($this->tableModel !== null) {
+            for ($i = 0; $i < count($this->processes); $i++) {
+                Table::modelRowChanged($this->tableModel, $i);
+            }
+        } else {
+            error_log("端口查询: 表格模型引用为空，无法更新复选框状态");
+        }
     }
     
     /**
