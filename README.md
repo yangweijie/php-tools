@@ -16,12 +16,6 @@ A cross-platform PHP tools collection with GUI interface built using the kingbes
   - Selective termination with bulk operations
   - Cross-platform support (Windows, macOS, Linux)
 
-- **HTTP Load Testing**: Perform high-concurrency HTTP load testing with real-time monitoring
-  - Configure concurrent requests and duration
-  - Real-time performance metrics display
-  - Detailed analysis with response time statistics
-  - Export test results for further analysis
-
 - **Cross-platform GUI**: Native desktop application with tabbed interface
   - Built with kingbes/libui PHP-FFI bindings
   - Native look and feel on all platforms
@@ -60,7 +54,14 @@ Pre-built binaries are available for download from the GitHub Releases page for:
 
 #### From Source
 ```bash
-php toolkit.php
+# When running from source
+php toolkit
+```
+
+#### From PHAR Package
+```bash
+# When using the PHAR package
+php tools.phar
 ```
 
 #### From Pre-built Binary
@@ -96,27 +97,25 @@ tools-windows.exe
 composer install
 
 # Build PHAR executable
-php toolkit app:build tools
+composer build
 
 # The built executable will be available in the builds/ directory
 ```
-
-### Cross-platform Builds
-
-The GitHub Actions workflow automatically builds binaries for all supported platforms:
-- Linux (x86_64)
-- Windows (x86_64)
-- macOS (x86_64)
 
 ## Development
 
 ### Project Structure
 ```
-src/                 # Source code
+app/                 # Application source code
 ├── App.php         # Main GUI application class
 ├── PortKiller.php  # Port killing utility
-└── ProcessKiller.php # Process killing utility
-toolkit.php         # Main entry point
+├── ProcessKiller.php # Process killing utility
+├── ProcessRow.php  # Process row component
+├── ExampleTab.php  # Example tab component
+├── Commands/       # CLI commands
+└── Providers/      # Service providers
+bootstrap/          # Application bootstrap files
+config/             # Configuration files
 tests/              # Test files
 builds/             # Build output directory
 ```
@@ -136,7 +135,17 @@ composer test
 
 # Code formatting
 composer format
+
+# Build PHAR executable
+composer build
 ```
+
+### Cross-platform Builds
+
+The GitHub Actions workflow automatically builds binaries for all supported platforms:
+- Linux (x86_64)
+- Windows (x86_64)
+- macOS (x86_64)
 
 ## GitHub Actions
 
@@ -179,7 +188,7 @@ Download the appropriate binary for your platform and run it directly without an
 ## Dependencies
 
 - [kingbes/libui](https://github.com/kingbes/php-libui) - PHP-FFI bindings for libui
-- [guzzlehttp/guzzle](https://github.com/guzzle/guzzle) - HTTP client for load testing
+- [laravel-zero/framework](https://github.com/laravel-zero/laravel-zero) - Micro-framework for console applications
 - [pestphp/pest](https://github.com/pestphp/pest) - Testing framework
 
 ## License
