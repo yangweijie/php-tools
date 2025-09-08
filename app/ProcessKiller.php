@@ -76,7 +76,7 @@ class ProcessKiller
     {
         $this->checkboxContainer = Box::newVerticalBox();
         Box::setPadded($this->checkboxContainer, true);
-        Box::append($this->containerParent, $this->checkboxContainer, false);
+        Box::append($this->containerParent, $this->checkboxContainer, true);
     }
     
     public function getControl()
@@ -127,7 +127,7 @@ class ProcessKiller
         Box::delete($this->containerParent, 2);
         
         // 添加新容器
-        Box::append($this->containerParent, $newContainer, false);
+        Box::append($this->containerParent, $newContainer, true);
         
         // 更新引用
         $this->checkboxContainer = $newContainer;
@@ -213,11 +213,11 @@ class ProcessKiller
             // 表格追加复选框列（第4个参数为0表示可编辑）
             Table::appendCheckboxColumn($table, "", 0, 0);
             // 表格追加文本列
-            Table::appendTextColumn($table, "PID", 1, -1);
+            Table::appendTextColumn($table, "PID", 1, 100);
             // 表格追加文本列
-            Table::appendTextColumn($table, "User", 2, -1);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "Command", 3, -1);
+            Table::appendTextColumn($table, "User", 2, 150);
+            // 表格追加文本列（使用-2填充剩余空间）
+            Table::appendTextColumn($table, "Command", 3, -2);
 
             // 将表格添加到容器
             Box::append($this->checkboxContainer, $table, true);
