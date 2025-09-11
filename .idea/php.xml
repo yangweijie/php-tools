@@ -147,6 +147,9 @@
       <path value="$PROJECT_DIR$/vendor/league/mime-type-detection" />
       <path value="$PROJECT_DIR$/vendor/jolicode/jolinotif" />
       <path value="$PROJECT_DIR$/vendor/jolicode/php-os-helper" />
+      <path value="$PROJECT_DIR$/vendor/kingbes/webui" />
+      <path value="$PROJECT_DIR$/vendor/ffi/work-directory" />
+      <path value="$PROJECT_DIR$/vendor/ffi/env" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">
@@ -154,6 +157,11 @@
   </component>
   <component name="PhpStanOptionsConfiguration">
     <option name="transferred" value="true" />
+  </component>
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings configuration_file_path="$PROJECT_DIR$/phpunit.xml" custom_loader_path="$PROJECT_DIR$/vendor/autoload.php" paratest_path="$PROJECT_DIR$/vendor/bin/paratest_for_phpstorm" use_configuration_file="true" />
+    </phpunit_settings>
   </component>
   <component name="PsalmOptionsConfiguration">
     <option name="transferred" value="true" />
