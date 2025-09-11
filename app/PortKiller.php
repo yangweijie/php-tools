@@ -378,7 +378,7 @@ class PortKiller
      */
     private function getPortProcessesInfo($port)
     {
-        $os = strtoupper(substr(PHP_OS, 0, 3));
+        $os = App::getOperatingSystem();
         $command = '';
         $output = [];
         $processes = [];
@@ -513,7 +513,7 @@ class PortKiller
      */
     private function killProcessById($pid)
     {
-        $os = strtoupper(substr(PHP_OS, 0, 3));
+        $os = App::getOperatingSystem();
         $command = '';
         
         if ($os === 'WIN') {

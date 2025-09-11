@@ -380,7 +380,7 @@ class ProcessKiller
      */
     private function getProcessesInfo($process)
     {
-        $os = strtoupper(substr(PHP_OS, 0, 3));
+        $os = App::getOperatingSystem();
         $command = '';
         $output = [];
         $processes = [];
@@ -540,7 +540,7 @@ class ProcessKiller
      */
     private function killProcessById($pid)
     {
-        $os = strtoupper(substr(PHP_OS, 0, 3));
+        $os = App::getOperatingSystem();
         $command = '';
         
         if ($os === 'WIN') {

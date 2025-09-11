@@ -61,4 +61,55 @@ class App
     {
         return $this->window;
     }
+    
+    /**
+     * 获取操作系统类型
+     *
+     * @return string 操作系统类型 (WIN, DAR, LIN)
+     */
+    public static function getOperatingSystem()
+    {
+        $os = strtoupper(substr(PHP_OS, 0, 3));
+        
+        if ($os === 'WIN') {
+            return 'WIN';  // Windows
+        } elseif ($os === 'DAR') {
+            return 'DAR';  // macOS (Darwin)
+        } elseif ($os === 'LIN') {
+            return 'LIN';  // Linux
+        } else {
+            // 其他Unix-like系统也归类为Linux
+            return 'LIN';
+        }
+    }
+    
+    /**
+     * 检查是否为Windows系统
+     *
+     * @return bool 是否为Windows系统
+     */
+    public static function isWindows()
+    {
+        return self::getOperatingSystem() === 'WIN';
+    }
+    
+    /**
+     * 检查是否为macOS系统
+     *
+     * @return bool 是否为macOS系统
+     */
+    public static function isMac()
+    {
+        return self::getOperatingSystem() === 'DAR';
+    }
+    
+    /**
+     * 检查是否为Linux系统
+     *
+     * @return bool 是否为Linux系统
+     */
+    public static function isLinux()
+    {
+        return self::getOperatingSystem() === 'LIN';
+    }
 }
