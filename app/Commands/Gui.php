@@ -5,6 +5,7 @@ namespace App\Commands;
 use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
 use App\App;
+use App\DatetimeTab;
 use App\PortKiller;
 use App\ProcessKiller;
 use App\ExampleTab;
@@ -46,6 +47,10 @@ class Gui extends Command
         // 创建示例tab
         $exampleTab = new ExampleTab();
         $application->addTab("示例", $exampleTab->getControl());
+
+        // 创建示例tab
+        $exampleTab2 = new DatetimeTab();
+        $application->addTab("示例2", $exampleTab2->getControl());
 
         // 创建下载加速tab
         $downloadAcceleratorTab = new DownloadAcceleratorTab();
