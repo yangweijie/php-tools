@@ -144,8 +144,21 @@ class PortKiller
         $this->clearCheckboxes();
 
         if (empty($this->processes)) {
+            // 创建一个居中显示的"No Data"标签
+            $noDataBox = Box::newHorizontalBox();
+            Box::setPadded($noDataBox, true);
+
+            // 添加弹性空间以居中内容
+            $spacer1 = Box::newHorizontalBox();
+            Box::append($noDataBox, $spacer1, true);
+
             $label = Label::create("No Data");
-            Box::append($this->checkboxContainer, $label, false);
+            Box::append($noDataBox, $label, false);
+
+            $spacer2 = Box::newHorizontalBox();
+            Box::append($noDataBox, $spacer2, true);
+
+            Box::append($this->checkboxContainer, $noDataBox, true);
             return;
         }
 
@@ -356,8 +369,20 @@ class PortKiller
 
         if (empty($selectedPids)) {
             // 显示提示消息
+            $msgBox = Box::newHorizontalBox();
+            Box::setPadded($msgBox, true);
+
+            // 添加弹性空间以居中内容
+            $spacer1 = Box::newHorizontalBox();
+            Box::append($msgBox, $spacer1, true);
+
             $label = Label::create("未选中任何进程");
-            Box::append($this->checkboxContainer, $label, false);
+            Box::append($msgBox, $label, false);
+
+            $spacer2 = Box::newHorizontalBox();
+            Box::append($msgBox, $spacer2, true);
+
+            Box::append($this->checkboxContainer, $msgBox, false);
             return;
         }
 
