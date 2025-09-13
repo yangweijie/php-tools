@@ -55,23 +55,13 @@ Pre-built binaries are available for download from the GitHub Releases page for:
 #### From Source
 ```bash
 # When running from source
-php toolkit
+php cli.php gui
 ```
 
 #### From PHAR Package
 ```bash
 # When using the PHAR package
-php tools.phar
-```
-
-#### From Pre-built Binary
-```bash
-# On Unix-like systems (macOS/Linux)
-./tools-macos
-./tools-linux
-
-# On Windows
-tools-windows.exe
+php builds/tools.phar gui
 ```
 
 ### Command Line Options
@@ -97,7 +87,10 @@ tools-windows.exe
 composer install
 
 # Build PHAR executable
-composer build
+php cli.php build
+
+# Or use the build script
+./build.sh
 
 # The built executable will be available in the builds/ directory
 ```
@@ -137,7 +130,7 @@ composer test
 composer format
 
 # Build PHAR executable
-composer build
+php cli.php build
 ```
 
 ### Cross-platform Builds
@@ -188,7 +181,7 @@ Download the appropriate binary for your platform and run it directly without an
 ## Dependencies
 
 - [kingbes/libui](https://github.com/kingbes/php-libui) - PHP-FFI bindings for libui
-- [laravel-zero/framework](https://github.com/laravel-zero/laravel-zero) - Micro-framework for console applications
+- [humbug/box](https://github.com/humbug/box) - PHAR builder
 - [pestphp/pest](https://github.com/pestphp/pest) - Testing framework
 
 ## License
