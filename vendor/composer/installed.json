@@ -2176,6 +2176,64 @@
             "install-path": "../laravel/prompts"
         },
         {
+            "name": "laravel/serializable-closure",
+            "version": "v2.0.4",
+            "version_normalized": "2.0.4.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.tencent.com/repository/composer/laravel/serializable-closure/v2.0.4/laravel-serializable-closure-v2.0.4.zip",
+                "reference": "b352cf0534aa1ae6b4d825d1e762e35d43f8a841",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "illuminate/support": "^10.0|^11.0|^12.0",
+                "nesbot/carbon": "^2.67|^3.0",
+                "pestphp/pest": "^2.36|^3.0",
+                "phpstan/phpstan": "^2.0",
+                "symfony/var-dumper": "^6.2.0|^7.0.0"
+            },
+            "time": "2025-03-19T13:51:03+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\SerializableClosure\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                },
+                {
+                    "name": "Nuno Maduro",
+                    "email": "nuno@laravel.com"
+                }
+            ],
+            "description": "Laravel Serializable Closure provides an easy and secure way to serialize closures in PHP.",
+            "keywords": [
+                "closure",
+                "laravel",
+                "serializable"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/serializable-closure/issues",
+                "source": "https://github.com/laravel/serializable-closure"
+            },
+            "install-path": "../laravel/serializable-closure"
+        },
+        {
             "name": "league/flysystem",
             "version": "3.30.0",
             "version_normalized": "3.30.0.0",
@@ -3324,6 +3382,81 @@
                 "source": "https://github.com/phar-io/version/tree/3.2.1"
             },
             "install-path": "../phar-io/version"
+        },
+        {
+            "name": "phpacker/phpacker",
+            "version": "0.6.3",
+            "version_normalized": "0.6.3.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/phpacker/phpacker/0.6.3/phpacker-phpacker-0.6.3.zip",
+                "reference": "b313838e348f40fb7aad0c6fe220eb9e56f2abd4",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/prompts": "^0.3",
+                "laravel/serializable-closure": "^2.0",
+                "spatie/once": "^3",
+                "symfony/console": "^7",
+                "symfony/event-dispatcher": "^7",
+                "symfony/filesystem": "^7",
+                "symfony/finder": "^7",
+                "vlucas/phpdotenv": "^5.6"
+            },
+            "require-dev": {
+                "cpx/cpx": "^1.0",
+                "laravel/pint": "^1.20",
+                "nunomaduro/collision": "^8.8",
+                "pestphp/pest": "^3.8",
+                "phpstan/phpstan": "^2.1",
+                "symfony/process": "^7.3"
+            },
+            "time": "2025-09-09T08:53:52+00:00",
+            "bin": [
+                "./bin/phpacker"
+            ],
+            "type": "library",
+            "extra": {
+                "thanks": [
+                    {
+                        "url": "https://github.com/crazywhalecc/static-php-cli",
+                        "name": "Static PHP CLI"
+                    },
+                    {
+                        "url": "https://github.com/easysoft/phpmicro",
+                        "name": "phpmicro"
+                    },
+                    {
+                        "url": "https://github.com/nativephp/php-bin",
+                        "name": "NativePHP"
+                    }
+                ]
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src/constants.php"
+                ],
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "PHPacker\\PHPacker\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "gwleuverink",
+                    "email": "willem@leuver.ink"
+                }
+            ],
+            "description": "Package a PHP script as a standalone cross-platform binary. Convenience wrapper around static-php & phpmicro using general-purpose php binaries",
+            "support": {
+                "issues": "https://github.com/phpacker/phpacker/issues",
+                "source": "https://github.com/phpacker/phpacker/tree/0.6.3"
+            },
+            "install-path": "../phpacker/phpacker"
         },
         {
             "name": "phpdocumentor/reflection-common",
@@ -5737,6 +5870,55 @@
             "install-path": "../symfony/event-dispatcher-contracts"
         },
         {
+            "name": "symfony/filesystem",
+            "version": "v7.3.2",
+            "version_normalized": "7.3.2.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://mirrors.cloud.tencent.com/repository/composer/symfony/filesystem/v7.3.2/symfony-filesystem-v7.3.2.zip",
+                "reference": "edcbb768a186b5c3f25d0643159a787d3e63b7fd",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/polyfill-ctype": "~1.8",
+                "symfony/polyfill-mbstring": "~1.8"
+            },
+            "require-dev": {
+                "symfony/process": "^6.4|^7.0"
+            },
+            "time": "2025-07-07T08:17:47+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Filesystem\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides basic utilities for the filesystem",
+            "homepage": "https://symfony.com",
+            "support": {
+                "source": "https://github.com/symfony/filesystem/tree/v7.3.2"
+            },
+            "install-path": "../symfony/filesystem"
+        },
+        {
             "name": "symfony/finder",
             "version": "v7.3.2",
             "version_normalized": "7.3.2.0",
@@ -6941,6 +7123,7 @@
         "hamcrest/hamcrest-php",
         "jean85/pretty-package-versions",
         "laravel/pint",
+        "laravel/serializable-closure",
         "mockery/mockery",
         "myclabs/deep-copy",
         "nikic/php-parser",
@@ -6950,6 +7133,7 @@
         "pestphp/pest-plugin-mutate",
         "phar-io/manifest",
         "phar-io/version",
+        "phpacker/phpacker",
         "phpdocumentor/reflection-common",
         "phpdocumentor/reflection-docblock",
         "phpdocumentor/type-resolver",
@@ -6976,6 +7160,7 @@
         "sebastian/type",
         "sebastian/version",
         "staabm/side-effects-detector",
+        "symfony/filesystem",
         "ta-tikoma/phpunit-architecture-test",
         "theseer/tokenizer"
     ]
