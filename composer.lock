@@ -4,15 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "eba3ea4221a2ee0f04cdd7b5454c6deb",
+    "content-hash": "dfb8baf4baf9c553e8d54ba777d6349c",
     "packages": [
         {
             "name": "kingbes/libui",
-            "version": "v0.0.3",
+            "version": "v0.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/KingBes/php-libui.git",
+                "reference": "1dc50513c7fc44eaea00ebc87df21e2851348aa3"
+            },
             "dist": {
                 "type": "zip",
-                "url": "https://mirrors.cloud.tencent.com/repository/composer/kingbes/libui/v0.0.3/kingbes-libui-v0.0.3.zip",
-                "reference": "404ddef562bad0d35d7b4135eafaa1be2773b3c5",
+                "url": "https://api.github.com/repos/KingBes/php-libui/zipball/1dc50513c7fc44eaea00ebc87df21e2851348aa3",
+                "reference": "1dc50513c7fc44eaea00ebc87df21e2851348aa3",
                 "shasum": ""
             },
             "require": {
@@ -25,6 +30,7 @@
                     "Kingbes\\Libui\\": "src/"
                 }
             },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -43,9 +49,9 @@
             ],
             "support": {
                 "issues": "https://github.com/KingBes/php-libui/issues",
-                "source": "https://github.com/KingBes/php-libui/tree/v0.0.3"
+                "source": "https://github.com/KingBes/php-libui/tree/v0.0.4"
             },
-            "time": "2025-09-10T07:32:01+00:00"
+            "time": "2025-09-13T09:58:36+00:00"
         }
     ],
     "packages-dev": [

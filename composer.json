@@ -16,7 +16,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "kingbes/libui": "0.0.3"
+        "kingbes/libui": "*"
     },
     "require-dev": {
         "humbug/box": "*",
