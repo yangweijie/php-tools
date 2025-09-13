@@ -12,8 +12,6 @@ use Kingbes\Libui\Button;
 App::init();
 // 创建窗口
 $window = Window::create("窗口", 640, 480, 0);
-// 创建控件
-$control = new Control();
 // 窗口设置边框
 Window::setMargined($window, true);
 // 窗口关闭事件
@@ -22,7 +20,7 @@ Window::onClosing($window, function ($window) {
     // 退出应用
     App::quit();
     // 返回1：奏效,返回0：不奏效
-    return 1;
+    return 1;   
 });
 
 // 创建水平容器

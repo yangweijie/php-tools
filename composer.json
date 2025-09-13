@@ -14,22 +14,13 @@
             "email": "917647288@qq.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "path",
-            "url": "./kingbes/libui",
-            "options": {
-                "symlink": false
-            }
-        }
-    ],
     "require": {
         "php": "^8.2",
-        "kingbes/libui": "0.0.1"
+        "kingbes/libui": "0.0.3"
     },
     "require-dev": {
         "humbug/box": "*",
-        "laravel/pint": "^1.22",
+        "laravel/pint": "^1.20",
         "mockery/mockery": "^1.6.12",
         "pestphp/pest": "^3.8.2",
         "phpacker/phpacker": "^0.6.3"
@@ -57,7 +48,15 @@
             "pestphp/pest-plugin": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true,
-    "bin": ["cli.php"]
+    "bin": ["cli.php"],
+    "scripts": {
+        "post-install-cmd": [
+            "@php scripts/check-libui-dylib.php"
+        ],
+        "post-update-cmd": [
+            "@php scripts/check-libui-dylib.php"
+        ]
+    }
 }

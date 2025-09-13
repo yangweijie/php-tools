@@ -21,8 +21,7 @@ class Form extends Base
      */
     public static function append(CData $f, string $lable, CData $c, bool $stretchy): void
     {
-        $uiControlPtr = self::ffi()->cast("uiControl*", $c);
-        self::ffi()->uiFormAppend($f, $lable, $uiControlPtr, $stretchy ? 1 : 0);
+        self::ffi()->uiFormAppend($f, $lable, $c, $stretchy ? 1 : 0);
     }
 
     /**

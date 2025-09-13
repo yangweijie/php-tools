@@ -41,12 +41,7 @@ class Checkbox extends Base
      */
     public static function onToggled(CData $checkbox, callable $callback): void
     {
-        // 保存回调函数引用以防止被垃圾回收
-        static $callbacks = [];
-        $callbackId = spl_object_hash($checkbox);
-        $callbacks[$callbackId] = $callback;
-        
-        self::ffi()->uiCheckboxOnToggled($checkbox, function ($c, $d) use ($callback, $checkbox, &$callbacks, $callbackId) {
+        self::ffi()->uiCheckboxOnToggled($checkbox, function ($c, $d) use ($callback, $checkbox) {
             $callback($checkbox);
         }, null);
     }

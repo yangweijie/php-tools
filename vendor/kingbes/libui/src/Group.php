@@ -76,6 +76,6 @@ class Group extends Base
      */
     public static function create(string $title): CData
     {
-        return self::ffi()->uiNewGroup($title);
+        return self::ffi()->uiGroup($title);
     }
 }

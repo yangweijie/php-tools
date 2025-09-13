@@ -89,17 +89,16 @@ class App extends Base
     }
 
     /**
-     * 注册应用程序退出事件回调
+     * 列队主循环注销事件
      *
-     * @param callable $callback 回调函数，返回 true 允许退出，返回 false 阻止退出
+     * @param callable:int $callable
      * @return void
      */
-    public static function onShouldQuit(callable $callback): void
+    public static function onShouldQuit(callable $callable): void
     {
-        $c_callback = function ($data) use ($callback) {
-            $result = $callback();
-            return $result ? 1 : 0;
+        $c_callable = function ($data) use ($callable) {
+            return $callable($data);
         };
-        self::ffi()->uiOnShouldQuit($c_callback, null);
+        self::ffi()->uiOnShouldQuit($c_callable, null);
     }
 }

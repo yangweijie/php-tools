@@ -73,14 +73,9 @@ class MultilineEntry extends Base
      */
     public static function onChanged(CData $entry, callable $callback): void
     {
-        // 保存回调函数引用以防止被垃圾回收
-        static $callbacks = [];
-        $callbackId = spl_object_hash($entry);
-        $callbacks[$callbackId] = $callback;
-        
         self::ffi()->uiMultilineEntryOnChanged(
             $entry,
-            function ($e, $d) use ($callback, $entry, &$callbacks, $callbackId) {
+            function ($e, $d) use ($callback, $entry) {
                 $callback($entry);
             },
             null
