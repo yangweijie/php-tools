@@ -19,7 +19,7 @@
         "kingbes/libui": "*"
     },
     "require-dev": {
-        "humbug/box": "*",
+        "humbug/box": "^4.6",
         "laravel/pint": "^1.20",
         "mockery/mockery": "^1.6.12",
         "pestphp/pest": "^3.8.2",
@@ -53,10 +53,12 @@
     "bin": ["cli.php"],
     "scripts": {
         "post-install-cmd": [
-            "@php scripts/check-libui-dylib.php"
+            "@php scripts/check-libui-dylib.php",
+            "@php scripts/patchBase.php"
         ],
         "post-update-cmd": [
-            "@php scripts/check-libui-dylib.php"
+            "@php scripts/check-libui-dylib.php",
+            "@php scripts/patchBase.php"
         ]
     }
 }
