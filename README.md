@@ -107,6 +107,10 @@ app/                 # Application source code
 ├── ExampleTab.php  # Example tab component
 ├── Commands/       # CLI commands
 └── Providers/      # Service providers
+scripts/            # Development and utility scripts
+├── watcher.php     # Hot reload watcher script
+dev.sh              # Development script for macOS/Linux
+dev.bat             # Development script for Windows
 bootstrap/          # Application bootstrap files
 config/             # Configuration files
 tests/              # Test files
@@ -131,6 +135,27 @@ composer format
 
 # Build PHAR executable
 php cli.php build
+`````
+
+### Development with Hot Reload
+
+For improved development experience, we provide hot reload functionality that automatically restarts the GUI application when PHP files are modified:
+
+#### Using the development scripts
+```bash
+# On macOS/Linux
+./dev.sh
+
+# On Windows
+dev.bat
+```
+
+This will start the GUI application in watch mode. Any changes to PHP files in the `app/` directory will automatically trigger a restart of the application.
+
+#### Manual hot reload
+```bash
+# On all platforms
+php scripts/watcher.php gui --watch
 ```
 
 ### Cross-platform Builds
