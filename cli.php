@@ -56,6 +56,16 @@ function runGuiApplication()
     $processKiller = new App\ProcessKiller();
     $application->addTab("进程查杀", $processKiller->getControl());
     
+    // Create download accelerator tab
+    $downloadAcceleratorTab = new App\DownloadAcceleratorTab();
+    $application->addTab("下载加速", $downloadAcceleratorTab->getControl());
+
+    // Create SQLite2MySQL tab
+    $sqlite2MysqlTab = new App\SQLite2MySQLTab();
+    $application->addTabWithCallback("SQLite转MySQL", $sqlite2MysqlTab->getControl(), function() use ($sqlite2MysqlTab) {
+        $sqlite2MysqlTab->checkAndDownloadPhar();
+    });
+
     // Create example tab
     $exampleTab = new App\ExampleTab();
     $application->addTab("示例", $exampleTab->getControl());
@@ -63,11 +73,7 @@ function runGuiApplication()
     // Create datetime tab
     $exampleTab2 = new App\DatetimeTab();
     $application->addTab("示例2", $exampleTab2->getControl());
-    
-    // Create download accelerator tab
-    $downloadAcceleratorTab = new App\DownloadAcceleratorTab();
-    $application->addTab("下载加速", $downloadAcceleratorTab->getControl());
-    
+
     // Run the application
     $application->run();
 }
@@ -86,13 +92,13 @@ function buildPhar()
         exit(1);
     }
     
-    // Execute Box compile command
+    // 执行 Box 编译命令
     $command = "php $boxPath compile";
     $output = shell_exec("$command 2>&1");
     
     echo $output;
     
-    // Check if build was successful
+    // 检查构建是否成功
     if (file_exists(__DIR__ . '/builds/tools.phar')) {
         echo "Build successful! PHAR file created at builds/tools.phar\n";
     } else {

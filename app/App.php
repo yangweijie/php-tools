@@ -12,6 +12,7 @@ class App
 {
     private $window;
     private $tab;
+    private $tabs = []; // 保存标签页引用
     
     public function __construct()
     {
@@ -49,6 +50,21 @@ class App
         $index = Tab::numPages($this->tab);
         Tab::append($this->tab, $name, $control);
         Tab::setMargined($this->tab, $index, true);
+    }
+    
+    /**
+     * 添加带有回调函数的标签页
+     */
+    public function addTabWithCallback($name, $control, $callback = null)
+    {
+        $index = Tab::numPages($this->tab);
+        Tab::append($this->tab, $name, $control);
+        Tab::setMargined($this->tab, $index, true);
+        
+        // 保存标签页回调函数
+        if ($callback) {
+            $this->tabs[$index] = $callback;
+        }
     }
     
     public function run()
