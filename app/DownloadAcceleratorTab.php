@@ -170,8 +170,12 @@ class DownloadAcceleratorTab
     
     private function generateAcceleratedUrl($originalUrl, $platformPrefix)
     {
-        // 移除URL协议部分
-        $urlWithoutProtocol = preg_replace('#^https?://#', '', $originalUrl);
+        $host = parse_url($originalUrl, PHP_URL_HOST);
+        // 移除URL协议和host部分，保留URL的剩余部分
+        $urlWithoutProtocol = str_ireplace([
+            parse_url($originalUrl, PHP_URL_SCHEME).'://', 
+            $host.'/',
+        ], ['', ''], $originalUrl);
         
         // 构造加速URL
         return "https://xget.xi-xu.me/" . $platformPrefix . "/" . $urlWithoutProtocol;
