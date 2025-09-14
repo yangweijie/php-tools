@@ -10,7 +10,6 @@ use Kingbes\Libui\Group;
 use Kingbes\Libui\Control;
 use Kingbes\Libui\MultilineEntry;
 use Kingbes\Libui\ProgressBar;
-use Kingbes\Libui\MsgBox;
 
 class SQLite2MySQLTab
 {
@@ -70,22 +69,23 @@ class SQLite2MySQLTab
      */
     private function checkAndDownloadPhar()
     {
+     
         Label::setText($this->statusLabel, "正在检查必要的文件...");
-        sleep(1);
+
         $pharPath = __DIR__ . '/../scripts/sqlite2mysql.phar';
         
         // 检查文件是否存在
         if (!file_exists($pharPath)) {
-            // 文件不存在，需要下载
             Label::setText($this->statusLabel, "正在下载 sqlite2mysql.phar 文件...");
-            sleep(2);
-            if ($this->downloadPharFile($pharPath)) {
-                Label::setText($this->statusLabel, "文件已下载完成");
-            } else {
-                Label::setText($this->statusLabel, "警告: 无法下载 sqlite2mysql.phar 文件");
-            }
+            \Kingbes\Libui\App::queueMain(function()use($pharPath){
+                if ($this->downloadPharFile($pharPath)) {
+                    Label::setText($this->statusLabel, "文件已下载完成");
+                } else {
+                    Label::setText($this->statusLabel, "警告: 无法下载 sqlite2mysql.phar 文件");
+                }
+            });
         } else {
-            Label::setText($this->statusLabel, "必要的文件已就绪");
+            \Kingbes\Libui\App::queueMain(fn() => Label::setText($this->statusLabel, "必要的文件已就绪"));
         }
     }
 
