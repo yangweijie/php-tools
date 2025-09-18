@@ -66,6 +66,14 @@ function runGuiApplication()
         $sqlite2MysqlTab->checkAndDownloadPhar();
     });
 
+    // Create packager tab
+    $packagerTab = new App\PackagerTab();
+    $application->addTab("PHP打包工具", $packagerTab->getControl());
+
+    // Create smart packager tab
+    $smartPackagerTab = new App\SmartPackagerTab();
+    $application->addTab("智能打包工具", $smartPackagerTab->getControl());
+
     // Create example tab
     $exampleTab = new App\ExampleTab();
     $application->addTab("示例", $exampleTab->getControl());
@@ -73,6 +81,7 @@ function runGuiApplication()
     // Create datetime tab
     $exampleTab2 = new App\DatetimeTab();
     $application->addTab("示例2", $exampleTab2->getControl());
+
 
     // Run the application
     $application->run();

@@ -6,3 +6,6 @@
 /builds
 nul
 ~/mcp-shrimp-task-manager/data/WebGUI.md
+build
+composer.lock
+composer.lock

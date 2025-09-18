@@ -2139,24 +2139,30 @@
         },
         {
             "name": "kingbes/libui",
-            "version": "v0.0.4",
-            "version_normalized": "0.0.4.0",
+            "version": "v0.0.6",
+            "version_normalized": "0.0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/KingBes/php-libui.git",
-                "reference": "1dc50513c7fc44eaea00ebc87df21e2851348aa3"
+                "reference": "18f989b21298b3f867d29164d724d5d61f89ce3b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/KingBes/php-libui/zipball/1dc50513c7fc44eaea00ebc87df21e2851348aa3",
-                "reference": "1dc50513c7fc44eaea00ebc87df21e2851348aa3",
-                "shasum": ""
+                "url": "https://api.github.com/repos/KingBes/php-libui/zipball/18f989b21298b3f867d29164d724d5d61f89ce3b",
+                "reference": "18f989b21298b3f867d29164d724d5d61f89ce3b",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
             },
             "require": {
                 "ext-ffi": "*",
                 "php": ">=8.2"
             },
-            "time": "2025-09-13T09:58:36+00:00",
+            "time": "2025-09-17T08:49:37+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -2183,7 +2189,7 @@
             ],
             "support": {
                 "issues": "https://github.com/KingBes/php-libui/issues",
-                "source": "https://github.com/KingBes/php-libui/tree/v0.0.4"
+                "source": "https://github.com/KingBes/php-libui/tree/v0.0.6"
             },
             "install-path": "../kingbes/libui"
         },
