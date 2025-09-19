@@ -19,7 +19,7 @@ use Kingbes\Libui\Spinbox;
 use Kingbes\Libui\Table;
 use Kingbes\Libui\TableValueType;
 
-class SmartPackagerTab
+class IntelligentPackagerTab
 {
     private $box;
     private $sourceEntry;
@@ -36,6 +36,20 @@ class SmartPackagerTab
     private $cliFile;
     private $cliParameters = [];
     private $paramConfigControls = [];
+    private $analysisCompleted = false;
+    private $parameterKeys = [];
+    private $currentParameterIndex = 0;
+    private $prevButton;
+    private $nextButton;
+    private $tempOutput = ''; // 临时存储输出内容，直到$outputArea初始化完成
+    
+    // 新增：步骤控制相关属性
+    private $stepContainer;
+    private $step1Container;
+    private $step2Container;
+    private $step3Container;
+    private $stepIndicator;
+    private $backToStep1Button;
 
     public function __construct()
     {
@@ -51,17 +65,154 @@ class SmartPackagerTab
         $descLabel = Label::create("将 PHP 命令行程序智能打包成基于 GUI 的独立应用程序");
         Box::append($this->box, $descLabel, false);
 
-        // 创建输入区域
-        $this->addInputControls($this->box);
+        // 添加步骤指示器
+        $this->stepIndicator = Label::create("步骤 1: 输入应用信息");
+        Box::append($this->box, $this->stepIndicator, false);
 
-        // 创建动态参数区域
-        $this->addDynamicParameterControls($this->box);
+        // 创建步骤容器
+        $this->stepContainer = Box::newVerticalBox();
+        Box::setPadded($this->stepContainer, true);
+        Box::append($this->box, $this->stepContainer, true);
 
-        // 创建输出区域
-        $this->addOutputControls($this->box);
+        // 创建三个步骤的容器
+        $this->createStepContainers();
+
+        // 显示第一步
+        $this->showStep(1);
 
         // 检查 PHAR 配置并设置复选框状态
         $this->checkPharConfiguration();
+        
+        $this->appendOutput("初始化完成，显示步骤1\n");
+    }
+
+    private function createStepContainers()
+    {
+        $this->appendOutput("开始创建步骤容器\n");
+        
+        // 步骤1: 输入应用信息
+        $this->step1Container = Box::newVerticalBox();
+        Box::setPadded($this->step1Container, true);
+        $this->addInputControls($this->step1Container);
+        Box::append($this->stepContainer, $this->step1Container, true);
+
+        // 步骤2: 分析应用后的动态元素确认界面
+        $this->step2Container = Box::newVerticalBox();
+        Box::setPadded($this->step2Container, true);
+        $this->addDynamicParameterControls($this->step2Container);
+        Box::append($this->stepContainer, $this->step2Container, true);
+        Control::hide($this->step2Container); // 初始隐藏
+
+        // 步骤3: 打包输出
+        $this->step3Container = Box::newVerticalBox();
+        Box::setPadded($this->step3Container, true);
+        $this->addOutputControls($this->step3Container);
+        Box::append($this->stepContainer, $this->step3Container, true);
+        Control::hide($this->step3Container); // 初始隐藏
+        
+        // 添加导航按钮（仅用于测试）
+        $navBox = Box::newHorizontalBox();
+        Box::setPadded($navBox, true);
+        Box::append($this->box, $navBox, false);
+
+        $prevButton = Button::create("上一步(测试)");
+        Button::onClicked($prevButton, function ($btn) {
+            static $currentStep = 1;
+            $currentStep = $currentStep > 1 ? $currentStep - 1 : 3;
+            $this->showStep($currentStep);
+        });
+        Box::append($navBox, $prevButton, true);
+
+        $nextButton = Button::create("下一步(测试)");
+        Button::onClicked($nextButton, function ($btn) {
+            static $currentStep = 1;
+            $currentStep = $currentStep < 3 ? $currentStep + 1 : 1;
+            $this->showStep($currentStep);
+        });
+        Box::append($navBox, $nextButton, true);
+        
+        $this->appendOutput("步骤容器创建完成\n");
+    }
+
+    private function showStep($step)
+    {
+        $this->appendOutput("进入 showStep 方法，参数: $step\n");
+        
+        // 隐藏所有步骤容器
+        Control::hide($this->step1Container);
+        Control::hide($this->step2Container);
+        Control::hide($this->step3Container);
+        
+        $this->appendOutput("已隐藏所有步骤容器\n");
+        $this->appendOutput("隐藏后 step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
+        $this->appendOutput("隐藏后 step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
+        $this->appendOutput("隐藏后 step3Container 是否可见: " . (Control::visible($this->step3Container) ? "是" : "否") . "\n");
+        
+        // 根据步骤显示对应内容
+        switch ($step) {
+            case 1:
+                Control::show($this->step1Container);
+                Label::setText($this->stepIndicator, "步骤 1: 输入应用信息");
+                if ($this->backToStep1Button) {
+                    Control::hide($this->backToStep1Button);
+                }
+                $this->appendOutput("显示步骤1\n");
+                $this->appendOutput("显示后 step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
+                break;
+            case 2:
+                Control::show($this->step2Container);
+                Label::setText($this->stepIndicator, "步骤 2: 分析应用后的动态元素确认");
+                if ($this->backToStep1Button) {
+                    Control::hide($this->backToStep1Button);
+                }
+                // 确保动态容器是可见的
+                if ($this->dynamicContainer) {
+                    Control::show($this->dynamicContainer);
+                }
+                $this->appendOutput("显示步骤2\n");
+                // 添加调试信息
+                $this->appendOutput("显示后 step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
+                $this->appendOutput("显示后 step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
+                break;
+            case 3:
+                Control::show($this->step3Container);
+                Label::setText($this->stepIndicator, "步骤 3: 打包输出");
+                if ($this->backToStep1Button) {
+                    Control::show($this->backToStep1Button);
+                }
+                $this->appendOutput("显示步骤3\n");
+                $this->appendOutput("显示后 step3Container 是否可见: " . (Control::visible($this->step3Container) ? "是" : "否") . "\n");
+                break;
+        }
+        
+        // 尝试强制刷新界面
+        // 注意：这里可能需要根据具体的GUI库实现来调整
+        $this->appendOutput("尝试强制刷新界面\n");
+        $this->appendOutput("退出 showStep 方法\n");
+    }
+
+    private function clearStep2UI()
+    {
+        // 清空动态参数容器
+        while (true) {
+            try {
+                Box::delete($this->dynamicContainer, 0);
+            } catch (\Exception $e) {
+                // 当没有更多子元素时会抛出异常，此时退出循环
+                break;
+            }
+        }
+
+        // 重新添加默认提示
+        $hintLabel = Label::create("请选择一个 CLI 文件，然后点击'分析参数'按钮");
+        Box::append($this->dynamicContainer, $hintLabel, false);
+        
+        // 重置参数相关状态
+        $this->cliParameters = [];
+        $this->paramConfigControls = [];
+        $this->analysisCompleted = false;
+        $this->parameterKeys = [];
+        $this->currentParameterIndex = 0;
     }
 
     private function addInputControls($container)
@@ -88,7 +239,8 @@ class SmartPackagerTab
         $this->sourceEntry = Entry::create();
         Entry::setText($this->sourceEntry, "./cli.php");
         Entry::onChanged($this->sourceEntry, function ($entry) {
-            $this->analyzeCliFile();
+            // 当源文件路径改变时，重置分析状态
+            $this->analysisCompleted = false;
         });
         Box::append($sourceBox, $this->sourceEntry, true);
 
@@ -153,12 +305,25 @@ class SmartPackagerTab
         Box::setPadded($buttonBox, true);
         Box::append($inputBox, $buttonBox, false);
 
+        // 分析参数按钮
+        $analyzeButton = Button::create("分析参数");
+        Button::onClicked($analyzeButton, function ($btn) {
+            $this->appendOutput("分析参数按钮被点击\n");
+            $this->analyzeCliParameters();
+            $this->appendOutput("分析参数按钮点击事件处理完成\n");
+        });
+        Box::append($buttonBox, $analyzeButton, true);
+
         // 打包按钮
         $this->packageButton = Button::create("开始打包");
         Button::onClicked($this->packageButton, function ($btn) {
-            // 先分析CLI参数，再开始打包
-            $this->analyzeCliFile();
-            // 注意：这里不会直接开始打包，而是在参数配置完成后才打包
+            if (!$this->analysisCompleted) {
+                $this->appendOutput("请先点击'分析参数'按钮分析CLI程序的参数\n");
+                return;
+            }
+            $this->startPackaging();
+            // 打包开始时跳转到第三步
+            $this->showStep(3);
         });
         Box::append($buttonBox, $this->packageButton, true);
 
@@ -176,15 +341,18 @@ class SmartPackagerTab
         // 动态参数控件组
         $dynamicGroup = Group::create("CLI 参数配置");
         Group::setMargined($dynamicGroup, true);
-        Box::append($container, $dynamicGroup, false);
+        Box::append($container, $dynamicGroup, true); // 改为true以获得更多空间
 
         $this->dynamicContainer = Box::newVerticalBox();
         Box::setPadded($this->dynamicContainer, true);
         Group::setChild($dynamicGroup, $this->dynamicContainer);
 
         // 添加默认提示
-        $hintLabel = Label::create("请选择一个 CLI 文件以分析其参数");
+        $hintLabel = Label::create("请选择一个 CLI 文件，然后点击'分析参数'按钮");
         Box::append($this->dynamicContainer, $hintLabel, false);
+        
+        // 确保动态容器初始是可见的
+        Control::show($this->dynamicContainer);
     }
 
     private function addOutputControls($container)
@@ -211,6 +379,12 @@ class SmartPackagerTab
         $this->outputArea = MultilineEntry::create();
         MultilineEntry::setText($this->outputArea, "等待开始打包...\n");
         Box::append($outputBox, $this->outputArea, true);
+        
+        // 如果有临时输出内容，现在输出到控件中
+        if (!empty($this->tempOutput)) {
+            MultilineEntry::setText($this->outputArea, $this->tempOutput);
+            $this->tempOutput = ''; // 清空临时输出
+        }
     }
 
     private function checkPharConfiguration()
@@ -243,7 +417,8 @@ class SmartPackagerTab
             // 如果用户选择了文件，更新输入框
             if (!empty($selectedFile) && $selectedFile !== "") {
                 Entry::setText($this->sourceEntry, $selectedFile);
-                $this->analyzeCliFile();
+                // 重置分析状态
+                $this->analysisCompleted = false;
             }
         } catch (\Exception $e) {
             // 获取主窗口引用
@@ -265,12 +440,15 @@ class SmartPackagerTab
         $this->appendOutput("请手动输入输出目录路径\n");
     }
 
-    private function analyzeCliFile()
+    private function analyzeCliParameters()
     {
+        $this->appendOutput("进入 analyzeCliParameters 方法\n");
+        
         $sourceFile = Entry::text($this->sourceEntry);
 
         // 检查文件是否存在
         if (empty($sourceFile) || !file_exists($sourceFile)) {
+            $this->appendOutput("错误: 请指定有效的源文件路径\n");
             return;
         }
 
@@ -283,12 +461,27 @@ class SmartPackagerTab
         // 通过运行CLI程序获取帮助信息来分析参数
         $this->parseCliParametersByExecution();
 
+        // 标记分析已完成
+        $this->analysisCompleted = true;
+
         // 更新动态参数界面
         $this->updateDynamicParameterControls();
+
+        $this->appendOutput("参数分析完成，可以进行打包了\n");
+        
+        // 分析完成后跳转到第二步
+        $this->appendOutput("准备切换到步骤2\n");
+        $this->showStep(2);
+        $this->appendOutput("已调用showStep(2)\n");
+        $this->appendOutput("step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
+        $this->appendOutput("step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
+        $this->appendOutput("退出 analyzeCliParameters 方法\n");
     }
 
     private function parseCliParametersByExecution()
     {
+        $this->appendOutput("进入 parseCliParametersByExecution 方法\n");
+        
         $sourceFile = $this->cliFile;
 
         // 确定如何运行该文件
@@ -301,7 +494,7 @@ class SmartPackagerTab
         }
 
         // 尝试不同的帮助命令
-        $helpCommands = [' --help', ' -h', ' /?', ' --usage', ' -help'];
+        $helpCommands = [' --help', ' -h', ' /?', ' --usage', ' -help', ' help'];
         $helpOutput = '';
 
         foreach ($helpCommands as $helpCmd) {
@@ -312,12 +505,12 @@ class SmartPackagerTab
             // 使用exec而不是system来捕获输出
             exec($fullCommand, $output, $returnCode);
 
+            // 收集输出
+            $helpOutput .= implode("\n", $output);
+
             // 如果命令成功执行或返回常见的帮助信息退出码
-            if ($returnCode <= 1) {
-                $helpOutput = implode("\n", $output);
-                if (!empty($helpOutput)) {
-                    break;
-                }
+            if ($returnCode <= 1 && !empty($output)) {
+                break;
             }
         }
 
@@ -328,20 +521,39 @@ class SmartPackagerTab
             exec($fullCommand, $output, $returnCode);
 
             // 如果程序输出了信息并且很快退出，可能是帮助信息
-            if (!empty($output) && $returnCode <= 1) {
+            if (!empty($output)) {
                 $helpOutput = implode("\n", $output);
             }
         }
 
         // 解析帮助信息中的参数
         $this->parseHelpOutput($helpOutput);
+        
+        // 如果仍然没有参数，添加一个默认参数用于测试
+        if (empty($this->cliParameters)) {
+            $this->appendOutput("未检测到参数，添加默认参数用于测试\n");
+            $this->cliParameters['test'] = [
+                'name' => 'test',
+                'short' => null,
+                'description' => '测试参数',
+                'required' => false,
+                'type' => 'string',
+                'default' => ''
+            ];
+        }
+        
+        $this->appendOutput("退出 parseCliParametersByExecution 方法\n");
     }
 
     private function parseHelpOutput($helpOutput)
     {
         if (empty($helpOutput)) {
+            $this->appendOutput("未检测到 CLI 参数，将使用默认运行方式\n");
             return;
         }
+
+        // 输出帮助信息以便调试
+        $this->appendOutput("检测到的帮助信息:\n" . $helpOutput . "\n");
 
         // 查找长选项 --param
         if (preg_match_all('/--([a-zA-Z0-9\-_]+)/', $helpOutput, $longOpts)) {
@@ -353,24 +565,52 @@ class SmartPackagerTab
                         'short' => null,
                         'description' => 'Auto-detected parameter',
                         'required' => false,
-                        'type' => 'string'
+                        'type' => 'string',
+                        'default' => ''
                     ];
                 }
             }
         }
 
-        // 查找短选项 -p
+        // 查找短选项 -p, --param 格式并关联长短选项
+        $lines = explode("\n", $helpOutput);
+        foreach ($lines as $line) {
+            // 查找 -f, --file FILE 格式的行
+            if (preg_match('/^\s*(-[a-zA-Z]),\s*(--?[a-zA-Z0-9\-_]+)/', $line, $matches)) {
+                $shortOpt = ltrim($matches[1], '-');
+                $longOpt = ltrim($matches[2], '-');
+
+                // 如果长选项已存在，更新其短选项信息
+                if (isset($this->cliParameters[$longOpt])) {
+                    $this->cliParameters[$longOpt]['short'] = $shortOpt;
+                }
+                // 如果长选项不存在但短选项不存在，添加短选项
+                else if (!isset($this->cliParameters[$shortOpt])) {
+                    $this->cliParameters[$shortOpt] = [
+                        'name' => $shortOpt,
+                        'short' => $shortOpt,
+                        'description' => 'Auto-detected short parameter',
+                        'required' => false,
+                        'type' => 'string',
+                        'default' => ''
+                    ];
+                }
+            }
+        }
+
+        // 查找单独的短选项
         if (preg_match_all('/\s-([a-zA-Z])[\s,]/', $helpOutput, $shortOpts)) {
             foreach ($shortOpts[1] as $opt) {
                 // 过滤掉一些常见的非参数选项
                 if (!in_array($opt, ['h', 'v', 'V'])) {
-                    if (!isset($this->cliParameters[$opt])) {
+                    if (!isset($this->cliParameters[$opt]) && !isset($this->cliParameters[$opt])) {
                         $this->cliParameters[$opt] = [
                             'name' => $opt,
                             'short' => $opt,
                             'description' => 'Auto-detected short parameter',
                             'required' => false,
-                            'type' => 'string'
+                            'type' => 'string',
+                            'default' => ''
                         ];
                     }
                 }
@@ -378,10 +618,24 @@ class SmartPackagerTab
         }
 
         // 查找带值的选项 --param=value 或 --param value
-        if (preg_match_all('/--([a-zA-Z0-9\-_]+)[\s=]+([A-Z_]+)/', $helpOutput, $valueOpts)) {
-            for ($i = 0; $i < count($valueOpts[1]); $i++) {
-                $param = $valueOpts[1][$i];
-                $valueType = $valueOpts[2][$i];
+        $lines = explode("\n", $helpOutput);
+        foreach ($lines as $line) {
+            // 查找 --file FILE 或 -f, --file FILE 格式的行
+            if (preg_match('/^\s*(-[a-zA-Z]),\s*(--?[a-zA-Z0-9\-_]+)\s+([A-Z_]+)\s*(.*)$/', $line, $matches) ||
+                preg_match('/^\s*(--?[a-zA-Z0-9\-_]+)\s+([A-Z_]+)\s*(.*)$/', $line, $matches)) {
+
+                // 确定参数名和值类型
+                if (count($matches) == 5) {
+                    // 匹配到 -f, --file FILE 格式
+                    $param = ltrim($matches[2], '-');
+                    $valueType = $matches[3];
+                } else if (count($matches) == 4) {
+                    // 匹配到 --file FILE 格式
+                    $param = ltrim($matches[1], '-');
+                    $valueType = $matches[2];
+                } else {
+                    continue;
+                }
 
                 if (isset($this->cliParameters[$param])) {
                     // 根据值类型推测参数类型
@@ -393,7 +647,7 @@ class SmartPackagerTab
                             break;
                         case 'FILE':
                         case 'PATH':
-                            $this->cliParameters[$param]['type'] = 'string';
+                            $this->cliParameters[$param]['type'] = 'file';
                             break;
                     }
                 }
@@ -402,6 +656,37 @@ class SmartPackagerTab
 
         // 查找帮助文本中的参数描述
         $this->parseHelpDescriptions($helpOutput);
+
+        // 特殊处理verbose参数类型
+        foreach ($this->cliParameters as $name => &$param) {
+            // 检查是否为verbose相关参数
+            if (strpos($name, 'verbose') !== false || strpos($name, 'verbos') !== false) {
+                $param['type'] = 'boolean';
+            }
+            // 检查描述中是否包含"详细"、"verbose"等关键词
+            else if (isset($param['description']) &&
+                     (strpos($param['description'], '详细') !== false ||
+                      strpos($param['description'], 'verbose') !== false ||
+                      strpos($param['description'], '详细输出') !== false)) {
+                $param['type'] = 'boolean';
+            }
+            // 特殊处理互斥参数（如-h/--help）
+            else if (in_array($name, ['h', 'help'])) {
+                $param['type'] = 'boolean';
+                $param['required'] = false; // 互斥参数通常不是必需的
+            }
+        }
+
+        // 标记必需参数
+        foreach ($this->cliParameters as $name => &$param) {
+            // 检查描述中是否包含"必需"、"required"等关键词
+            if (isset($param['description']) &&
+                (strpos($param['description'], '必需') !== false ||
+                 strpos($param['description'], 'required') !== false ||
+                 strpos($param['description'], '必须') !== false)) {
+                $param['required'] = true;
+            }
+        }
     }
 
     private function parseHelpDescriptions($helpOutput)
@@ -409,8 +694,32 @@ class SmartPackagerTab
         // 查找参数和描述的模式
         $lines = explode("\n", $helpOutput);
         foreach ($lines as $line) {
+            // 查找 -f, --file FILE          Input file path (required) 格式的行
+            if (preg_match('/^\s*(-[a-zA-Z]),\s*(--?[a-zA-Z0-9\-_]+)\s+[A-Z_]*\s*(.+)$/', $line, $matches)) {
+                $shortOpt = ltrim($matches[1], '-');
+                $longOpt = ltrim($matches[2], '-');
+                $description = trim($matches[3]);
+
+                // 更新长选项描述
+                if (isset($this->cliParameters[$longOpt])) {
+                    $this->cliParameters[$longOpt]['description'] = $description;
+                }
+                // 更新短选项描述
+                if (isset($this->cliParameters[$shortOpt])) {
+                    $this->cliParameters[$shortOpt]['description'] = $description;
+                }
+            }
+            // 查找 --file FILE          Input file path (required) 格式的行
+            else if (preg_match('/^\s*(--?[a-zA-Z0-9\-_]+)\s+[A-Z_]*\s*(.+)$/', $line, $matches)) {
+                $param = ltrim($matches[1], '-');
+                $description = trim($matches[2]);
+
+                if (isset($this->cliParameters[$param])) {
+                    $this->cliParameters[$param]['description'] = $description;
+                }
+            }
             // 查找 -p, --param 描述 或 --param 描述 的模式
-            if (preg_match('/^[\s]*(-[a-zA-Z],?[\s]*)?(--?[a-zA-Z0-9\-_]+)[\s,]+(.+)$/', $line, $matches)) {
+            else if (preg_match('/^[\s]*(-[a-zA-Z],?[\s]*)?(--?[a-zA-Z0-9\-_]+)[\s,]+(.+)$/', $line, $matches)) {
                 $param = str_replace(['--', '-'], '', $matches[2]);
                 $description = trim($matches[3]);
 
@@ -427,30 +736,22 @@ class SmartPackagerTab
                     $this->cliParameters[$param]['description'] = $description;
                 }
             }
+            // 查找 -p 描述 的模式
+            else if (preg_match('/^[\s]*(-[a-zA-Z])[\s]{2,}(.+)$/', $line, $matches)) {
+                $param = str_replace('-', '', $matches[1]);
+                $description = trim($matches[2]);
+
+                if (isset($this->cliParameters[$param])) {
+                    $this->cliParameters[$param]['description'] = $description;
+                }
+            }
         }
     }
 
-    // 新增：显示参数配置界面
-    private function showParameterConfigurationInterface()
+    private function updateDynamicParameterControls()
     {
-        // 创建参数配置窗口
-        global $application;
-        $window = $application->getWindow();
-
-        // 创建配置对话框
-        $this->createParameterConfigDialog($window);
-    }
-
-    // 新增：创建参数配置对话框
-    private function createParameterConfigDialog($parentWindow)
-    {
-        // 创建参数配置界面
-        $this->showParameterConfigForm();
-    }
-
-    // 新增：显示参数配置表单
-    private function showParameterConfigForm()
-    {
+        $this->appendOutput("开始更新动态参数控件\n");
+        
         // 清空动态容器
         while (true) {
             try {
@@ -461,41 +762,144 @@ class SmartPackagerTab
             }
         }
 
+        // 如果没有参数，显示提示信息
+        if (empty($this->cliParameters)) {
+            $this->appendOutput("未检测到CLI参数\n");
+            $hintLabel = Label::create("未检测到 CLI 参数，将使用默认运行方式");
+            Box::append($this->dynamicContainer, $hintLabel, false);
+            
+            // 添加提示信息，建议用户查看参数配置
+            $tipLabel = Label::create("参数配置界面已更新，请查看上方的'CLI 参数配置'区域");
+            Box::append($this->dynamicContainer, $tipLabel, false);
+            
+            // 确保动态容器是可见的
+            Control::show($this->dynamicContainer);
+            $this->appendOutput("已显示动态容器（无参数情况）\n");
+            return;
+        }
+
+        // 显示参数配置界面
+        $this->appendOutput("显示参数配置界面，参数数量: " . count($this->cliParameters) . "\n");
+        $this->showParameterConfigForm();
+
+        // 添加提示信息，建议用户查看参数配置
+        $tipLabel = Label::create("参数配置界面已更新，请查看上方的'CLI 参数配置'区域");
+        Box::append($this->dynamicContainer, $tipLabel, false);
+        
+        // 确保动态容器是可见的
+        Control::show($this->dynamicContainer);
+        $this->appendOutput("已显示动态容器（有参数情况）\n");
+    }
+
+    private function showParameterConfigForm()
+    {
+        $this->appendOutput("开始创建参数配置表单\n");
+
         // 添加标题
         $titleLabel = Label::create("参数配置");
         Box::append($this->dynamicContainer, $titleLabel, false);
 
-        $descLabel = Label::create("请配置以下参数，然后点击'预览GUI'按钮");
+        $descLabel = Label::create("请配置以下参数");
         Box::append($this->dynamicContainer, $descLabel, false);
 
+        // 创建分步导航按钮
+        $navBox = Box::newHorizontalBox();
+        Box::setPadded($navBox, true);
+        Box::append($this->dynamicContainer, $navBox, false);
+
+        $this->prevButton = Button::create("上一步");
+        Button::onClicked($this->prevButton, function ($btn) {
+            $this->showPreviousParameter();
+        });
+        Box::append($navBox, $this->prevButton, true);
+        Control::disable($this->prevButton); // 初始禁用
+
+        $this->nextButton = Button::create("下一步");
+        Button::onClicked($this->nextButton, function ($btn) {
+            $this->showNextParameter();
+        });
+        Box::append($navBox, $this->nextButton, true);
+
         // 为每个参数创建配置控件
+        $this->parameterKeys = array_keys($this->cliParameters);
+        $this->currentParameterIndex = 0;
+
+        $paramCount = 0;
         foreach ($this->cliParameters as $name => $param) {
+            $this->appendOutput("创建参数控件: $name\n");
             $this->createParameterConfigControl($name, $param);
+            $paramCount++;
         }
 
-        // 添加按钮
-        $buttonBox = Box::newHorizontalBox();
-        Box::setPadded($buttonBox, true);
-        Box::append($this->dynamicContainer, $buttonBox, false);
+        // 初始只显示第一个参数
+        $this->showCurrentParameter();
 
-        // 预览GUI按钮
-        $previewButton = Button::create("预览GUI");
-        Button::onClicked($previewButton, function ($btn) {
-            $this->showGuiPreview();
-        });
-        Box::append($buttonBox, $previewButton, true);
-
-        // 返回按钮
-        $backButton = Button::create("返回");
-        Button::onClicked($backButton, function ($btn) {
-            $this->updateDynamicParameterControls();
-        });
-        Box::append($buttonBox, $backButton, true);
+        $this->appendOutput("参数配置表单创建完成，共创建了 $paramCount 个参数控件\n");
+        
+        // 确保动态容器是可见的
+        Control::show($this->dynamicContainer);
+        $this->appendOutput("已确保动态容器可见\n");
     }
 
-    // 新增：创建参数配置控件
+    private function showCurrentParameter()
+    {
+        $this->appendOutput("显示当前参数，索引: " . $this->currentParameterIndex . "\n");
+        
+        // 隐藏所有参数控件
+        foreach ($this->paramConfigControls as $name => $controls) {
+            if (isset($controls['group'])) {
+                Control::hide($controls['group']);
+            }
+        }
+
+        // 显示当前参数控件
+        if (isset($this->parameterKeys[$this->currentParameterIndex])) {
+            $currentParamName = $this->parameterKeys[$this->currentParameterIndex];
+            if (isset($this->paramConfigControls[$currentParamName]['group'])) {
+                Control::show($this->paramConfigControls[$currentParamName]['group']);
+                $this->appendOutput("显示参数控件: $currentParamName\n");
+            }
+        }
+
+        // 更新导航按钮状态
+        if ($this->currentParameterIndex > 0) {
+            Control::enable($this->prevButton);
+        } else {
+            Control::disable($this->prevButton);
+        }
+
+        if ($this->currentParameterIndex < count($this->parameterKeys) - 1) {
+            Control::enable($this->nextButton);
+        } else {
+            Control::disable($this->nextButton);
+        }
+        
+        // 确保动态容器是可见的
+        if ($this->dynamicContainer) {
+            Control::show($this->dynamicContainer);
+        }
+    }
+
+    private function showNextParameter()
+    {
+        if ($this->currentParameterIndex < count($this->parameterKeys) - 1) {
+            $this->currentParameterIndex++;
+            $this->showCurrentParameter();
+        }
+    }
+
+    private function showPreviousParameter()
+    {
+        if ($this->currentParameterIndex > 0) {
+            $this->currentParameterIndex--;
+            $this->showCurrentParameter();
+        }
+    }
+
     private function createParameterConfigControl($name, $param)
     {
+        $this->appendOutput("开始创建参数控件: $name\n");
+        
         // 参数组
         $paramGroup = Group::create($name);
         Group::setMargined($paramGroup, true);
@@ -504,6 +908,14 @@ class SmartPackagerTab
         $paramBox = Box::newVerticalBox();
         Box::setPadded($paramBox, true);
         Group::setChild($paramGroup, $paramBox);
+
+        // 特殊处理互斥参数（如-h/--help）
+        $isHelpParam = in_array($name, ['h', 'help']);
+        if ($isHelpParam) {
+            // 为互斥参数添加特殊标识
+            $helpLabel = Label::create("注意: 这是一个互斥参数，勾选后其他参数将被忽略");
+            Box::append($paramBox, $helpLabel, false);
+        }
 
         // 参数描述
         $descLabel = Label::create("描述: " . ($param['description'] ?? '无描述'));
@@ -546,59 +958,23 @@ class SmartPackagerTab
             'required' => $requiredCheckbox,
             'type' => $typeCombobox,
             'default' => $defaultEntry,
-            'types' => $types
+            'types' => $types,
+            'group' => $paramGroup, // 添加group引用用于显示/隐藏
+            'isHelpParam' => $isHelpParam // 标记是否为互斥参数
         ];
+
+        // 初始隐藏所有参数控件，除了第一个
+        if ($name !== ($this->parameterKeys[0] ?? '')) {
+            Control::hide($paramGroup);
+            $this->appendOutput("隐藏参数控件: $name\n");
+        } else {
+            Control::show($paramGroup);
+            $this->appendOutput("显示参数控件: $name\n");
+        }
+        
+        $this->appendOutput("完成创建参数控件: $name\n");
     }
 
-    // 新增：显示GUI预览
-    private function showGuiPreview()
-    {
-        // 更新参数配置
-        $this->updateParameterConfigurations();
-
-        // 清空动态容器
-        while (true) {
-            try {
-                Box::delete($this->dynamicContainer, 0);
-            } catch (\Exception $e) {
-                // 当没有更多子元素时会抛出异常，此时退出循环
-                break;
-            }
-        }
-
-        // 添加标题
-        $titleLabel = Label::create("GUI预览");
-        Box::append($this->dynamicContainer, $titleLabel, false);
-
-        $descLabel = Label::create("以下是将要生成的GUI界面预览");
-        Box::append($this->dynamicContainer, $descLabel, false);
-
-        // 显示预览控件
-        foreach ($this->cliParameters as $name => $param) {
-            $this->createPreviewControl($name, $param);
-        }
-
-        // 添加按钮
-        $buttonBox = Box::newHorizontalBox();
-        Box::setPadded($buttonBox, true);
-        Box::append($this->dynamicContainer, $buttonBox, false);
-
-        // 生成GUI按钮
-        $generateButton = Button::create("生成GUI");
-        Button::onClicked($generateButton, function ($btn) {
-            $this->generateSmartGuiWrapper();
-        });
-        Box::append($buttonBox, $generateButton, true);
-
-        // 返回配置按钮
-        $backButton = Button::create("返回配置");
-        Button::onClicked($backButton, function ($btn) {
-            $this->showParameterConfigForm();
-        });
-        Box::append($buttonBox, $backButton, true);
-    }
-
-    // 新增：更新参数配置
     private function updateParameterConfigurations()
     {
         foreach ($this->paramConfigControls as $name => $controls) {
@@ -618,161 +994,40 @@ class SmartPackagerTab
         }
     }
 
-    // 新增：创建预览控件
-    private function createPreviewControl($name, $param)
+    private function validateRequiredParameters()
     {
-        // 参数标签
-        $paramLabel = Label::create($name . ": " . ($param['description'] ?? ''));
-        Box::append($this->dynamicContainer, $paramLabel, false);
-
-        // 根据参数类型创建不同的预览控件
-        switch ($param['type']) {
-            case 'boolean':
-                // 复选框
-                $checkbox = Checkbox::create("启用 " . $name);
-                if (!empty($param['default'])) {
-                    Checkbox::setChecked($checkbox, (bool)$param['default']);
+        foreach ($this->cliParameters as $name => $param) {
+            if ($param['required'] ?? false) {
+                // 检查是否有默认值或用户输入值
+                $hasValue = false;
+                if (isset($this->paramConfigControls[$name])) {
+                    $controls = $this->paramConfigControls[$name];
+                    $defaultValue = Entry::text($controls['default']);
+                    if (!empty($defaultValue)) {
+                        $hasValue = true;
+                    }
                 }
-                Box::append($this->dynamicContainer, $checkbox, false);
-                break;
 
-            case 'integer':
-                // 微调框
-                $spinbox = Spinbox::create(-1000000, 1000000);
-                if (!empty($param['default'])) {
-                    Spinbox::setValue($spinbox, (int)$param['default']);
+                if (!$hasValue) {
+                    $this->appendOutput("错误: 必需参数 '{$name}' 没有提供值\n");
+                    return false;
                 }
-                Box::append($this->dynamicContainer, $spinbox, false);
-                break;
-
-            case 'file':
-                // 文件路径输入框和选择按钮
-                $fileBox = Box::newHorizontalBox();
-                Box::setPadded($fileBox, true);
-                Box::append($this->dynamicContainer, $fileBox, false);
-
-                $fileEntry = Entry::create();
-                if (!empty($param['default'])) {
-                    Entry::setText($fileEntry, $param['default']);
-                }
-                Box::append($fileBox, $fileEntry, true);
-
-                $fileButton = Button::create("选择文件");
-                Box::append($fileBox, $fileButton, false);
-                break;
-
-            case 'string':
-            default:
-                // 普通输入框
-                $entry = Entry::create();
-                if (!empty($param['default'])) {
-                    Entry::setText($entry, $param['default']);
-                }
-                Box::append($this->dynamicContainer, $entry, false);
-                break;
-        }
-
-        // 添加分隔符
-        $separator = \Kingbes\Libui\Separator::createHorizontal();
-        Box::append($this->dynamicContainer, $separator, false);
-    }
-
-    // 新增：生成智能GUI包装器
-    private function generateSmartGuiWrapper()
-    {
-        // 获取输出目录和应用名称
-        $outputDir = Entry::text($this->outputEntry);
-        $appName = Entry::text($this->appNameEntry);
-        $sourceFile = Entry::text($this->sourceEntry);
-
-        // 确保输出目录存在
-        $appOutputDir = $outputDir . '/' . $appName;
-        if (!is_dir($appOutputDir)) {
-            mkdir($appOutputDir, 0755, true);
-        }
-
-        // 创建智能GUI包装器
-        $this->createSmartGuiWrapper($appOutputDir, $appName, $sourceFile, true);
-
-        // 显示完成信息
-        $this->appendOutput("智能GUI包装器已生成到: " . $appOutputDir . "/smart_gui_wrapper.php\n");
-    }
-
-    private function updateDynamicParameterControls()
-    {
-        // 由于libui PHP绑定的限制，我们采用简单的重建方式
-        // 清空现有的容器
-        while (true) {
-            try {
-                Box::delete($this->dynamicContainer, 0);
-            } catch (\Exception $e) {
-                // 当没有更多子元素时会抛出异常，此时退出循环
-                break;
             }
         }
-
-        // 如果没有参数，显示提示信息
-        if (empty($this->cliParameters)) {
-            $hintLabel = Label::create("未检测到 CLI 参数，将使用默认运行方式");
-            Box::append($this->dynamicContainer, $hintLabel, false);
-            return;
-        }
-
-        // 显示参数配置界面
-        $this->showParameterConfigForm();
-    }
-
-    private function createParameterControl($param)
-    {
-        // 参数标签
-        $paramLabel = Label::create($param['name'] . ": " . $param['description']);
-        Box::append($this->dynamicContainer, $paramLabel, false);
-
-        // 根据参数类型创建不同的控件
-        switch ($param['type']) {
-            case 'boolean':
-                // 复选框
-                $checkbox = Checkbox::create("启用 " . $param['name']);
-                Box::append($this->dynamicContainer, $checkbox, false);
-                break;
-
-            case 'integer':
-                // 微调框
-                $spinbox = Spinbox::create(-1000000, 1000000);
-                Box::append($this->dynamicContainer, $spinbox, false);
-                break;
-
-            case 'choice':
-                // 下拉框
-                if (isset($param['choices'])) {
-                    $combobox = Combobox::create();
-                    foreach ($param['choices'] as $choice) {
-                        Combobox::append($combobox, $choice);
-                    }
-                    Box::append($this->dynamicContainer, $combobox, false);
-                } else {
-                    // 普通输入框
-                    $entry = Entry::create();
-                    Box::append($this->dynamicContainer, $entry, false);
-                }
-                break;
-
-            case 'string':
-            default:
-                // 普通输入框
-                $entry = Entry::create();
-                Box::append($this->dynamicContainer, $entry, false);
-                break;
-        }
-
-        // 添加分隔符
-        $separator = \Kingbes\Libui\Separator::createHorizontal();
-        Box::append($this->dynamicContainer, $separator, false);
+        return true;
     }
 
     private function startPackaging()
     {
         try {
+            // 更新参数配置
+            $this->updateParameterConfigurations();
+
+            // 验证必需参数
+            if (!$this->validateRequiredParameters()) {
+                return;
+            }
+
             // 获取输入参数
             $sourceFile = Entry::text($this->sourceEntry);
             $outputDir = Entry::text($this->outputEntry);
@@ -1011,12 +1266,13 @@ use Kingbes\Libui\Entry;
 use Kingbes\Libui\Checkbox;
 use Kingbes\Libui\Combobox;
 use Kingbes\Libui\Spinbox;
+use Kingbes\Libui\Slider;
 
 // 初始化应用
 LibuiApp::init();
 
-// 创建主窗口
-\$window = Window::create("$appName", 600, 500, 1);
+// 创建主窗口（增加窗口大小以容纳更多控件）
+\$window = Window::create("$appName - 参数配置", 800, 600, 1);
 Window::setMargined(\$window, true);
 
 // 创建主容器
@@ -1036,16 +1292,36 @@ Box::append(\$box, \$descLabel, false);
 
 // 为每个参数创建控件
 \$paramControls = [];
+\$helpParamControl = null; // 用于存储互斥参数控件
+
 foreach (\$cliParameters as \$param) {
     // 参数标签
-    \$paramLabel = Label::create(\$param['name'] . ": " . \$param['description']);
+    \$paramLabel = Label::create(\$param['name'] . ": " . (\$param['description'] ?? ''));
     Box::append(\$box, \$paramLabel, false);
+
+    // 特殊处理互斥参数（如-h/--help）
+    \$isHelpParam = in_array(\$param['name'], ['h', 'help']);
+    if (\$isHelpParam) {
+        // 为互斥参数创建复选框
+        \$helpCheckbox = Checkbox::create("显示帮助信息");
+        Box::append(\$box, \$helpCheckbox, false);
+        \$paramControls[\$param['name']] = \$helpCheckbox;
+        \$helpParamControl = \$helpCheckbox;
+
+        // 添加分隔符
+        \$separator = \Kingbes\Libui\Separator::createHorizontal();
+        Box::append(\$box, \$separator, false);
+        continue; // 跳过其他控件创建
+    }
 
     // 根据参数类型创建不同的控件
     switch (\$param['type']) {
         case 'boolean':
             // 复选框
             \$checkbox = Checkbox::create("启用 " . \$param['name']);
+            if (!empty(\$param['default'])) {
+                Checkbox::setChecked(\$checkbox, (bool)\$param['default']);
+            }
             Box::append(\$box, \$checkbox, false);
             \$paramControls[\$param['name']] = \$checkbox;
             break;
@@ -1053,31 +1329,39 @@ foreach (\$cliParameters as \$param) {
         case 'integer':
             // 微调框
             \$spinbox = Spinbox::create(-1000000, 1000000);
+            if (!empty(\$param['default'])) {
+                Spinbox::setValue(\$spinbox, (int)\$param['default']);
+            }
             Box::append(\$box, \$spinbox, false);
             \$paramControls[\$param['name']] = \$spinbox;
             break;
 
-        case 'choice':
-            // 下拉框
-            if (isset(\$param['choices'])) {
-                \$combobox = Combobox::create();
-                foreach (\$param['choices'] as \$choice) {
-                    Combobox::append(\$combobox, \$choice);
-                }
-                Box::append(\$box, \$combobox, false);
-                \$paramControls[\$param['name']] = \$combobox;
-            } else {
-                // 普通输入框
-                \$entry = Entry::create();
-                Box::append(\$box, \$entry, false);
-                \$paramControls[\$param['name']] = \$entry;
+        case 'file':
+            // 文件路径输入框和选择按钮
+            \$fileBox = Box::newHorizontalBox();
+            Box::setPadded(\$fileBox, true);
+            Box::append(\$box, \$fileBox, false);
+
+            \$fileEntry = Entry::create();
+            if (!empty(\$param['default'])) {
+                Entry::setText(\$fileEntry, \$param['default']);
             }
+            Box::append(\$fileBox, \$fileEntry, true);
+
+            \$fileButton = Button::create("选择文件");
+            // 注意：这里简化处理，实际应用中需要实现文件选择功能
+            Box::append(\$fileBox, \$fileButton, false);
+
+            \$paramControls[\$param['name']] = \$fileEntry;
             break;
 
         case 'string':
         default:
             // 普通输入框
             \$entry = Entry::create();
+            if (!empty(\$param['default'])) {
+                Entry::setText(\$entry, \$param['default']);
+            }
             Box::append(\$box, \$entry, false);
             \$paramControls[\$param['name']] = \$entry;
             break;
@@ -1090,34 +1374,54 @@ foreach (\$cliParameters as \$param) {
 
 // 添加运行按钮
 \$runButton = Button::create("运行程序");
-Button::onClicked(\$runButton, function(\$btn) use (\$paramControls, \$cliParameters) {
+Button::onClicked(\$runButton, function(\$btn) use (\$paramControls, \$cliParameters, \$helpParamControl) {
+    // 检查互斥参数
+    \$useHelp = \$helpParamControl && Checkbox::checked(\$helpParamControl);
+
     // 收集参数值
     \$params = [];
-    foreach (\$cliParameters as \$param) {
-        \$name = \$param['name'];
-        if (isset(\$paramControls[\$name])) {
-            \$control = \$paramControls[\$name];
+    if (\$useHelp) {
+        // 如果使用了互斥参数，只添加帮助参数
+        \$params[] = "--help";
+    } else {
+        // 否则添加其他参数
+        foreach (\$cliParameters as \$param) {
+            // 跳过互斥参数
+            if (in_array(\$param['name'], ['h', 'help'])) {
+                continue;
+            }
 
-            switch (\$param['type']) {
-                case 'boolean':
-                    if (Checkbox::checked(\$control)) {
-                        \$params[] = "--" . \$name;
-                    }
-                    break;
+            \$name = \$param['name'];
+            if (isset(\$paramControls[\$name])) {
+                \$control = \$paramControls[\$name];
 
-                case 'integer':
-                    \$value = Spinbox::value(\$control);
-                    \$params[] = "--" . \$name . "=" . \$value;
-                    break;
+                switch (\$param['type']) {
+                    case 'boolean':
+                        if (Checkbox::checked(\$control)) {
+                            // 对于verbose等参数，可能需要特殊处理
+                            if (strpos(\$name, 'verbose') !== false) {
+                                // 可以根据需要添加多个-v选项
+                                \$params[] = "-" . str_repeat("v", 1); // 默认一个v
+                            } else {
+                                \$params[] = "--" . \$name;
+                            }
+                        }
+                        break;
 
-                case 'choice':
-                case 'string':
-                default:
-                    \$value = Entry::text(\$control);
-                    if (!empty(\$value)) {
-                        \$params[] = "--" . \$name . "=" . escapeshellarg(\$value);
-                    }
-                    break;
+                    case 'integer':
+                        \$value = Spinbox::value(\$control);
+                        \$params[] = "--" . \$name . "=" . \$value;
+                        break;
+
+                    case 'file':
+                    case 'string':
+                    default:
+                        \$value = Entry::text(\$control);
+                        if (!empty(\$value)) {
+                            \$params[] = "--" . \$name . "=" . escapeshellarg(\$value);
+                        }
+                        break;
+                }
             }
         }
     }
@@ -1195,8 +1499,45 @@ EOT;
     {
         // 创建源码压缩包的逻辑
         $zipFile = $outputDir . '/' . $appName . '_source.zip';
-        $this->appendOutput("  源码包将保存为: $zipFile\n");
-        // 实际的 ZIP 创建逻辑会在这里实现
+        $this->appendOutput("  创建源码压缩包: $zipFile\n");
+
+        try {
+            // 创建ZIP压缩包
+            $zip = new \ZipArchive();
+            if ($zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                // 添加应用目录中的所有文件
+                $this->addFilesToZip($zip, $outputDir, $outputDir);
+                $zip->close();
+                $this->appendOutput("  源码压缩包创建完成: $zipFile\n");
+            } else {
+                $this->appendOutput("  创建源码压缩包失败\n");
+            }
+        } catch (\Exception $e) {
+            $this->appendOutput("  创建源码压缩包时出错: " . $e->getMessage() . "\n");
+        }
+    }
+
+    private function addFilesToZip($zip, $basePath, $dir)
+    {
+        $files = scandir($dir);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+
+            $filePath = $dir . '/' . $file;
+            $relativePath = substr($filePath, strlen($basePath) + 1);
+
+            if (is_dir($filePath)) {
+                // 添加目录
+                $zip->addEmptyDir($relativePath);
+                // 递归添加子目录
+                $this->addFilesToZip($zip, $basePath, $filePath);
+            } else {
+                // 添加文件
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
     }
 
     private function deleteDirectory($dir)
@@ -1297,9 +1638,27 @@ EOT;
 
     private function appendOutput($text)
     {
+        // 检查$outputArea是否已初始化
+        if ($this->outputArea === null) {
+            // 如果未初始化，暂时存储到临时变量中
+            $this->tempOutput .= $text;
+            return;
+        }
+        
+        // 如果有临时输出内容，先输出临时内容
+        if (!empty($this->tempOutput)) {
+            $currentText = MultilineEntry::text($this->outputArea);
+            $newText = $currentText . $this->tempOutput;
+            MultilineEntry::setText($this->outputArea, $newText);
+            $this->tempOutput = ''; // 清空临时输出
+        }
+        
         $currentText = MultilineEntry::text($this->outputArea);
         $newText = $currentText . $text;
         MultilineEntry::setText($this->outputArea, $newText);
+
+        // 滚动到底部（如果可能的话）
+        // 注意：libui PHP绑定可能不支持直接滚动到底部
     }
 
     public function getControl()

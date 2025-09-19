@@ -62,17 +62,15 @@ function runGuiApplication()
 
     // Create SQLite2MySQL tab
     $sqlite2MysqlTab = new App\SQLite2MySQLTab();
-    $application->addTabWithCallback("SQLite转MySQL", $sqlite2MysqlTab->getControl(), function() use ($sqlite2MysqlTab) {
-        $sqlite2MysqlTab->checkAndDownloadPhar();
-    });
+    $application->addTab("SQLite转MySQL", $sqlite2MysqlTab->getControl());
 
-    // Create packager tab
-    $packagerTab = new App\PackagerTab();
-    $application->addTab("PHP打包工具", $packagerTab->getControl());
+    // Create intelligent packager tab
+    $intelligentPackagerTab = new App\IntelligentPackagerTab();
+    $application->addTab("智能打包工具", $intelligentPackagerTab->getControl());
 
-    // Create smart packager tab
-    $smartPackagerTab = new App\SmartPackagerTab();
-    $application->addTab("智能打包工具", $smartPackagerTab->getControl());
+    // Create test step tab
+    $testStepTab = new App\TestStepTab();
+    $application->addTab("测试步骤切换", $testStepTab->getBox());
 
     // Create example tab
     $exampleTab = new App\ExampleTab();

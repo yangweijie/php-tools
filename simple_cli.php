@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-// 测试CLI程序用于验证参数分析功能
+// 简单的CLI程序用于测试参数分析
 $options = getopt("f:n:v::h", [
     "file:",
     "name:",
@@ -11,8 +11,8 @@ $options = getopt("f:n:v::h", [
 
 // 检查帮助参数
 if (isset($options['h']) || isset($options['help'])) {
-    echo "测试CLI程序\n";
-    echo "用法: php test_cli.php [选项]\n\n";
+    echo "简单CLI程序\n";
+    echo "用法: php simple_cli.php [选项]\n\n";
     echo "选项:\n";
     echo "  -f, --file FILE     输入文件 (必需)\n";
     echo "  -n, --name NAME     名称标识 (必需)\n";
