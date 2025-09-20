@@ -551,6 +551,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 Event\Code\ComparisonFailureBuilder::from($e),
             );
         } catch (TimeoutException $e) {
+            $this->status = TestStatus::risky($e->getMessage());
         } catch (Throwable $_e) {
             if ($this->isRegisteredFailure($_e)) {
                 $this->status = TestStatus::failure($_e->getMessage());
@@ -564,12 +565,6 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $e = $this->transformException($_e);
 
                 $this->status = TestStatus::error($e->getMessage());
-
-                if (!$this->wasPrepared) {
-                    $emitter->testPreparationFailed(
-                        $this->valueObjectForEvents(),
-                    );
-                }
 
                 $emitter->testErrored(
                     $this->valueObjectForEvents(),
@@ -588,14 +583,27 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
             $this->performAssertionsOnOutput();
         }
 
+        if ($this->status->isSuccess()) {
+            $emitter->testPassed(
+                $this->valueObjectForEvents(),
+            );
+
+            if (!$this->usesDataProvider()) {
+                PassedTests::instance()->testMethodPassed(
+                    $this->valueObjectForEvents(),
+                    $this->testResult,
+                );
+            }
+        }
+
         try {
             $this->mockObjects = [];
 
             /** @phpstan-ignore catch.neverThrown */
-        } catch (Throwable $e) {
+        } catch (Throwable $t) {
             Event\Facade::emitter()->testErrored(
                 $this->valueObjectForEvents(),
-                Event\Code\ThrowableBuilder::from($e),
+                Event\Code\ThrowableBuilder::from($t),
             );
         }
 
@@ -620,26 +628,13 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 Event\Code\ComparisonFailureBuilder::from($e),
             );
         } catch (Throwable $exceptionRaisedDuringTearDown) {
-            if (!isset($e) || $e instanceof SkippedWithMessageException) {
+            if (!isset($e)) {
                 $this->status = TestStatus::error($exceptionRaisedDuringTearDown->getMessage());
                 $e            = $exceptionRaisedDuringTearDown;
 
                 $emitter->testErrored(
                     $this->valueObjectForEvents(),
                     Event\Code\ThrowableBuilder::from($exceptionRaisedDuringTearDown),
-                );
-            }
-        }
-
-        if (!isset($e) && !isset($_e)) {
-            $emitter->testPassed(
-                $this->valueObjectForEvents(),
-            );
-
-            if (!$this->usesDataProvider()) {
-                PassedTests::instance()->testMethodPassed(
-                    $this->valueObjectForEvents(),
-                    $this->testResult,
                 );
             }
         }
@@ -1225,6 +1220,35 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
     }
 
     /**
+     * @throws AssertionFailedError
+     * @throws Exception
+     * @throws ExpectationFailedException
+     * @throws Throwable
+     *
+     * @internal This method is not covered by the backward compatibility promise for PHPUnit
+     */
+    final protected function runTest(): mixed
+    {
+        $testArguments = array_merge($this->data, array_values($this->dependencyInput));
+
+        try {
+            $testResult = $this->{$this->methodName}(...$testArguments);
+        } catch (Throwable $exception) {
+            if (!$this->shouldExceptionExpectationsBeVerified($exception)) {
+                throw $exception;
+            }
+
+            $this->verifyExceptionExpectations($exception);
+
+            return null;
+        }
+
+        $this->expectedExceptionWasNotRaised();
+
+        return $testResult;
+    }
+
+    /**
      * This method is a wrapper for the ini_set() function that automatically
      * resets the modified php.ini setting to its original value after the
      * test is run.
@@ -1643,33 +1667,6 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
     }
 
     /**
-     * @throws AssertionFailedError
-     * @throws Exception
-     * @throws ExpectationFailedException
-     * @throws Throwable
-     */
-    private function runTest(): mixed
-    {
-        $testArguments = array_merge($this->data, array_values($this->dependencyInput));
-
-        try {
-            $testResult = $this->{$this->methodName}(...$testArguments);
-        } catch (Throwable $exception) {
-            if (!$this->shouldExceptionExpectationsBeVerified($exception)) {
-                throw $exception;
-            }
-
-            $this->verifyExceptionExpectations($exception);
-
-            return null;
-        }
-
-        $this->expectedExceptionWasNotRaised();
-
-        return $testResult;
-    }
-
-    /**
      * @throws ExpectationFailedException
      */
     private function verifyDeprecationExpectations(): void
@@ -1797,11 +1794,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                     'This test depends on a test that is larger than itself',
                 );
 
-                return true;
-            }
-
-            if (!$passedTests->hasReturnValue($dependencyTarget)) {
-                return true;
+                return false;
             }
 
             $returnValue = $passedTests->returnValue($dependencyTarget);
@@ -1891,6 +1884,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $message,
             );
 
+            $this->status = TestStatus::risky($message);
+
             return false;
         }
 
@@ -1904,14 +1899,14 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
     private function snapshotGlobalErrorExceptionHandlers(): void
     {
-        $this->backupGlobalErrorHandlers     = $this->activeErrorHandlers();
-        $this->backupGlobalExceptionHandlers = $this->activeExceptionHandlers();
+        $this->backupGlobalErrorHandlers     = $this->getActiveErrorHandlers();
+        $this->backupGlobalExceptionHandlers = $this->getActiveExceptionHandlers();
     }
 
     private function restoreGlobalErrorExceptionHandlers(): void
     {
-        $activeErrorHandlers     = $this->activeErrorHandlers();
-        $activeExceptionHandlers = $this->activeExceptionHandlers();
+        $activeErrorHandlers     = $this->getActiveErrorHandlers();
+        $activeExceptionHandlers = $this->getActiveExceptionHandlers();
 
         $message = null;
 
@@ -1938,6 +1933,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $this->valueObjectForEvents(),
                 $message,
             );
+
+            $this->status = TestStatus::risky($message);
         }
 
         $message = null;
@@ -1968,13 +1965,15 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $this->valueObjectForEvents(),
                 $message,
             );
+
+            $this->status = TestStatus::risky($message);
         }
     }
 
     /**
      * @return list<callable>
      */
-    private function activeErrorHandlers(): array
+    private function getActiveErrorHandlers(): array
     {
         $activeErrorHandlers = [];
 
@@ -2012,6 +2011,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $this->valueObjectForEvents(),
                 $message,
             );
+
+            $this->status = TestStatus::risky($message);
         }
 
         return $activeErrorHandlers;
@@ -2020,7 +2021,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
     /**
      * @return list<callable>
      */
-    private function activeExceptionHandlers(): array
+    private function getActiveExceptionHandlers(): array
     {
         $res = [];
 
@@ -2328,9 +2329,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['beforeClass'],
             $emitter,
-            'beforeFirstTestMethodCalled',
-            'beforeFirstTestMethodErrored',
-            'beforeFirstTestMethodFinished',
+            'testBeforeFirstTestMethodCalled',
+            'testBeforeFirstTestMethodErrored',
+            'testBeforeFirstTestMethodFinished',
         );
     }
 
@@ -2344,9 +2345,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['before'],
             $emitter,
-            'beforeTestMethodCalled',
-            'beforeTestMethodErrored',
-            'beforeTestMethodFinished',
+            'testBeforeTestMethodCalled',
+            'testBeforeTestMethodErrored',
+            'testBeforeTestMethodFinished',
         );
     }
 
@@ -2360,9 +2361,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['preCondition'],
             $emitter,
-            'preConditionCalled',
-            'preConditionErrored',
-            'preConditionFinished',
+            'testPreConditionCalled',
+            'testPreConditionErrored',
+            'testPreConditionFinished',
         );
     }
 
@@ -2376,9 +2377,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['postCondition'],
             $emitter,
-            'postConditionCalled',
-            'postConditionErrored',
-            'postConditionFinished',
+            'testPostConditionCalled',
+            'testPostConditionErrored',
+            'testPostConditionFinished',
         );
     }
 
@@ -2392,9 +2393,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['after'],
             $emitter,
-            'afterTestMethodCalled',
-            'afterTestMethodErrored',
-            'afterTestMethodFinished',
+            'testAfterTestMethodCalled',
+            'testAfterTestMethodErrored',
+            'testAfterTestMethodFinished',
         );
     }
 
@@ -2410,16 +2411,16 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $this->invokeHookMethods(
             $hookMethods['afterClass'],
             $emitter,
-            'afterLastTestMethodCalled',
-            'afterLastTestMethodErrored',
-            'afterLastTestMethodFinished',
+            'testAfterLastTestMethodCalled',
+            'testAfterLastTestMethodErrored',
+            'testAfterLastTestMethodFinished',
         );
     }
 
     /**
-     * @param 'afterLastTestMethodCalled'|'afterTestMethodCalled'|'beforeFirstTestMethodCalled'|'beforeTestMethodCalled'|'postConditionCalled'|'preConditionCalled'             $calledMethod
-     * @param 'afterLastTestMethodErrored'|'afterTestMethodErrored'|'beforeFirstTestMethodErrored'|'beforeTestMethodErrored'|'postConditionErrored'|'preConditionErrored'       $erroredMethod
-     * @param 'afterLastTestMethodFinished'|'afterTestMethodFinished'|'beforeFirstTestMethodFinished'|'beforeTestMethodFinished'|'postConditionFinished'|'preConditionFinished' $finishedMethod *
+     * @param 'testAfterLastTestMethodCalled'|'testAfterTestMethodCalled'|'testBeforeFirstTestMethodCalled'|'testBeforeTestMethodCalled'|'testPostConditionCalled'|'testPreConditionCalled'             $calledMethod
+     * @param 'testAfterLastTestMethodErrored'|'testAfterTestMethodErrored'|'testBeforeFirstTestMethodErrored'|'testBeforeTestMethodErrored'|'testPostConditionErrored'|'testPreConditionErrored'       $erroredMethod
+     * @param 'testAfterLastTestMethodFinished'|'testAfterTestMethodFinished'|'testBeforeFirstTestMethodFinished'|'testBeforeTestMethodFinished'|'testPostConditionFinished'|'testPreConditionFinished' $finishedMethod
      *
      * @throws Throwable
      */
@@ -2449,7 +2450,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
             $methodsInvoked[] = $methodInvoked;
 
-            if (isset($t) && !$t instanceof SkippedTest) {
+            if (isset($t)) {
                 $emitter->{$erroredMethod}(
                     static::class,
                     $methodInvoked,

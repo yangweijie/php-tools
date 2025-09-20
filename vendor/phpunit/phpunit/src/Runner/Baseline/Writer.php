@@ -12,9 +12,6 @@ namespace PHPUnit\Runner\Baseline;
 use function assert;
 use function dirname;
 use function file_put_contents;
-use function is_dir;
-use function realpath;
-use function sprintf;
 use XMLWriter;
 
 /**
@@ -26,18 +23,10 @@ final readonly class Writer
 {
     /**
      * @param non-empty-string $baselineFile
-     *
-     * @throws CannotWriteBaselineException
      */
     public function write(string $baselineFile, Baseline $baseline): void
     {
-        $normalizedBaselineFile = realpath(dirname($baselineFile));
-
-        if ($normalizedBaselineFile === false || !is_dir($normalizedBaselineFile)) {
-            throw new CannotWriteBaselineException(sprintf('Cannot write baseline to "%s".', $baselineFile));
-        }
-
-        $pathCalculator = new RelativePathCalculator($normalizedBaselineFile);
+        $pathCalculator = new RelativePathCalculator(dirname($baselineFile));
 
         $writer = new XMLWriter;
 
@@ -61,7 +50,7 @@ final readonly class Writer
 
                 foreach ($issues as $issue) {
                     $writer->startElement('issue');
-                    $writer->writeCdata($issue->description());
+                    $writer->writeCData($issue->description());
                     $writer->endElement();
                 }
 

@@ -134,7 +134,7 @@ class Command implements SignalableCommandInterface
             $this->setHelp($attribute?->help ?? '');
         }
 
-        if (\is_callable($this) && self::class === (new \ReflectionMethod($this, 'execute'))->getDeclaringClass()->name) {
+        if (\is_callable($this) && (new \ReflectionMethod($this, 'execute'))->getDeclaringClass()->name === self::class) {
             $this->code = new InvokableCommand($this, $this(...));
         }
 

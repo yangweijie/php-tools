@@ -83,7 +83,6 @@ use const T_VAR;
 use const T_WHILE;
 use const T_YIELD;
 use const T_YIELD_FROM;
-use const TOKEN_PARSE;
 use function array_key_exists;
 use function array_keys;
 use function array_merge;
@@ -983,7 +982,7 @@ final class File extends Renderer
         }
 
         $buffer              = file_get_contents($file);
-        $tokens              = token_get_all($buffer, TOKEN_PARSE);
+        $tokens              = token_get_all($buffer);
         $result              = [''];
         $i                   = 0;
         $stringFlag          = false;

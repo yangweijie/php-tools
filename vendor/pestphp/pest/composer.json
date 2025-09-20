@@ -18,17 +18,17 @@
     ],
     "require": {
         "php": "^8.2.0",
-        "brianium/paratest": "^7.8.4",
-        "nunomaduro/collision": "^8.8.2",
-        "nunomaduro/termwind": "^2.3.1",
+        "brianium/paratest": "^7.7.0",
+        "nunomaduro/collision": "^8.6.1",
+        "nunomaduro/termwind": "^2.3.0",
         "pestphp/pest-plugin": "^3.0.0",
-        "pestphp/pest-plugin-arch": "^3.1.1",
+        "pestphp/pest-plugin-arch": "^3.0.0",
         "pestphp/pest-plugin-mutate": "^3.0.5",
-        "phpunit/phpunit": "^11.5.33"
+        "phpunit/phpunit": "^11.5.3"
     },
     "conflict": {
         "filp/whoops": "<2.16.0",
-        "phpunit/phpunit": ">11.5.33",
+        "phpunit/phpunit": ">11.5.3",
         "sebastian/exporter": "<6.0.0",
         "webmozart/assert": "<1.11.0"
     },
@@ -53,9 +53,9 @@
         ]
     },
     "require-dev": {
-        "pestphp/pest-dev-tools": "^3.4.0",
-        "pestphp/pest-plugin-type-coverage": "^3.6.1",
-        "symfony/process": "^7.3.0"
+        "pestphp/pest-dev-tools": "^3.3.0",
+        "pestphp/pest-plugin-type-coverage": "^3.2.3",
+        "symfony/process": "^7.2.0"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

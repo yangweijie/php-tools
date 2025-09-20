@@ -92,7 +92,7 @@ final class Facade
         }
 
         if (self::$testDoxResultPrinter !== null && $testDoxResult !== null) {
-            self::$testDoxResultPrinter->print($result, $testDoxResult);
+            self::$testDoxResultPrinter->print($testDoxResult);
         }
 
         if (self::$defaultResultPrinter !== null) {
@@ -206,16 +206,16 @@ final class Facade
                 self::$printer,
                 true,
                 true,
-                $configuration->displayDetailsOnPhpunitDeprecations() || $configuration->displayDetailsOnAllIssues(),
+                $configuration->displayDetailsOnPhpunitDeprecations(),
                 false,
                 false,
                 true,
                 false,
                 false,
-                $configuration->displayDetailsOnTestsThatTriggerDeprecations() || $configuration->displayDetailsOnAllIssues(),
-                $configuration->displayDetailsOnTestsThatTriggerErrors() || $configuration->displayDetailsOnAllIssues(),
-                $configuration->displayDetailsOnTestsThatTriggerNotices() || $configuration->displayDetailsOnAllIssues(),
-                $configuration->displayDetailsOnTestsThatTriggerWarnings() || $configuration->displayDetailsOnAllIssues(),
+                $configuration->displayDetailsOnTestsThatTriggerDeprecations(),
+                $configuration->displayDetailsOnTestsThatTriggerErrors(),
+                $configuration->displayDetailsOnTestsThatTriggerNotices(),
+                $configuration->displayDetailsOnTestsThatTriggerWarnings(),
                 $configuration->reverseDefectList(),
             );
         }
@@ -241,16 +241,16 @@ final class Facade
             self::$printer,
             true,
             true,
-            $configuration->displayDetailsOnPhpunitDeprecations() || $configuration->displayDetailsOnAllIssues(),
+            $configuration->displayDetailsOnPhpunitDeprecations(),
             true,
             true,
             true,
-            $configuration->displayDetailsOnIncompleteTests() || $configuration->displayDetailsOnAllIssues(),
-            $configuration->displayDetailsOnSkippedTests() || $configuration->displayDetailsOnAllIssues(),
-            $configuration->displayDetailsOnTestsThatTriggerDeprecations() || $configuration->displayDetailsOnAllIssues(),
-            $configuration->displayDetailsOnTestsThatTriggerErrors() || $configuration->displayDetailsOnAllIssues(),
-            $configuration->displayDetailsOnTestsThatTriggerNotices() || $configuration->displayDetailsOnAllIssues(),
-            $configuration->displayDetailsOnTestsThatTriggerWarnings() || $configuration->displayDetailsOnAllIssues(),
+            $configuration->displayDetailsOnIncompleteTests(),
+            $configuration->displayDetailsOnSkippedTests(),
+            $configuration->displayDetailsOnTestsThatTriggerDeprecations(),
+            $configuration->displayDetailsOnTestsThatTriggerErrors(),
+            $configuration->displayDetailsOnTestsThatTriggerNotices(),
+            $configuration->displayDetailsOnTestsThatTriggerWarnings(),
             $configuration->reverseDefectList(),
         );
     }

@@ -309,7 +309,14 @@ final class WrapperRunner implements RunnerInterface
         $this->generateLogs();
 
         $exitcode = (new ShellExitCodeCalculator())->calculate(
-            $this->options->configuration,
+            $this->options->configuration->failOnDeprecation(),
+            $this->options->configuration->failOnPhpunitDeprecation(),
+            $this->options->configuration->failOnEmptyTestSuite(),
+            $this->options->configuration->failOnIncomplete(),
+            $this->options->configuration->failOnNotice(),
+            $this->options->configuration->failOnRisky(),
+            $this->options->configuration->failOnSkipped(),
+            $this->options->configuration->failOnWarning(),
             $testResultSum,
         );
 

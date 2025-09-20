@@ -214,7 +214,7 @@ final class TestRunner
             Facade::emitter()->testConsideredRisky(
                 $test->valueObjectForEvents(),
                 sprintf(
-                    'Test code or tested code printed unexpected output: %s',
+                    'This test printed output: %s',
                     $test->output(),
                 ),
             );

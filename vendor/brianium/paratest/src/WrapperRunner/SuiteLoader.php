@@ -42,14 +42,14 @@ use function strlen;
 use function substr;
 
 /** @internal */
-final readonly class SuiteLoader
+final class SuiteLoader
 {
-    public int $testCount;
+    public readonly int $testCount;
     /** @var list<non-empty-string> */
-    public array $tests;
+    public readonly array $tests;
 
     public function __construct(
-        private Options $options,
+        private readonly Options $options,
         OutputInterface $output,
         CodeCoverageFilterRegistry $codeCoverageFilterRegistry,
     ) {
@@ -188,7 +188,7 @@ final readonly class SuiteLoader
             if ($test instanceof TestCase) {
                 $refClass = new ReflectionClass($test);
                 $filename = $refClass->getFileName();
-                assert(is_string($filename));
+                assert(is_string($filename) && $filename !== '');
                 $filename = $this->stripCwd($filename);
 
                 yield $filename => $test;

@@ -18,7 +18,6 @@ use function sprintf;
 use function str_starts_with;
 use function strtolower;
 use function trim;
-use Error;
 use PHPUnit\Event\Facade as EventFacade;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\AfterClass;
@@ -77,7 +76,6 @@ use PHPUnit\Framework\Attributes\UsesFunction;
 use PHPUnit\Framework\Attributes\UsesMethod;
 use PHPUnit\Framework\Attributes\UsesTrait;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
-use PHPUnit\Metadata\InvalidAttributeException;
 use PHPUnit\Metadata\Metadata;
 use PHPUnit\Metadata\MetadataCollection;
 use PHPUnit\Metadata\Version\ConstraintRequirement;
@@ -98,10 +96,9 @@ final readonly class AttributeParser implements Parser
     {
         assert(class_exists($className));
 
-        $reflector = new ReflectionClass($className);
-        $result    = [];
+        $result = [];
 
-        foreach ($reflector->getAttributes() as $attribute) {
+        foreach ((new ReflectionClass($className))->getAttributes() as $attribute) {
             if (!str_starts_with($attribute->getName(), 'PHPUnit\\Framework\\Attributes\\')) {
                 continue;
             }
@@ -110,17 +107,7 @@ final readonly class AttributeParser implements Parser
                 continue;
             }
 
-            try {
-                $attributeInstance = $attribute->newInstance();
-            } catch (Error $e) {
-                throw new InvalidAttributeException(
-                    $attribute->getName(),
-                    'class ' . $className,
-                    $reflector->getFileName(),
-                    $reflector->getStartLine(),
-                    $e->getMessage(),
-                );
-            }
+            $attributeInstance = $attribute->newInstance();
 
             switch ($attribute->getName()) {
                 case BackupGlobals::class:
@@ -403,10 +390,9 @@ final readonly class AttributeParser implements Parser
         assert(class_exists($className));
         assert(method_exists($className, $methodName));
 
-        $reflector = new ReflectionMethod($className, $methodName);
-        $result    = [];
+        $result = [];
 
-        foreach ($reflector->getAttributes() as $attribute) {
+        foreach ((new ReflectionMethod($className, $methodName))->getAttributes() as $attribute) {
             if (!str_starts_with($attribute->getName(), 'PHPUnit\\Framework\\Attributes\\')) {
                 continue;
             }
@@ -415,17 +401,7 @@ final readonly class AttributeParser implements Parser
                 continue;
             }
 
-            try {
-                $attributeInstance = $attribute->newInstance();
-            } catch (Error $e) {
-                throw new InvalidAttributeException(
-                    $attribute->getName(),
-                    'method ' . $className . '::' . $methodName . '()',
-                    $reflector->getFileName(),
-                    $reflector->getStartLine(),
-                    $e->getMessage(),
-                );
-            }
+            $attributeInstance = $attribute->newInstance();
 
             switch ($attribute->getName()) {
                 case After::class:
@@ -786,7 +762,7 @@ final readonly class AttributeParser implements Parser
             return false;
         }
 
-        EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+        EventFacade::emitter()->testRunnerTriggeredWarning(
             sprintf(
                 'Group name "%s" is not allowed for %s %s%s%s',
                 $_groupName,

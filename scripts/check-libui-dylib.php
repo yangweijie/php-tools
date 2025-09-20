@@ -12,7 +12,7 @@
 echo "检查 libui.dylib 文件...\n";
 
 // 检查系统架构
-$arch = trim(shell_exec('uname -m'));
+$arch = shell_exec('uname -m')? trim(shell_exec('uname -m')):'';
 $isMacOS = PHP_OS_FAMILY === 'Darwin';
 $isARM = $arch === 'arm64';
 

@@ -19,6 +19,7 @@ use const E_ERROR;
 use const E_NOTICE;
 use const E_PARSE;
 use const E_RECOVERABLE_ERROR;
+use const E_STRICT;
 use const E_USER_DEPRECATED;
 use const E_USER_ERROR;
 use const E_USER_NOTICE;
@@ -57,6 +58,7 @@ final class ErrorHandler
     private bool $enabled                     = false;
     private ?int $originalErrorReportingLevel = null;
     private readonly Source $source;
+    private readonly SourceFilter $sourceFilter;
 
     /**
      * @var ?array{functions: list<non-empty-string>, methods: list<array{className: class-string, methodName: non-empty-string}>}
@@ -70,7 +72,8 @@ final class ErrorHandler
 
     private function __construct(Source $source)
     {
-        $this->source = $source;
+        $this->source       = $source;
+        $this->sourceFilter = new SourceFilter;
     }
 
     /**
@@ -89,7 +92,7 @@ final class ErrorHandler
          *
          * @see https://github.com/sebastianbergmann/phpunit/issues/5956
          */
-        if (defined('E_STRICT') && $errorNumber === 2048) {
+        if (defined('E_STRICT') && $errorNumber === @E_STRICT) {
             $errorNumber = E_NOTICE;
         }
 
@@ -273,14 +276,14 @@ final class ErrorHandler
                 return IssueTrigger::test();
             }
 
-            if (SourceFilter::instance()->includes($trace[0]['file'])) {
+            if ($this->sourceFilter->includes($this->source, $trace[0]['file'])) {
                 $triggeredInFirstPartyCode = true;
             }
         }
 
         if (isset($trace[1]['file']) &&
             ($trace[1]['file'] === $test->file() ||
-            SourceFilter::instance()->includes($trace[1]['file']))) {
+            $this->sourceFilter->includes($this->source, $trace[1]['file']))) {
             $triggerCalledFromFirstPartyCode = true;
         }
 

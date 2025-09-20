@@ -224,7 +224,7 @@ final class TestCall // @phpstan-ignore-line
      */
     public function only(): self
     {
-        Only::enable($this, ...func_get_args());
+        Only::enable($this, ...func_get_args()); // @phpstan-ignore-line
 
         return $this;
     }

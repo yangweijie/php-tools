@@ -46,7 +46,7 @@ final readonly class Panic
     {
         try {
             $output = Container::getInstance()->get(OutputInterface::class);
-        } catch (Throwable) {
+        } catch (Throwable) { // @phpstan-ignore-line
             $output = new ConsoleOutput;
         }
 

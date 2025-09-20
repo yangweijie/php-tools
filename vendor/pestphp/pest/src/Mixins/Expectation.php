@@ -183,6 +183,7 @@ final class Expectation
     {
         foreach ($needles as $needle) {
             if (is_string($this->value)) {
+                // @phpstan-ignore-next-line
                 Assert::assertStringContainsString((string) $needle, $this->value);
             } else {
                 if (! is_iterable($this->value)) {

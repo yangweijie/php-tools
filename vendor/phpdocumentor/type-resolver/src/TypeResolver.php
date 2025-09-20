@@ -98,7 +98,6 @@ use PHPStan\PhpDocParser\Parser\ConstExprParser;
 use PHPStan\PhpDocParser\Parser\ParserException;
 use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
-use PHPStan\PhpDocParser\ParserConfig;
 use RuntimeException;
 
 use function array_filter;
@@ -190,14 +189,8 @@ final class TypeResolver
     public function __construct(?FqsenResolver $fqsenResolver = null)
     {
         $this->fqsenResolver = $fqsenResolver ?: new FqsenResolver();
-
-        if (class_exists(ParserConfig::class)) {
-            $this->typeParser = new TypeParser(new ParserConfig([]), new ConstExprParser(new ParserConfig([])));
-            $this->lexer = new Lexer(new ParserConfig([]));
-        } else {
-            $this->typeParser = new TypeParser(new ConstExprParser());
-            $this->lexer = new Lexer();
-        }
+        $this->typeParser = new TypeParser(new ConstExprParser());
+        $this->lexer = new Lexer();
     }
 
     /**

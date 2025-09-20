@@ -25,7 +25,6 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\TestSuite;
 use PHPUnit\Runner\ResultCache\NullResultCache;
 use PHPUnit\Runner\ResultCache\ResultCache;
-use PHPUnit\Runner\ResultCache\ResultCacheId;
 
 /**
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
@@ -193,11 +192,9 @@ final class TestSuiteSorter
                 continue;
             }
 
-            $sortId = $test->sortId();
-
-            if (!isset($this->defectSortOrder[$sortId])) {
-                $this->defectSortOrder[$sortId] = $this->cache->status(ResultCacheId::fromReorderable($test))->asInt();
-                $max                            = max($max, $this->defectSortOrder[$sortId]);
+            if (!isset($this->defectSortOrder[$test->sortId()])) {
+                $this->defectSortOrder[$test->sortId()] = $this->cache->status($test->sortId())->asInt();
+                $max                                    = max($max, $this->defectSortOrder[$test->sortId()]);
             }
         }
 
@@ -309,7 +306,7 @@ final class TestSuiteSorter
             return 0;
         }
 
-        return $this->cache->time(ResultCacheId::fromReorderable($a)) <=> $this->cache->time(ResultCacheId::fromReorderable($b));
+        return $this->cache->time($a->sortId()) <=> $this->cache->time($b->sortId());
     }
 
     /**

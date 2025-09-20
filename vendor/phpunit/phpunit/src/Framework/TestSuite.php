@@ -110,7 +110,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
         }
 
         if ($testSuite->isEmpty()) {
-            Event\Facade::emitter()->testRunnerTriggeredPhpunitWarning(
+            Event\Facade::emitter()->testRunnerTriggeredWarning(
                 sprintf(
                     'No tests found in class "%s".',
                     $class->getName(),
@@ -233,7 +233,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
                 );
             }
         } catch (RunnerException $e) {
-            Event\Facade::emitter()->testRunnerTriggeredPhpunitWarning(
+            Event\Facade::emitter()->testRunnerTriggeredWarning(
                 $e->getMessage(),
             );
         }
@@ -640,7 +640,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
             }
 
             if ($emitCalledEvent) {
-                $emitter->beforeFirstTestMethodCalled(
+                $emitter->testBeforeFirstTestMethodCalled(
                     $this->name,
                     $calledMethod,
                 );
@@ -658,7 +658,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
             }
 
             if (isset($t)) {
-                $emitter->beforeFirstTestMethodErrored(
+                $emitter->testBeforeFirstTestMethodErrored(
                     $this->name,
                     $calledMethod,
                     Event\Code\ThrowableBuilder::from($t),
@@ -669,14 +669,10 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
         }
 
         if (!empty($calledMethods)) {
-            $emitter->beforeFirstTestMethodFinished(
+            $emitter->testBeforeFirstTestMethodFinished(
                 $this->name,
                 ...$calledMethods,
             );
-        }
-
-        if (!$result) {
-            $emitter->testSuiteFinished($testSuiteValueObjectForEvents);
         }
 
         return $result;
@@ -706,7 +702,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
             } catch (Throwable $t) {
             }
 
-            $emitter->afterLastTestMethodCalled(
+            $emitter->testAfterLastTestMethodCalled(
                 $this->name,
                 $calledMethod,
             );
@@ -714,7 +710,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
             $calledMethods[] = $calledMethod;
 
             if (isset($t)) {
-                $emitter->afterLastTestMethodErrored(
+                $emitter->testAfterLastTestMethodErrored(
                     $this->name,
                     $calledMethod,
                     Event\Code\ThrowableBuilder::from($t),
@@ -723,7 +719,7 @@ class TestSuite implements IteratorAggregate, Reorderable, Test
         }
 
         if (!empty($calledMethods)) {
-            $emitter->afterLastTestMethodFinished(
+            $emitter->testAfterLastTestMethodFinished(
                 $this->name,
                 ...$calledMethods,
             );

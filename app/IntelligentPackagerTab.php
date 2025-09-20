@@ -168,6 +168,8 @@ class IntelligentPackagerTab
                 // 确保动态容器是可见的
                 if ($this->dynamicContainer) {
                     Control::show($this->dynamicContainer);
+                    $this->appendOutput("已尝试显示 dynamicContainer\n");
+                    $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
                 }
                 $this->appendOutput("显示步骤2\n");
                 // 添加调试信息
@@ -442,107 +444,259 @@ class IntelligentPackagerTab
 
     private function analyzeCliParameters()
     {
-        $this->appendOutput("进入 analyzeCliParameters 方法\n");
-        
-        $sourceFile = Entry::text($this->sourceEntry);
+        try {
+            $this->appendOutput("进入 analyzeCliParameters 方法\n");
 
-        // 检查文件是否存在
-        if (empty($sourceFile) || !file_exists($sourceFile)) {
-            $this->appendOutput("错误: 请指定有效的源文件路径\n");
-            return;
+            $sourceFile = Entry::text($this->sourceEntry);
+            $this->appendOutput("源文件路径: $sourceFile\n");
+
+            // 检查文件是否存在
+            if (empty($sourceFile)) {
+                $this->appendOutput("错误: 请指定源文件路径\n");
+                return;
+            }
+
+            // 检查文件是否存在
+            if (!file_exists($sourceFile)) {
+                $this->appendOutput("错误: 源文件不存在: $sourceFile\n");
+                return;
+            }
+
+            // 检查文件是否可读
+            if (!is_readable($sourceFile)) {
+                $this->appendOutput("错误: 源文件不可读: $sourceFile\n");
+                return;
+            }
+
+            // 保存CLI文件路径
+            $this->cliFile = $sourceFile;
+
+            // 清空之前的参数
+            $this->cliParameters = [];
+
+            // 通过运行CLI程序获取帮助信息来分析参数
+            $this->parseCliParametersByExecution();
+
+            // 标记分析已完成
+            $this->analysisCompleted = true;
+
+            $this->appendOutput("参数分析完成，检测到 " . count($this->cliParameters) . " 个参数\n");
+
+            // 更新动态参数界面
+            $this->updateDynamicParameterControls();
+
+            $this->appendOutput("动态参数界面更新完成\n");
+
+            // 分析完成后跳转到第二步
+            $this->appendOutput("准备切换到步骤2\n");
+            $this->showStep(2);
+            $this->appendOutput("已调用showStep(2)\n");
+            $this->appendOutput("step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
+            $this->appendOutput("step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
+
+            // 添加更多调试信息
+            if ($this->dynamicContainer) {
+                $this->appendOutput("dynamicContainer 是否存在: 是\n");
+                $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
+            } else {
+                $this->appendOutput("dynamicContainer 是否存在: 否\n");
+            }
+
+            $this->appendOutput("退出 analyzeCliParameters 方法\n");
+        } catch (\Exception $e) {
+            $this->appendOutput("analyzeCliParameters 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("analyzeCliParameters 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
         }
-
-        // 保存CLI文件路径
-        $this->cliFile = $sourceFile;
-
-        // 清空之前的参数
-        $this->cliParameters = [];
-
-        // 通过运行CLI程序获取帮助信息来分析参数
-        $this->parseCliParametersByExecution();
-
-        // 标记分析已完成
-        $this->analysisCompleted = true;
-
-        // 更新动态参数界面
-        $this->updateDynamicParameterControls();
-
-        $this->appendOutput("参数分析完成，可以进行打包了\n");
-        
-        // 分析完成后跳转到第二步
-        $this->appendOutput("准备切换到步骤2\n");
-        $this->showStep(2);
-        $this->appendOutput("已调用showStep(2)\n");
-        $this->appendOutput("step1Container 是否可见: " . (Control::visible($this->step1Container) ? "是" : "否") . "\n");
-        $this->appendOutput("step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
-        $this->appendOutput("退出 analyzeCliParameters 方法\n");
     }
 
     private function parseCliParametersByExecution()
     {
-        $this->appendOutput("进入 parseCliParametersByExecution 方法\n");
-        
-        $sourceFile = $this->cliFile;
+        try {
+            $this->appendOutput("进入 parseCliParametersByExecution 方法\n");
 
-        // 确定如何运行该文件
-        $command = '';
-        if (substr($sourceFile, -4) === '.php' || substr($sourceFile, -5) === '.phar') {
-            $command = 'php ' . escapeshellarg($sourceFile);
-        } else {
-            // 对于二进制文件或其他脚本，直接运行
-            $command = escapeshellarg($sourceFile);
-        }
+            $sourceFile = $this->cliFile;
 
-        // 尝试不同的帮助命令
-        $helpCommands = [' --help', ' -h', ' /?', ' --usage', ' -help', ' help'];
-        $helpOutput = '';
-
-        foreach ($helpCommands as $helpCmd) {
-            $fullCommand = $command . $helpCmd . ' 2>&1';
-            $output = [];
-            $returnCode = 0;
-
-            // 使用exec而不是system来捕获输出
-            exec($fullCommand, $output, $returnCode);
-
-            // 收集输出
-            $helpOutput .= implode("\n", $output);
-
-            // 如果命令成功执行或返回常见的帮助信息退出码
-            if ($returnCode <= 1 && !empty($output)) {
-                break;
+            // 确定如何运行该文件
+            $command = '';
+            if (substr($sourceFile, -4) === '.php' || substr($sourceFile, -5) === '.phar') {
+                // 检查PHP是否可用
+                $phpPath = PHP_BINDIR . '/php';
+                if (file_exists($phpPath) && is_executable($phpPath)) {
+                    $command = escapeshellarg($phpPath) . ' ' . escapeshellarg($sourceFile);
+                } else {
+                    $command = 'php ' . escapeshellarg($sourceFile);
+                }
+            } else {
+                // 对于二进制文件或其他脚本，直接运行
+                $command = escapeshellarg($sourceFile);
             }
-        }
 
-        // 如果没有获取到帮助信息，尝试直接运行命令看是否有帮助信息输出
-        if (empty($helpOutput)) {
-            $fullCommand = $command . ' 2>&1';
-            $output = [];
-            exec($fullCommand, $output, $returnCode);
+            $this->appendOutput("将要执行的命令: $command\n");
 
-            // 如果程序输出了信息并且很快退出，可能是帮助信息
-            if (!empty($output)) {
-                $helpOutput = implode("\n", $output);
+            // 尝试不同的帮助命令
+            $helpCommands = [' --help', ' -h', ' /?', ' --usage', ' -help', ' help'];
+            $helpOutput = '';
+
+            foreach ($helpCommands as $helpCmd) {
+                $fullCommand = $command . $helpCmd . ' 2>&1';
+                $this->appendOutput("执行命令: $fullCommand\n");
+                $output = [];
+                $returnCode = 0;
+
+                // 使用exec而不是system来捕获输出，添加超时机制
+                $descriptorspec = array(
+                   0 => array("pipe", "r"),
+                   1 => array("pipe", "w"),
+                   2 => array("pipe", "w")
+                );
+
+                $process = proc_open($fullCommand, $descriptorspec, $pipes);
+
+                if (is_resource($process)) {
+                    // 设置非阻塞模式
+                    stream_set_blocking($pipes[1], false);
+                    stream_set_blocking($pipes[2], false);
+
+                    $output = '';
+                    $errors = '';
+                    $startTime = time();
+
+                    // 等待最多10秒
+                    while (time() - $startTime < 10) {
+                        $status = proc_get_status($process);
+                        if (!$status['running']) {
+                            break;
+                        }
+
+                        // 读取输出
+                        $output .= fread($pipes[1], 8192);
+                        $errors .= fread($pipes[2], 8192);
+
+                        // 短暂休眠
+                        usleep(100000); // 100ms
+                    }
+
+                    // 关闭管道
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+
+                    // 获取返回码
+                    $status = proc_get_status($process);
+                    $returnCode = $status['exitcode'];
+                    proc_close($process);
+
+                    // 分割输出为行数组
+                    $outputLines = explode("\n", trim($output));
+                    if (!empty($errors)) {
+                        $outputLines = array_merge($outputLines, explode("\n", trim($errors)));
+                    }
+
+                    // 收集输出
+                    $helpOutput .= implode("\n", $outputLines);
+                    $this->appendOutput("命令返回码: $returnCode, 输出行数: " . count($outputLines) . "\n");
+
+                    // 如果命令成功执行或返回常见的帮助信息退出码
+                    if ($returnCode <= 1 && !empty($outputLines)) {
+                        break;
+                    }
+                } else {
+                    $this->appendOutput("无法启动进程\n");
+                }
             }
-        }
 
-        // 解析帮助信息中的参数
-        $this->parseHelpOutput($helpOutput);
-        
-        // 如果仍然没有参数，添加一个默认参数用于测试
-        if (empty($this->cliParameters)) {
-            $this->appendOutput("未检测到参数，添加默认参数用于测试\n");
-            $this->cliParameters['test'] = [
-                'name' => 'test',
-                'short' => null,
-                'description' => '测试参数',
-                'required' => false,
-                'type' => 'string',
-                'default' => ''
-            ];
+            // 如果没有获取到帮助信息，尝试直接运行命令看是否有帮助信息输出
+            if (empty($helpOutput)) {
+                $fullCommand = $command . ' 2>&1';
+                $this->appendOutput("执行命令: $fullCommand\n");
+                $output = [];
+                $returnCode = 0;
+
+                // 使用proc_open而不是exec来捕获输出，添加超时机制
+                $descriptorspec = array(
+                   0 => array("pipe", "r"),
+                   1 => array("pipe", "w"),
+                   2 => array("pipe", "w")
+                );
+
+                $process = proc_open($fullCommand, $descriptorspec, $pipes);
+
+                if (is_resource($process)) {
+                    // 设置非阻塞模式
+                    stream_set_blocking($pipes[1], false);
+                    stream_set_blocking($pipes[2], false);
+
+                    $outputStr = '';
+                    $errors = '';
+                    $startTime = time();
+
+                    // 等待最多10秒
+                    while (time() - $startTime < 10) {
+                        $status = proc_get_status($process);
+                        if (!$status['running']) {
+                            break;
+                        }
+
+                        // 读取输出
+                        $outputStr .= fread($pipes[1], 8192);
+                        $errors .= fread($pipes[2], 8192);
+
+                        // 短暂休眠
+                        usleep(100000); // 100ms
+                    }
+
+                    // 关闭管道
+                    fclose($pipes[1]);
+                    fclose($pipes[2]);
+
+                    // 获取返回码
+                    $status = proc_get_status($process);
+                    $returnCode = $status['exitcode'];
+                    proc_close($process);
+
+                    // 分割输出为行数组
+                    $outputLines = explode("\n", trim($outputStr));
+                    if (!empty($errors)) {
+                        $outputLines = array_merge($outputLines, explode("\n", trim($errors)));
+                    }
+
+                    $this->appendOutput("命令返回码: $returnCode, 输出行数: " . count($outputLines) . "\n");
+
+                    // 如果程序输出了信息并且很快退出，可能是帮助信息
+                    if (!empty($outputLines)) {
+                        $helpOutput = implode("\n", $outputLines);
+                    }
+                } else {
+                    $this->appendOutput("无法启动进程\n");
+                }
+            }
+
+            // 解析帮助信息中的参数
+            $this->parseHelpOutput($helpOutput);
+
+            // 如果仍然没有参数，添加一个默认参数用于测试
+            if (empty($this->cliParameters)) {
+                $this->appendOutput("未检测到参数，添加默认参数用于测试\n");
+                $this->cliParameters['test'] = [
+                    'name' => 'test',
+                    'short' => null,
+                    'description' => '测试参数',
+                    'required' => false,
+                    'type' => 'string',
+                    'default' => ''
+                ];
+            }
+
+            $this->appendOutput("退出 parseCliParametersByExecution 方法\n");
+        } catch (\Exception $e) {
+            $this->appendOutput("parseCliParametersByExecution 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("parseCliParametersByExecution 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
         }
-        
-        $this->appendOutput("退出 parseCliParametersByExecution 方法\n");
     }
 
     private function parseHelpOutput($helpOutput)
@@ -555,12 +709,15 @@ class IntelligentPackagerTab
         // 输出帮助信息以便调试
         $this->appendOutput("检测到的帮助信息:\n" . $helpOutput . "\n");
 
+        // 用于存储解析到的参数，避免重复
+        $parsedParameters = [];
+
         // 查找长选项 --param
         if (preg_match_all('/--([a-zA-Z0-9\-_]+)/', $helpOutput, $longOpts)) {
             foreach ($longOpts[1] as $opt) {
                 // 过滤掉一些常见的非参数选项
                 if (!in_array($opt, ['help', 'version', 'usage'])) {
-                    $this->cliParameters[$opt] = [
+                    $parsedParameters[$opt] = [
                         'name' => $opt,
                         'short' => null,
                         'description' => 'Auto-detected parameter',
@@ -581,12 +738,12 @@ class IntelligentPackagerTab
                 $longOpt = ltrim($matches[2], '-');
 
                 // 如果长选项已存在，更新其短选项信息
-                if (isset($this->cliParameters[$longOpt])) {
-                    $this->cliParameters[$longOpt]['short'] = $shortOpt;
+                if (isset($parsedParameters[$longOpt])) {
+                    $parsedParameters[$longOpt]['short'] = $shortOpt;
                 }
                 // 如果长选项不存在但短选项不存在，添加短选项
-                else if (!isset($this->cliParameters[$shortOpt])) {
-                    $this->cliParameters[$shortOpt] = [
+                else if (!isset($parsedParameters[$shortOpt])) {
+                    $parsedParameters[$shortOpt] = [
                         'name' => $shortOpt,
                         'short' => $shortOpt,
                         'description' => 'Auto-detected short parameter',
@@ -603,8 +760,8 @@ class IntelligentPackagerTab
             foreach ($shortOpts[1] as $opt) {
                 // 过滤掉一些常见的非参数选项
                 if (!in_array($opt, ['h', 'v', 'V'])) {
-                    if (!isset($this->cliParameters[$opt]) && !isset($this->cliParameters[$opt])) {
-                        $this->cliParameters[$opt] = [
+                    if (!isset($parsedParameters[$opt])) {
+                        $parsedParameters[$opt] = [
                             'name' => $opt,
                             'short' => $opt,
                             'description' => 'Auto-detected short parameter',
@@ -637,17 +794,17 @@ class IntelligentPackagerTab
                     continue;
                 }
 
-                if (isset($this->cliParameters[$param])) {
+                if (isset($parsedParameters[$param])) {
                     // 根据值类型推测参数类型
                     switch (strtoupper($valueType)) {
                         case 'NUMBER':
                         case 'INT':
                         case 'INTEGER':
-                            $this->cliParameters[$param]['type'] = 'integer';
+                            $parsedParameters[$param]['type'] = 'integer';
                             break;
                         case 'FILE':
                         case 'PATH':
-                            $this->cliParameters[$param]['type'] = 'file';
+                            $parsedParameters[$param]['type'] = 'file';
                             break;
                     }
                 }
@@ -655,10 +812,10 @@ class IntelligentPackagerTab
         }
 
         // 查找帮助文本中的参数描述
-        $this->parseHelpDescriptions($helpOutput);
+        $this->parseHelpDescriptionsForParameters($helpOutput, $parsedParameters);
 
         // 特殊处理verbose参数类型
-        foreach ($this->cliParameters as $name => &$param) {
+        foreach ($parsedParameters as $name => &$param) {
             // 检查是否为verbose相关参数
             if (strpos($name, 'verbose') !== false || strpos($name, 'verbos') !== false) {
                 $param['type'] = 'boolean';
@@ -678,7 +835,7 @@ class IntelligentPackagerTab
         }
 
         // 标记必需参数
-        foreach ($this->cliParameters as $name => &$param) {
+        foreach ($parsedParameters as $name => &$param) {
             // 检查描述中是否包含"必需"、"required"等关键词
             if (isset($param['description']) &&
                 (strpos($param['description'], '必需') !== false ||
@@ -687,196 +844,195 @@ class IntelligentPackagerTab
                 $param['required'] = true;
             }
         }
-    }
 
-    private function parseHelpDescriptions($helpOutput)
-    {
-        // 查找参数和描述的模式
-        $lines = explode("\n", $helpOutput);
-        foreach ($lines as $line) {
-            // 查找 -f, --file FILE          Input file path (required) 格式的行
-            if (preg_match('/^\s*(-[a-zA-Z]),\s*(--?[a-zA-Z0-9\-_]+)\s+[A-Z_]*\s*(.+)$/', $line, $matches)) {
-                $shortOpt = ltrim($matches[1], '-');
-                $longOpt = ltrim($matches[2], '-');
-                $description = trim($matches[3]);
-
-                // 更新长选项描述
-                if (isset($this->cliParameters[$longOpt])) {
-                    $this->cliParameters[$longOpt]['description'] = $description;
-                }
-                // 更新短选项描述
-                if (isset($this->cliParameters[$shortOpt])) {
-                    $this->cliParameters[$shortOpt]['description'] = $description;
-                }
-            }
-            // 查找 --file FILE          Input file path (required) 格式的行
-            else if (preg_match('/^\s*(--?[a-zA-Z0-9\-_]+)\s+[A-Z_]*\s*(.+)$/', $line, $matches)) {
-                $param = ltrim($matches[1], '-');
-                $description = trim($matches[2]);
-
-                if (isset($this->cliParameters[$param])) {
-                    $this->cliParameters[$param]['description'] = $description;
-                }
-            }
-            // 查找 -p, --param 描述 或 --param 描述 的模式
-            else if (preg_match('/^[\s]*(-[a-zA-Z],?[\s]*)?(--?[a-zA-Z0-9\-_]+)[\s,]+(.+)$/', $line, $matches)) {
-                $param = str_replace(['--', '-'], '', $matches[2]);
-                $description = trim($matches[3]);
-
-                if (isset($this->cliParameters[$param])) {
-                    $this->cliParameters[$param]['description'] = $description;
-                }
-            }
-            // 查找 --param 描述 的模式
-            else if (preg_match('/^[\s]*(--?[a-zA-Z0-9\-_]+)[\s]{2,}(.+)$/', $line, $matches)) {
-                $param = str_replace(['--', '-'], '', $matches[1]);
-                $description = trim($matches[2]);
-
-                if (isset($this->cliParameters[$param])) {
-                    $this->cliParameters[$param]['description'] = $description;
-                }
-            }
-            // 查找 -p 描述 的模式
-            else if (preg_match('/^[\s]*(-[a-zA-Z])[\s]{2,}(.+)$/', $line, $matches)) {
-                $param = str_replace('-', '', $matches[1]);
-                $description = trim($matches[2]);
-
-                if (isset($this->cliParameters[$param])) {
-                    $this->cliParameters[$param]['description'] = $description;
-                }
-            }
-        }
+        // 将解析到的参数赋值给类属性
+        $this->cliParameters = $parsedParameters;
+        $this->appendOutput("解析完成，共检测到 " . count($this->cliParameters) . " 个参数\n");
     }
 
     private function updateDynamicParameterControls()
     {
-        $this->appendOutput("开始更新动态参数控件\n");
-        
-        // 清空动态容器
-        while (true) {
-            try {
-                Box::delete($this->dynamicContainer, 0);
-            } catch (\Exception $e) {
-                // 当没有更多子元素时会抛出异常，此时退出循环
-                break;
-            }
-        }
+        try {
+            $this->appendOutput("开始更新动态参数控件\n");
 
-        // 如果没有参数，显示提示信息
-        if (empty($this->cliParameters)) {
-            $this->appendOutput("未检测到CLI参数\n");
-            $hintLabel = Label::create("未检测到 CLI 参数，将使用默认运行方式");
-            Box::append($this->dynamicContainer, $hintLabel, false);
-            
+            // 清空动态容器
+            while (true) {
+                try {
+                    Box::delete($this->dynamicContainer, 0);
+                } catch (\Exception $e) {
+                    // 当没有更多子元素时会抛出异常，此时退出循环
+                    break;
+                }
+            }
+
+            // 如果没有参数，显示提示信息
+            if (empty($this->cliParameters)) {
+                $this->appendOutput("未检测到CLI参数\n");
+                $hintLabel = Label::create("未检测到 CLI 参数，将使用默认运行方式");
+                Box::append($this->dynamicContainer, $hintLabel, false);
+
+                // 添加提示信息，建议用户查看参数配置
+                $tipLabel = Label::create("参数配置界面已更新，请查看上方的'CLI 参数配置'区域");
+                Box::append($this->dynamicContainer, $tipLabel, false);
+
+                // 确保动态容器是可见的
+                Control::show($this->dynamicContainer);
+                $this->appendOutput("已显示动态容器（无参数情况）\n");
+                $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
+                return;
+            }
+
+            // 显示参数配置界面
+            $this->appendOutput("显示参数配置界面，参数数量: " . count($this->cliParameters) . "\n");
+            $this->showParameterConfigForm();
+
             // 添加提示信息，建议用户查看参数配置
             $tipLabel = Label::create("参数配置界面已更新，请查看上方的'CLI 参数配置'区域");
             Box::append($this->dynamicContainer, $tipLabel, false);
-            
+
             // 确保动态容器是可见的
             Control::show($this->dynamicContainer);
-            $this->appendOutput("已显示动态容器（无参数情况）\n");
-            return;
+            $this->appendOutput("已显示动态容器（有参数情况）\n");
+            $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
+        } catch (\Exception $e) {
+            $this->appendOutput("updateDynamicParameterControls 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("updateDynamicParameterControls 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
         }
-
-        // 显示参数配置界面
-        $this->appendOutput("显示参数配置界面，参数数量: " . count($this->cliParameters) . "\n");
-        $this->showParameterConfigForm();
-
-        // 添加提示信息，建议用户查看参数配置
-        $tipLabel = Label::create("参数配置界面已更新，请查看上方的'CLI 参数配置'区域");
-        Box::append($this->dynamicContainer, $tipLabel, false);
-        
-        // 确保动态容器是可见的
-        Control::show($this->dynamicContainer);
-        $this->appendOutput("已显示动态容器（有参数情况）\n");
     }
 
     private function showParameterConfigForm()
     {
-        $this->appendOutput("开始创建参数配置表单\n");
+        try {
+            $this->appendOutput("开始创建参数配置表单\n");
 
-        // 添加标题
-        $titleLabel = Label::create("参数配置");
-        Box::append($this->dynamicContainer, $titleLabel, false);
+            // 添加标题
+            $titleLabel = Label::create("参数配置");
+            Box::append($this->dynamicContainer, $titleLabel, false);
 
-        $descLabel = Label::create("请配置以下参数");
-        Box::append($this->dynamicContainer, $descLabel, false);
+            $descLabel = Label::create("请配置以下参数");
+            Box::append($this->dynamicContainer, $descLabel, false);
 
-        // 创建分步导航按钮
-        $navBox = Box::newHorizontalBox();
-        Box::setPadded($navBox, true);
-        Box::append($this->dynamicContainer, $navBox, false);
+            // 创建分步导航按钮
+            $navBox = Box::newHorizontalBox();
+            Box::setPadded($navBox, true);
+            Box::append($this->dynamicContainer, $navBox, false);
 
-        $this->prevButton = Button::create("上一步");
-        Button::onClicked($this->prevButton, function ($btn) {
-            $this->showPreviousParameter();
-        });
-        Box::append($navBox, $this->prevButton, true);
-        Control::disable($this->prevButton); // 初始禁用
+            $this->prevButton = Button::create("上一步");
+            Button::onClicked($this->prevButton, function ($btn) {
+                $this->showPreviousParameter();
+            });
+            Box::append($navBox, $this->prevButton, true);
+            Control::disable($this->prevButton); // 初始禁用
 
-        $this->nextButton = Button::create("下一步");
-        Button::onClicked($this->nextButton, function ($btn) {
-            $this->showNextParameter();
-        });
-        Box::append($navBox, $this->nextButton, true);
+            $this->nextButton = Button::create("下一步");
+            Button::onClicked($this->nextButton, function ($btn) {
+                $this->showNextParameter();
+            });
+            Box::append($navBox, $this->nextButton, true);
 
-        // 为每个参数创建配置控件
-        $this->parameterKeys = array_keys($this->cliParameters);
-        $this->currentParameterIndex = 0;
+            // 为每个参数创建配置控件，但限制数量以避免性能问题
+            $this->parameterKeys = array_keys($this->cliParameters);
+            $this->currentParameterIndex = 0;
 
-        $paramCount = 0;
-        foreach ($this->cliParameters as $name => $param) {
-            $this->appendOutput("创建参数控件: $name\n");
-            $this->createParameterConfigControl($name, $param);
-            $paramCount++;
+            $paramCount = 0;
+            $maxParameters = 20; // 限制最多创建20个参数控件
+            foreach ($this->cliParameters as $name => $param) {
+                // 如果参数过多，只处理前几个
+                if ($paramCount >= $maxParameters) {
+                    $this->appendOutput("参数数量过多，只处理前 $maxParameters 个参数\n");
+                    break;
+                }
+
+                $this->appendOutput("创建参数控件: $name\n");
+                $this->createParameterConfigControl($name, $param);
+                $paramCount++;
+            }
+
+            // 如果没有参数，添加一个提示
+            if ($paramCount == 0) {
+                $this->appendOutput("未检测到参数，添加默认提示\n");
+                $hintLabel = Label::create("未检测到CLI参数");
+                Box::append($this->dynamicContainer, $hintLabel, false);
+            }
+
+            // 初始只显示第一个参数
+            if ($paramCount > 0) {
+                $this->showCurrentParameter();
+            }
+
+            $this->appendOutput("参数配置表单创建完成，共创建了 $paramCount 个参数控件\n");
+
+            // 确保动态容器是可见的
+            Control::show($this->dynamicContainer);
+            $this->appendOutput("已确保动态容器可见\n");
+            $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
+
+            // 添加调试信息，检查 step2Container 的状态
+            $this->appendOutput("step2Container 是否可见: " . (Control::visible($this->step2Container) ? "是" : "否") . "\n");
+        } catch (\Exception $e) {
+            $this->appendOutput("showParameterConfigForm 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("showParameterConfigForm 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
         }
-
-        // 初始只显示第一个参数
-        $this->showCurrentParameter();
-
-        $this->appendOutput("参数配置表单创建完成，共创建了 $paramCount 个参数控件\n");
-        
-        // 确保动态容器是可见的
-        Control::show($this->dynamicContainer);
-        $this->appendOutput("已确保动态容器可见\n");
     }
 
     private function showCurrentParameter()
     {
-        $this->appendOutput("显示当前参数，索引: " . $this->currentParameterIndex . "\n");
-        
-        // 隐藏所有参数控件
-        foreach ($this->paramConfigControls as $name => $controls) {
-            if (isset($controls['group'])) {
-                Control::hide($controls['group']);
+        try {
+            $this->appendOutput("显示当前参数，索引: " . $this->currentParameterIndex . "\n");
+
+            // 隐藏所有参数控件
+            foreach ($this->paramConfigControls as $name => $controls) {
+                if (isset($controls['group'])) {
+                    Control::hide($controls['group']);
+                    $this->appendOutput("隐藏参数控件组: $name\n");
+                }
             }
-        }
 
-        // 显示当前参数控件
-        if (isset($this->parameterKeys[$this->currentParameterIndex])) {
-            $currentParamName = $this->parameterKeys[$this->currentParameterIndex];
-            if (isset($this->paramConfigControls[$currentParamName]['group'])) {
-                Control::show($this->paramConfigControls[$currentParamName]['group']);
-                $this->appendOutput("显示参数控件: $currentParamName\n");
+            // 显示当前参数控件
+            if (isset($this->parameterKeys[$this->currentParameterIndex])) {
+                $currentParamName = $this->parameterKeys[$this->currentParameterIndex];
+                if (isset($this->paramConfigControls[$currentParamName]['group'])) {
+                    Control::show($this->paramConfigControls[$currentParamName]['group']);
+                    $this->appendOutput("显示参数控件: $currentParamName\n");
+                    $this->appendOutput("参数控件 $currentParamName 是否可见: " . (Control::visible($this->paramConfigControls[$currentParamName]['group']) ? "是" : "否") . "\n");
+                }
             }
-        }
 
-        // 更新导航按钮状态
-        if ($this->currentParameterIndex > 0) {
-            Control::enable($this->prevButton);
-        } else {
-            Control::disable($this->prevButton);
-        }
+            // 更新导航按钮状态
+            if ($this->currentParameterIndex > 0) {
+                Control::enable($this->prevButton);
+                $this->appendOutput("启用上一步按钮\n");
+            } else {
+                Control::disable($this->prevButton);
+                $this->appendOutput("禁用上一步按钮\n");
+            }
 
-        if ($this->currentParameterIndex < count($this->parameterKeys) - 1) {
-            Control::enable($this->nextButton);
-        } else {
-            Control::disable($this->nextButton);
-        }
-        
-        // 确保动态容器是可见的
-        if ($this->dynamicContainer) {
-            Control::show($this->dynamicContainer);
+            if ($this->currentParameterIndex < count($this->parameterKeys) - 1) {
+                Control::enable($this->nextButton);
+                $this->appendOutput("启用下一步按钮\n");
+            } else {
+                Control::disable($this->nextButton);
+                $this->appendOutput("禁用下一步按钮\n");
+            }
+
+            // 确保动态容器是可见的
+            if ($this->dynamicContainer) {
+                Control::show($this->dynamicContainer);
+                $this->appendOutput("确保 dynamicContainer 可见\n");
+                $this->appendOutput("dynamicContainer 是否可见: " . (Control::visible($this->dynamicContainer) ? "是" : "否") . "\n");
+            }
+        } catch (\Exception $e) {
+            $this->appendOutput("showCurrentParameter 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("showCurrentParameter 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
         }
     }
 
@@ -898,7 +1054,8 @@ class IntelligentPackagerTab
 
     private function createParameterConfigControl($name, $param)
     {
-        $this->appendOutput("开始创建参数控件: $name\n");
+        try {
+            $this->appendOutput("开始创建参数控件: $name\n");
         
         // 参数组
         $paramGroup = Group::create($name);
@@ -967,12 +1124,21 @@ class IntelligentPackagerTab
         if ($name !== ($this->parameterKeys[0] ?? '')) {
             Control::hide($paramGroup);
             $this->appendOutput("隐藏参数控件: $name\n");
+            $this->appendOutput("参数控件 $name 是否可见: " . (Control::visible($paramGroup) ? "是" : "否") . "\n");
         } else {
             Control::show($paramGroup);
             $this->appendOutput("显示参数控件: $name\n");
+            $this->appendOutput("参数控件 $name 是否可见: " . (Control::visible($paramGroup) ? "是" : "否") . "\n");
         }
-        
+
         $this->appendOutput("完成创建参数控件: $name\n");
+        } catch (\Exception $e) {
+            $this->appendOutput("createParameterConfigControl 方法中发生异常: " . $e->getMessage() . "\n");
+            $this->appendOutput("异常跟踪: " . $e->getTraceAsString() . "\n");
+        } catch (\Error $e) {
+            $this->appendOutput("createParameterConfigControl 方法中发生错误: " . $e->getMessage() . "\n");
+            $this->appendOutput("错误跟踪: " . $e->getTraceAsString() . "\n");
+        }
     }
 
     private function updateParameterConfigurations()

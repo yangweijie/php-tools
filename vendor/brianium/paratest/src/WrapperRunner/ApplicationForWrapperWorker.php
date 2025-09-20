@@ -95,10 +95,6 @@ final class ApplicationForWrapperWorker
             $testSuite     = TestSuite::fromClassReflector($testSuiteRefl);
         }
 
-        EventFacade::emitter()->testSuiteLoaded(
-            TestSuiteBuilder::from($testSuite),
-        );
-
         (new TestSuiteFilterProcessor())->process($this->configuration, $testSuite);
 
         if ($filter !== null) {
@@ -115,7 +111,7 @@ final class ApplicationForWrapperWorker
 
         $testSuite->run();
 
-        return TestResultFacade::result()->wasSuccessful()
+        return TestResultFacade::result()->wasSuccessfulIgnoringPhpunitWarnings()
             ? RunnerInterface::SUCCESS_EXIT
             : RunnerInterface::FAILURE_EXIT;
     }
@@ -215,7 +211,7 @@ final class ApplicationForWrapperWorker
             try {
                 $baseline = (new Reader())->read($baselineFile);
             } catch (CannotLoadBaselineException $e) {
-                EventFacade::emitter()->testRunnerTriggeredPhpunitWarning($e->getMessage());
+                EventFacade::emitter()->testRunnerTriggeredWarning($e->getMessage());
             }
 
             if ($baseline !== null) {
@@ -257,7 +253,6 @@ final class ApplicationForWrapperWorker
             assert(isset($this->testdoxColumns));
 
             (new TestDoxResultPrinter(DefaultPrinter::from($this->testdoxFile), $this->testdoxColor, $this->testdoxColumns, false))->print(
-                $result,
                 $this->testdoxResultCollector->testMethodsGroupedByClass(),
             );
         }

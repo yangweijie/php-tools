@@ -13,7 +13,6 @@ use function array_flip;
 use function array_key_exists;
 use function array_unique;
 use function assert;
-use function ltrim;
 use function strtolower;
 use function trim;
 use PHPUnit\Framework\TestSize\TestSize;
@@ -70,7 +69,7 @@ final class Groups
                 /** @phpstan-ignore booleanOr.alwaysTrue */
                 assert($metadata instanceof CoversClass || $metadata instanceof CoversFunction);
 
-                $groups[] = '__phpunit_covers_' . $this->canonicalizeName(ltrim($metadata->asStringForCodeUnitMapper(), ':'));
+                $groups[] = '__phpunit_covers_' . $this->canonicalizeName($metadata->asStringForCodeUnitMapper());
 
                 continue;
             }
@@ -87,7 +86,7 @@ final class Groups
                 /** @phpstan-ignore booleanOr.alwaysTrue */
                 assert($metadata instanceof UsesClass || $metadata instanceof UsesFunction);
 
-                $groups[] = '__phpunit_uses_' . $this->canonicalizeName(ltrim($metadata->asStringForCodeUnitMapper(), ':'));
+                $groups[] = '__phpunit_uses_' . $this->canonicalizeName($metadata->asStringForCodeUnitMapper());
 
                 continue;
             }
@@ -105,9 +104,7 @@ final class Groups
             }
         }
 
-        self::$groupCache[$key] = array_unique($groups);
-
-        return self::$groupCache[$key];
+        return self::$groupCache[$key] = array_unique($groups);
     }
 
     /**

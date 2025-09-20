@@ -57,7 +57,7 @@ final class NamePrettifier
     /**
      * @var array<string, int>
      */
-    private array $strings = [];
+    private static array $strings = [];
 
     /**
      * @param class-string $className
@@ -118,10 +118,10 @@ final class NamePrettifier
 
         $string = rtrim($name, '0123456789');
 
-        if (array_key_exists($string, $this->strings)) {
+        if (array_key_exists($string, self::$strings)) {
             $name = $string;
         } elseif ($string === $name) {
-            $this->strings[$string] = 1;
+            self::$strings[$string] = 1;
         }
 
         if (str_starts_with($name, 'test_')) {
@@ -167,7 +167,7 @@ final class NamePrettifier
             }
         }
 
-        return trim($buffer);
+        return $buffer;
     }
 
     public function prettifyTestCase(TestCase $test, bool $colorize): string
@@ -293,7 +293,7 @@ final class NamePrettifier
             $enumReflector = new ReflectionEnum($value);
 
             if ($enumReflector->isBacked()) {
-                return (string) $value->value;
+                return $value->value;
             }
 
             return $value->name;

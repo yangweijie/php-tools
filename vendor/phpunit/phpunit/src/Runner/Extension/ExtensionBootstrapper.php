@@ -43,7 +43,7 @@ final readonly class ExtensionBootstrapper
     public function bootstrap(string $className, array $parameters): void
     {
         if (!class_exists($className)) {
-            EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+            EventFacade::emitter()->testRunnerTriggeredWarning(
                 sprintf(
                     'Cannot bootstrap extension because class %s does not exist',
                     $className,
@@ -54,7 +54,7 @@ final readonly class ExtensionBootstrapper
         }
 
         if (!in_array(Extension::class, class_implements($className), true)) {
-            EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+            EventFacade::emitter()->testRunnerTriggeredWarning(
                 sprintf(
                     'Cannot bootstrap extension because class %s does not implement interface %s',
                     $className,
@@ -76,7 +76,7 @@ final readonly class ExtensionBootstrapper
                 ParameterCollection::fromArray($parameters),
             );
         } catch (Throwable $t) {
-            EventFacade::emitter()->testRunnerTriggeredPhpunitWarning(
+            EventFacade::emitter()->testRunnerTriggeredWarning(
                 sprintf(
                     'Bootstrapping of extension %s failed: %s%s%s',
                     $className,

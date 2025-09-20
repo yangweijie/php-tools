@@ -40,7 +40,6 @@ final class WmicLogicalFinder extends ProcOpenBasedFinder
             return parent::countCpuCores($process);
         }
 
-        /** @phpstan-ignore offsetAccess.notFound */
         $count = $matches['count'];
 
         return parent::countCpuCores($count);

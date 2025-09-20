@@ -17,13 +17,11 @@ use PHPUnit\Logging\TestDox\NamePrettifier;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final class TestDoxBuilder
+final readonly class TestDoxBuilder
 {
-    private static ?NamePrettifier $namePrettifier = null;
-
     public static function fromTestCase(TestCase $testCase): TestDox
     {
-        $prettifier = self::namePrettifier();
+        $prettifier = new NamePrettifier;
 
         return new TestDox(
             $prettifier->prettifyTestClassName($testCase::class),
@@ -38,7 +36,7 @@ final class TestDoxBuilder
      */
     public static function fromClassNameAndMethodName(string $className, string $methodName): TestDox
     {
-        $prettifier = self::namePrettifier();
+        $prettifier = new NamePrettifier;
 
         $prettifiedMethodName = $prettifier->prettifyTestMethodName($methodName);
 
@@ -47,14 +45,5 @@ final class TestDoxBuilder
             $prettifiedMethodName,
             $prettifiedMethodName,
         );
-    }
-
-    private static function namePrettifier(): NamePrettifier
-    {
-        if (self::$namePrettifier === null) {
-            self::$namePrettifier = new NamePrettifier;
-        }
-
-        return self::$namePrettifier;
     }
 }

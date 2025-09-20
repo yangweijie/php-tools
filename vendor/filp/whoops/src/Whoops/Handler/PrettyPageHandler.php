@@ -28,7 +28,6 @@ class PrettyPageHandler extends Handler
     const EDITOR_ESPRESSO = "espresso";
     const EDITOR_XDEBUG = "xdebug";
     const EDITOR_NETBEANS = "netbeans";
-    const EDITOR_CURSOR = "cursor";
 
     /**
      * Search paths to be scanned for resources.
@@ -123,7 +122,6 @@ class PrettyPageHandler extends Handler
         "atom"     => "atom://core/open/file?filename=%file&line=%line",
         "espresso" => "x-espresso://open?filepath=%file&lines=%line",
         "netbeans" => "netbeans://open/?f=%file:%line",
-        "cursor"   => "cursor://file/%file:%line",
     ];
 
     /**

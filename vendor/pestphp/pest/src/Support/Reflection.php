@@ -34,6 +34,8 @@ final class Reflection
         try {
             $reflectionMethod = $reflectionClass->getMethod($method);
 
+            $reflectionMethod->setAccessible(true);
+
             return $reflectionMethod->invoke($object, ...$args);
         } catch (ReflectionException $exception) {
             if (method_exists($object, '__call')) {
@@ -111,6 +113,8 @@ final class Reflection
             }
         }
 
+        $reflectionProperty->setAccessible(true);
+
         return $reflectionProperty->getValue($object);
     }
 
@@ -140,6 +144,8 @@ final class Reflection
                 }
             }
         }
+
+        $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($object, $value);
     }
 

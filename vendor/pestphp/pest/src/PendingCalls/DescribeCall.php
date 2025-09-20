@@ -78,7 +78,7 @@ final class DescribeCall
             $this->currentBeforeEachCall->describing[] = $this->description;
         }
 
-        $this->currentBeforeEachCall->{$name}(...$arguments);
+        $this->currentBeforeEachCall->{$name}(...$arguments); // @phpstan-ignore-line
 
         return $this;
     }

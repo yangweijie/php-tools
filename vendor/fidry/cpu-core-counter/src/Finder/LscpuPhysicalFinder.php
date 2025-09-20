@@ -40,7 +40,6 @@ final class LscpuPhysicalFinder extends ProcOpenBasedFinder
     protected function countCpuCores(string $process): ?int
     {
         $lines = explode(PHP_EOL, $process);
-        /** @var string[]|false $actualLines */
         $actualLines = preg_grep('/^\d+/', $lines);
 
         if (!is_array($actualLines)) {

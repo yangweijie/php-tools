@@ -23,12 +23,14 @@ final class EnsureIgnorableTestCasesAreIgnored implements StartedSubscriber
     {
         $reflection = new ReflectionClass(Facade::class);
         $property = $reflection->getProperty('collector');
+        $property->setAccessible(true);
         $collector = $property->getValue();
 
         assert($collector instanceof Collector);
 
         $reflection = new ReflectionClass($collector);
         $property = $reflection->getProperty('testRunnerTriggeredWarningEvents');
+        $property->setAccessible(true);
 
         /** @var array<int, WarningTriggered> $testRunnerTriggeredWarningEvents */
         $testRunnerTriggeredWarningEvents = $property->getValue($collector);

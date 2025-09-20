@@ -77,9 +77,7 @@ final class InvalidTag implements Tag
     private function flattenExceptionBacktrace(Throwable $exception): void
     {
         $traceProperty = (new ReflectionClass(Exception::class))->getProperty('trace');
-        if (PHP_VERSION_ID < 80100) {
-            $traceProperty->setAccessible(true);
-        }
+        $traceProperty->setAccessible(true);
 
         do {
             $trace = $exception->getTrace();
@@ -98,9 +96,7 @@ final class InvalidTag implements Tag
             $exception = $exception->getPrevious();
         } while ($exception !== null);
 
-        if (PHP_VERSION_ID < 80100) {
-            $traceProperty->setAccessible(false);
-        }
+        $traceProperty->setAccessible(false);
     }
 
     /**

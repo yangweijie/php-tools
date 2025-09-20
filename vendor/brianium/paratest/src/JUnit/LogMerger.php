@@ -15,7 +15,7 @@ use function ksort;
  *
  * @immutable
  */
-final readonly class LogMerger
+final class LogMerger
 {
     /** @param list<SplFileInfo> $junitFiles */
     public function merge(array $junitFiles): ?TestSuite

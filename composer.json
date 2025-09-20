@@ -22,8 +22,8 @@
         "humbug/box": "^4.6",
         "laravel/pint": "^1.20",
         "mockery/mockery": "^1.6.12",
-        "pestphp/pest": "^3.8.2",
-        "phpacker/phpacker": "^0.6.3"
+        "pestphp/pest": "*",
+        "phpacker/phpacker": "*"
     },
     "autoload": {
         "psr-4": {

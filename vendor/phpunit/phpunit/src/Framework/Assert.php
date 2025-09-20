@@ -294,8 +294,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type array.
      *
-     * @phpstan-assert iterable<array<mixed>> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -313,8 +311,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type bool.
-     *
-     * @phpstan-assert iterable<bool> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -334,8 +330,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type callable.
      *
-     * @phpstan-assert iterable<callable> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -353,8 +347,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type float.
-     *
-     * @phpstan-assert iterable<float> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -374,8 +366,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type int.
      *
-     * @phpstan-assert iterable<int> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -393,8 +383,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type iterable.
-     *
-     * @phpstan-assert iterable<iterable<mixed>> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -414,8 +402,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type null.
      *
-     * @phpstan-assert iterable<null> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -433,8 +419,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type numeric.
-     *
-     * @phpstan-assert iterable<numeric> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -454,8 +438,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type object.
      *
-     * @phpstan-assert iterable<object> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -473,8 +455,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type resource.
-     *
-     * @phpstan-assert iterable<resource> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -494,8 +474,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type closed resource.
      *
-     * @phpstan-assert iterable<resource> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -513,8 +491,6 @@ abstract class Assert
 
     /**
      * Asserts that a haystack contains only values of type scalar.
-     *
-     * @phpstan-assert iterable<scalar> $haystack
      *
      * @param iterable<mixed> $haystack
      *
@@ -534,8 +510,6 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only values of type string.
      *
-     * @phpstan-assert iterable<string> $haystack
-     *
      * @param iterable<mixed> $haystack
      *
      * @throws ExpectationFailedException
@@ -554,11 +528,7 @@ abstract class Assert
     /**
      * Asserts that a haystack contains only instances of a specified interface or class name.
      *
-     * @template T
-     *
-     * @phpstan-assert iterable<T> $haystack
-     *
-     * @param class-string<T> $className
+     * @param class-string    $className
      * @param iterable<mixed> $haystack
      *
      * @throws Exception
@@ -1073,6 +1043,8 @@ abstract class Assert
      *
      * @throws ExpectationFailedException
      * @throws GeneratorNotSupportedException
+     *
+     * @phpstan-assert empty $actual
      */
     final public static function assertEmpty(mixed $actual, string $message = ''): void
     {
@@ -1088,6 +1060,8 @@ abstract class Assert
      *
      * @throws ExpectationFailedException
      * @throws GeneratorNotSupportedException
+     *
+     * @phpstan-assert !empty $actual
      */
     final public static function assertNotEmpty(mixed $actual, string $message = ''): void
     {
@@ -2678,7 +2652,14 @@ abstract class Assert
         self::assertIsString($actualJson);
         self::assertJson($actualJson, $message);
 
-        self::assertThat($actualJson, new JsonMatches($expectedJson), $message);
+        $constraintExpected = new JsonMatches(
+            $expectedJson,
+        );
+
+        $constraintActual = new JsonMatches($actualJson);
+
+        self::assertThat($expectedJson, $constraintActual, $message);
+        self::assertThat($actualJson, $constraintExpected, $message);
     }
 
     /**
@@ -2702,7 +2683,14 @@ abstract class Assert
         self::assertIsString($actualJson);
         self::assertJson($actualJson, $message);
 
-        self::assertThat($actualJson, self::logicalNot(new JsonMatches($expectedJson)), $message);
+        $constraintExpected = new JsonMatches(
+            $expectedJson,
+        );
+
+        $constraintActual = new JsonMatches($actualJson);
+
+        self::assertThat($expectedJson, new LogicalNot($constraintActual), $message);
+        self::assertThat($actualJson, new LogicalNot($constraintExpected), $message);
     }
 
     /**

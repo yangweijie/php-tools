@@ -535,7 +535,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => ! enum_exists($object->name) && isset($object->reflectionClass) && $object->reflectionClass->isFinal(),
+            fn (ObjectDescription $object): bool => ! enum_exists($object->name) && $object->reflectionClass->isFinal(),
             'to be final',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -548,7 +548,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => ! enum_exists($object->name) && isset($object->reflectionClass) && $object->reflectionClass->isReadOnly() && assert(true), // @phpstan-ignore-line
+            fn (ObjectDescription $object): bool => ! enum_exists($object->name) && $object->reflectionClass->isReadOnly() && assert(true), // @phpstan-ignore-line
             'to be readonly',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -561,7 +561,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->isTrait(),
+            fn (ObjectDescription $object): bool => $object->reflectionClass->isTrait(),
             'to be trait',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -582,7 +582,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->isAbstract(),
+            fn (ObjectDescription $object): bool => $object->reflectionClass->isAbstract(),
             'to be abstract',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -599,7 +599,7 @@ final class Expectation
 
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => count(array_filter($methods, fn (string $method): bool => isset($object->reflectionClass) && $object->reflectionClass->hasMethod($method))) === count($methods),
+            fn (ObjectDescription $object): bool => count(array_filter($methods, fn (string $method): bool => $object->reflectionClass->hasMethod($method))) === count($methods),
             sprintf("to have method '%s'", implode("', '", $methods)),
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -670,7 +670,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->isEnum(),
+            fn (ObjectDescription $object): bool => $object->reflectionClass->isEnum(),
             'to be enum',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -712,7 +712,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->isInterface(),
+            fn (ObjectDescription $object): bool => $object->reflectionClass->isInterface(),
             'to be interface',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -733,7 +733,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && ($class === $object->reflectionClass->getName() || $object->reflectionClass->isSubclassOf($class)),
+            fn (ObjectDescription $object): bool => $class === $object->reflectionClass->getName() || $object->reflectionClass->isSubclassOf($class),
             sprintf("to extend '%s'", $class),
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -773,10 +773,6 @@ final class Expectation
             $this,
             function (ObjectDescription $object) use ($traits): bool {
                 foreach ($traits as $trait) {
-                    if (isset($object->reflectionClass) === false) {
-                        return false;
-                    }
-
                     if (! in_array($trait, $object->reflectionClass->getTraitNames(), true)) {
                         return false;
                     }
@@ -796,7 +792,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->getInterfaceNames() === [],
+            fn (ObjectDescription $object): bool => $object->reflectionClass->getInterfaceNames() === [],
             'to implement nothing',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -813,8 +809,7 @@ final class Expectation
 
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass)
-                && (count($interfaces) === count($object->reflectionClass->getInterfaceNames()))
+            fn (ObjectDescription $object): bool => count($interfaces) === count($object->reflectionClass->getInterfaceNames())
                 && array_diff($interfaces, $object->reflectionClass->getInterfaceNames()) === [],
             "to only implement '".implode("', '", $interfaces)."'",
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
@@ -828,7 +823,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && str_starts_with($object->reflectionClass->getShortName(), $prefix),
+            fn (ObjectDescription $object): bool => str_starts_with($object->reflectionClass->getShortName(), $prefix),
             "to have prefix '{$prefix}'",
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -841,7 +836,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && str_ends_with($object->reflectionClass->getName(), $suffix),
+            fn (ObjectDescription $object): bool => str_ends_with($object->reflectionClass->getName(), $suffix),
             "to have suffix '{$suffix}'",
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -860,7 +855,7 @@ final class Expectation
             $this,
             function (ObjectDescription $object) use ($interfaces): bool {
                 foreach ($interfaces as $interface) {
-                    if (! isset($object->reflectionClass) || ! $object->reflectionClass->implementsInterface($interface)) {
+                    if (! $object->reflectionClass->implementsInterface($interface)) {
                         return false;
                     }
                 }
@@ -933,7 +928,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->hasMethod('__invoke'),
+            fn (ObjectDescription $object): bool => $object->reflectionClass->hasMethod('__invoke'),
             'to be invokable',
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class'))
         );
@@ -1042,7 +1037,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass) && $object->reflectionClass->getAttributes($attribute) !== [],
+            fn (ObjectDescription $object): bool => $object->reflectionClass->getAttributes($attribute) !== [],
             "to have attribute '{$attribute}'",
             FileLineFinder::where(fn (string $line): bool => str_contains($line, 'class')),
         );
@@ -1071,8 +1066,7 @@ final class Expectation
     {
         return Targeted::make(
             $this,
-            fn (ObjectDescription $object): bool => isset($object->reflectionClass)
-                && $object->reflectionClass->isEnum()
+            fn (ObjectDescription $object): bool => $object->reflectionClass->isEnum()
                 && (new ReflectionEnum($object->name))->isBacked() // @phpstan-ignore-line
                 && (string) (new ReflectionEnum($object->name))->getBackingType() === $backingType, // @phpstan-ignore-line
             'to be '.$backingType.' backed enum',

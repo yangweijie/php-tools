@@ -46,10 +46,9 @@ declare(strict_types=1);
 namespace PHPUnit\Runner\ResultCache;
 
 use const DIRECTORY_SEPARATOR;
-use const LOCK_EX;
 
 use PHPUnit\Framework\TestStatus\TestStatus;
-use PHPUnit\Runner\DirectoryDoesNotExistException;
+use PHPUnit\Runner\DirectoryCannotBeCreatedException;
 use PHPUnit\Runner\Exception;
 use PHPUnit\Util\Filesystem;
 
@@ -66,8 +65,6 @@ use function json_encode;
 use function Pest\version;
 
 /**
- * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
- *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
 final class DefaultResultCache implements ResultCache
@@ -80,12 +77,12 @@ final class DefaultResultCache implements ResultCache
     private readonly string $cacheFilename;
 
     /**
-     * @var array<string, TestStatus>
+     * @psalm-var array<string, TestStatus>
      */
     private array $defects = [];
 
     /**
-     * @var array<string, float>
+     * @psalm-var array<string, float>
      */
     private array $times = [];
 
@@ -98,39 +95,28 @@ final class DefaultResultCache implements ResultCache
         $this->cacheFilename = $filepath ?? $_ENV['PHPUNIT_RESULT_CACHE'] ?? self::DEFAULT_RESULT_CACHE_FILENAME;
     }
 
-    public function setStatus(ResultCacheId $id, TestStatus $status): void
+    public function setStatus(string $id, TestStatus $status): void
     {
         if ($status->isSuccess()) {
             return;
         }
 
-        $this->defects[$id->asString()] = $status;
+        $this->defects[$id] = $status;
     }
 
-    public function status(ResultCacheId $id): TestStatus
+    public function status(string $id): TestStatus
     {
-        return $this->defects[$id->asString()] ?? TestStatus::unknown();
+        return $this->defects[$id] ?? TestStatus::unknown();
     }
 
-    public function setTime(ResultCacheId $id, float $time): void
+    public function setTime(string $id, float $time): void
     {
-        $this->times[$id->asString()] = $time;
+        $this->times[$id] = $time;
     }
 
-    public function time(ResultCacheId $id): float
+    public function time(string $id): float
     {
-        return $this->times[$id->asString()] ?? 0.0;
-    }
-
-    public function mergeWith(self $other): void
-    {
-        foreach ($other->defects as $id => $defect) {
-            $this->defects[$id] = $defect;
-        }
-
-        foreach ($other->times as $id => $time) {
-            $this->times[$id] = $time;
-        }
+        return $this->times[$id] ?? 0.0;
     }
 
     public function load(): void
@@ -179,7 +165,7 @@ final class DefaultResultCache implements ResultCache
     public function persist(): void
     {
         if (! Filesystem::createDirectory(dirname($this->cacheFilename))) {
-            throw new DirectoryDoesNotExistException(dirname($this->cacheFilename));
+            throw new DirectoryCannotBeCreatedException($this->cacheFilename);
         }
 
         $data = [

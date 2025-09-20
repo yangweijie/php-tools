@@ -119,6 +119,6 @@ final readonly class Init implements HandlesArguments
      */
     private function isLaravelInstalled(): bool
     {
-        return InstalledVersions::isInstalled('laravel/framework');
+        return InstalledVersions::isInstalled('laravel/laravel');
     }
 }

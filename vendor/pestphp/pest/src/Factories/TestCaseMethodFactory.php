@@ -155,7 +155,7 @@ final class TestCaseMethodFactory
         assert($testCase instanceof TestCaseFactory);
         $method = $this;
 
-        return function (...$arguments) use ($testCase, $method, $closure): mixed {
+        return function (...$arguments) use ($testCase, $method, $closure): mixed { // @phpstan-ignore-line
             /* @var TestCase $this */
             $testCase->proxies->proxy($this);
             $method->proxies->proxy($this);
