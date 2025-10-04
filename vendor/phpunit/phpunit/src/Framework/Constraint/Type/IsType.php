@@ -94,7 +94,7 @@ final class IsType extends Constraint
     public const TYPE_ITERABLE = 'iterable';
 
     /**
-     * @var array<string,bool>
+     * @psalm-var array<string,bool>
      */
     private const KNOWN_TYPES = [
         'array'             => true,
@@ -117,12 +117,12 @@ final class IsType extends Constraint
     ];
 
     /**
-     * @var 'array'|'bool'|'boolean'|'callable'|'double'|'float'|'int'|'integer'|'iterable'|'null'|'numeric'|'object'|'real'|'resource (closed)'|'resource'|'scalar'|'string'
+     * @psalm-var 'array'|'boolean'|'bool'|'double'|'float'|'integer'|'int'|'null'|'numeric'|'object'|'real'|'resource'|'resource (closed)'|'string'|'scalar'|'callable'|'iterable'
      */
     private readonly string $type;
 
     /**
-     * @param 'array'|'bool'|'boolean'|'callable'|'double'|'float'|'int'|'integer'|'iterable'|'null'|'numeric'|'object'|'real'|'resource (closed)'|'resource'|'scalar'|'string' $type
+     * @psalm-param 'array'|'boolean'|'bool'|'double'|'float'|'integer'|'int'|'null'|'numeric'|'object'|'real'|'resource'|'resource (closed)'|'string'|'scalar'|'callable'|'iterable' $type
      *
      * @throws UnknownTypeException
      */

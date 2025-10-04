@@ -20,10 +20,10 @@ use SebastianBergmann\CodeCoverage\Util\Percentage;
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type LinesOfCodeType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
- * @phpstan-import-type ProcessedFunctionType from \SebastianBergmann\CodeCoverage\Node\File
- * @phpstan-import-type ProcessedClassType from \SebastianBergmann\CodeCoverage\Node\File
- * @phpstan-import-type ProcessedTraitType from \SebastianBergmann\CodeCoverage\Node\File
+ * @psalm-import-type LinesOfCodeType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
+ * @psalm-import-type ProcessedFunctionType from \SebastianBergmann\CodeCoverage\Node\File
+ * @psalm-import-type ProcessedClassType from \SebastianBergmann\CodeCoverage\Node\File
+ * @psalm-import-type ProcessedTraitType from \SebastianBergmann\CodeCoverage\Node\File
  */
 abstract class AbstractNode implements Countable
 {
@@ -153,9 +153,6 @@ abstract class AbstractNode implements Countable
         return $this->numberOfTestedClasses() + $this->numberOfTestedTraits();
     }
 
-    /**
-     * @return array<string, ProcessedClassType|ProcessedTraitType>
-     */
     public function classesAndTraits(): array
     {
         return array_merge($this->classes(), $this->traits());
@@ -172,22 +169,22 @@ abstract class AbstractNode implements Countable
     }
 
     /**
-     * @return array<string, ProcessedClassType>
+     * @psalm-return array<string, ProcessedClassType>
      */
     abstract public function classes(): array;
 
     /**
-     * @return array<string, ProcessedTraitType>
+     * @psalm-return array<string, ProcessedTraitType>
      */
     abstract public function traits(): array;
 
     /**
-     * @return array<string, ProcessedFunctionType>
+     * @psalm-return array<string, ProcessedFunctionType>
      */
     abstract public function functions(): array;
 
     /**
-     * @return LinesOfCodeType
+     * @psalm-return LinesOfCodeType
      */
     abstract public function linesOfCode(): array;
 

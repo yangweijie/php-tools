@@ -16,26 +16,26 @@ use PHPUnit\Event\Event;
 use PHPUnit\Event\Telemetry;
 
 /**
- * @immutable
+ * @psalm-immutable
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class AfterLastTestMethodFinished implements Event
+final class AfterLastTestMethodFinished implements Event
 {
-    private Telemetry\Info $telemetryInfo;
+    private readonly Telemetry\Info $telemetryInfo;
 
     /**
-     * @var class-string
+     * @psalm-var class-string
      */
-    private string $testClassName;
+    private readonly string $testClassName;
 
     /**
-     * @var list<Code\ClassMethod>
+     * @psalm-var list<Code\ClassMethod>
      */
-    private array $calledMethods;
+    private readonly array $calledMethods;
 
     /**
-     * @param class-string $testClassName
+     * @psalm-param class-string $testClassName
      */
     public function __construct(Telemetry\Info $telemetryInfo, string $testClassName, Code\ClassMethod ...$calledMethods)
     {
@@ -50,7 +50,7 @@ final readonly class AfterLastTestMethodFinished implements Event
     }
 
     /**
-     * @return class-string
+     * @psalm-return class-string
      */
     public function testClassName(): string
     {
@@ -58,7 +58,7 @@ final readonly class AfterLastTestMethodFinished implements Event
     }
 
     /**
-     * @return list<Code\ClassMethod>
+     * @psalm-return list<Code\ClassMethod>
      */
     public function calledMethods(): array
     {

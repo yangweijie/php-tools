@@ -2,21 +2,22 @@
 
 namespace App;
 
-use Kingbes\Libui\Box;
-use Kingbes\Libui\Label;
-use Kingbes\Libui\Button;
-use Kingbes\Libui\Entry;
-use Kingbes\Libui\Combobox;
-use Kingbes\Libui\Group;
-use Kingbes\Libui\Control;
-use Kingbes\Libui\MsgBox;
+use Kingbes\Libui\SDK\LibuiVBox;
+use Kingbes\Libui\SDK\LibuiLabel;
+use Kingbes\Libui\SDK\LibuiButton;
+use Kingbes\Libui\SDK\LibuiEntry;
+use Kingbes\Libui\SDK\LibuiCombobox;
+use Kingbes\Libui\SDK\LibuiGroup;
+use Kingbes\Libui\Window;
 
 class DownloadAcceleratorTab
 {
-    private $box;
+    private LibuiVBox $box;
+    private LibuiEntry $urlEntry;
+    private LibuiCombobox $typeCombobox;
     
     // 支持的平台类型
-    private $platforms = [
+    private array $platforms = [
         'GitHub' => 'gh',
         'GitLab' => 'gl',
         'Gitea' => 'gitea',
@@ -55,70 +56,70 @@ class DownloadAcceleratorTab
     public function __construct()
     {
         // 创建主垂直容器
-        $this->box = Box::newVerticalBox();
-        Box::setPadded($this->box, true);
+        $this->box = new LibuiVBox();
+        $this->box->setPadded(true);
         
         // 添加标题
-        $titleLabel = Label::create("下载加速器");
-        Box::append($this->box, $titleLabel, false);
+        $titleLabel = new LibuiLabel("下载加速器");
+        $this->box->append($titleLabel, false);
         
         // 添加说明标签
-        $descLabel = Label::create("输入原始URL，选择平台类型，点击转换获取加速链接");
-        Box::append($this->box, $descLabel, false);
+        $descLabel = new LibuiLabel("输入原始URL，选择平台类型，点击转换获取加速链接");
+        $this->box->append($descLabel, false);
         
         // 创建输入区域
         $this->addInputControls($this->box);
     }
     
-    private function addInputControls($container)
+    private function addInputControls(LibuiVBox $container)
     {
         // 输入控件组
-        $inputGroup = Group::create("URL转换");
-        Group::setMargined($inputGroup, true);
-        Box::append($container, $inputGroup, false);
+        $inputGroup = new LibuiGroup("URL转换");
+        $inputGroup->setPadded(true);
+        $container->append($inputGroup, false);
         
-        $inputBox = Box::newVerticalBox();
-        Box::setPadded($inputBox, true);
-        Group::setChild($inputGroup, $inputBox);
+        $inputBox = new LibuiVBox();
+        $inputBox->setPadded(true);
+        $inputGroup->append($inputBox, false);
         
         // URL输入框标签
-        $urlLabel = Label::create("原始URL:");
-        Box::append($inputBox, $urlLabel, false);
+        $urlLabel = new LibuiLabel("原始URL:");
+        $inputBox->append($urlLabel, false);
         
         // URL输入框
-        $urlEntry = Entry::create();
-        Entry::setText($urlEntry, "https://github.com/user/repo/archive/main.zip");
-        Box::append($inputBox, $urlEntry, false);
+        $this->urlEntry = new LibuiEntry();
+        $this->urlEntry->setText("https://github.com/user/repo/archive/main.zip");
+        $inputBox->append($this->urlEntry, false);
         
         // 类型选择器标签
-        $typeLabel = Label::create("平台类型:");
-        Box::append($inputBox, $typeLabel, false);
+        $typeLabel = new LibuiLabel("平台类型:");
+        $inputBox->append($typeLabel, false);
         
         // 类型下拉框
-        $typeCombobox = Combobox::create();
+        $this->typeCombobox = new LibuiCombobox();
         $platformNames = array_keys($this->platforms);
         foreach ($platformNames as $name) {
-            Combobox::append($typeCombobox, $name);
+            $this->typeCombobox->append($name);
         }
-        Combobox::setSelected($typeCombobox, 0); // 默认选择GitHub
-        Box::append($inputBox, $typeCombobox, false);
+        $this->typeCombobox->setSelected(0); // 默认选择GitHub
+        $inputBox->append($this->typeCombobox, false);
         
         // 转换按钮
-        $convertButton = Button::create("转换为加速链接");
-        Button::onClicked($convertButton, function ($btn) use ($urlEntry, $typeCombobox) {
-            $this->convertUrl($urlEntry, $typeCombobox);
+        $convertButton = new LibuiButton("转换为加速链接");
+        $convertButton->onClick(function () {
+            $this->convertUrl();
         });
-        Box::append($inputBox, $convertButton, false);
+        $inputBox->append($convertButton, false);
     }
     
-    private function convertUrl($urlEntry, $typeCombobox)
+    private function convertUrl()
     {
         try {
             // 获取输入的URL
-            $originalUrl = Entry::text($urlEntry);
+            $originalUrl = $this->urlEntry->getText();
             
             // 获取选择的平台类型
-            $selectedIndex = Combobox::selected($typeCombobox);
+            $selectedIndex = $this->typeCombobox->getSelected();
             $platformNames = array_keys($this->platforms);
             $selectedPlatformName = $platformNames[$selectedIndex];
             $platformPrefix = $this->platforms[$selectedPlatformName];
@@ -134,22 +135,22 @@ class DownloadAcceleratorTab
             
             // 显示结果弹窗
             if ($clipboardSuccess) {
-                \Kingbes\Libui\Window::msgBox(
-                    $application->getWindow(), 
+                Window::msgBox(
+                    $application->getWindow()->getHandle(), 
                     "加速链接", 
                     "加速后的URL:\n\n" . $acceleratedUrl . "\n\n已复制到剪贴板"
                 );
             } else {
                 $errorMsg = \App\Clipboard::getLastError();
                 if (!empty($errorMsg)) {
-                    \Kingbes\Libui\Window::msgBox(
-                        $application->getWindow(), 
+                    Window::msgBox(
+                        $application->getWindow()->getHandle(), 
                         "加速链接", 
                         "加速后的URL:\n\n" . $acceleratedUrl . "\n\n复制到剪贴板失败: " . $errorMsg
                     );
                 } else {
-                    \Kingbes\Libui\Window::msgBox(
-                        $application->getWindow(), 
+                    Window::msgBox(
+                        $application->getWindow()->getHandle(), 
                         "加速链接", 
                         "加速后的URL:\n\n" . $acceleratedUrl . "\n\n复制到剪贴板失败，请手动复制"
                     );
@@ -160,15 +161,15 @@ class DownloadAcceleratorTab
             global $application;
             
             // 显示错误信息
-            \Kingbes\Libui\Window::msgBoxError(
-                $application->getWindow(),
+            Window::msgBoxError(
+                $application->getWindow()->getHandle(),
                 "错误",
                 "转换URL时发生错误: " . $e->getMessage()
             );
         }
     }
     
-    private function generateAcceleratedUrl($originalUrl, $platformPrefix)
+    private function generateAcceleratedUrl(string $originalUrl, string $platformPrefix)
     {
         $host = parse_url($originalUrl, PHP_URL_HOST);
         // 移除URL协议和host部分，保留URL的剩余部分

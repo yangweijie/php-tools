@@ -6,17 +6,11 @@ namespace ParaTest\WrapperRunner;
 
 use Generator;
 use ParaTest\Options;
-use PHPUnit\Event\Facade as EventFacade;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\TestSuite;
-use PHPUnit\Runner\Extension\ExtensionBootstrapper;
-use PHPUnit\Runner\Extension\Facade as ExtensionFacade;
-use PHPUnit\Runner\Extension\PharLoader;
 use PHPUnit\Runner\PhptTestCase;
-use PHPUnit\Runner\ResultCache\DefaultResultCache;
 use PHPUnit\Runner\ResultCache\NullResultCache;
 use PHPUnit\Runner\TestSuiteSorter;
-use PHPUnit\TestRunner\TestResult\Facade as TestResultFacade;
 use PHPUnit\TextUI\Command\Result;
 use PHPUnit\TextUI\Command\WarmCodeCoverageCacheCommand;
 use PHPUnit\TextUI\Configuration\CodeCoverageFilterRegistry;
@@ -35,7 +29,6 @@ use function is_string;
 use function mt_srand;
 use function ob_get_clean;
 use function ob_start;
-use function preg_quote;
 use function sprintf;
 use function str_starts_with;
 use function strlen;
@@ -56,34 +49,8 @@ final class SuiteLoader
         (new PhpHandler())->handle($this->options->configuration->php());
 
         if ($this->options->configuration->hasBootstrap()) {
-            $bootstrapFilename = $this->options->configuration->bootstrap();
-            include_once $bootstrapFilename;
-            EventFacade::emitter()->testRunnerBootstrapFinished($bootstrapFilename);
+            include_once $this->options->configuration->bootstrap();
         }
-
-        if (! $this->options->configuration->noExtensions()) {
-            if ($this->options->configuration->hasPharExtensionDirectory()) {
-                (new PharLoader())->loadPharExtensionsInDirectory(
-                    $this->options->configuration->pharExtensionDirectory(),
-                );
-            }
-
-            $extensionFacade       = new ExtensionFacade();
-            $extensionBootstrapper = new ExtensionBootstrapper(
-                $this->options->configuration,
-                $extensionFacade,
-            );
-
-            foreach ($this->options->configuration->extensionBootstrappers() as $bootstrapper) {
-                $extensionBootstrapper->bootstrap(
-                    $bootstrapper['className'],
-                    $bootstrapper['parameters'],
-                );
-            }
-        }
-
-        TestResultFacade::init();
-        EventFacade::instance()->seal();
 
         $testSuite = (new TestSuiteBuilder())->build($this->options->configuration);
 
@@ -96,13 +63,7 @@ final class SuiteLoader
             $this->options->configuration->executionOrderDefects() !== TestSuiteSorter::ORDER_DEFAULT ||
             $this->options->configuration->resolveDependencies()
         ) {
-            $resultCache = new NullResultCache();
-            if ($this->options->configuration->cacheResult()) {
-                $resultCache = new DefaultResultCache($this->options->configuration->testResultCacheFile());
-                $resultCache->load();
-            }
-
-            (new TestSuiteSorter($resultCache))->reorderTestsInSuite(
+            (new TestSuiteSorter(new NullResultCache()))->reorderTestsInSuite(
                 $testSuite,
                 $this->options->configuration->executionOrder(),
                 $this->options->configuration->resolveDependencies(),
@@ -126,7 +87,7 @@ final class SuiteLoader
                 if ($test->providedData() !== []) {
                     $dataName = $test->dataName();
                     if ($this->options->functional) {
-                        $name = sprintf('/%s%s$/', preg_quote($name, '/'), preg_quote($test->dataSetAsString(), '/'));
+                        $name = sprintf('/%s\s.*%s.*$/', $name, $dataName);
                     } else {
                         if (is_int($dataName)) {
                             $name .= '#' . $dataName;

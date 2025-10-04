@@ -15,7 +15,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 /**
  * @internal
  */
-final readonly class Thanks
+final class Thanks
 {
     /**
      * The support options.
@@ -33,8 +33,8 @@ final readonly class Thanks
      * Creates a new Console Command instance.
      */
     public function __construct(
-        private InputInterface $input,
-        private OutputInterface $output
+        private readonly InputInterface $input,
+        private readonly OutputInterface $output
     ) {
         // ..
     }
@@ -72,13 +72,13 @@ final readonly class Thanks
         }
 
         if ($wantsToSupport === true) {
-            if (PHP_OS_FAMILY === 'Darwin') {
+            if (PHP_OS_FAMILY == 'Darwin') {
                 exec('open https://github.com/pestphp/pest');
             }
-            if (PHP_OS_FAMILY === 'Windows') {
+            if (PHP_OS_FAMILY == 'Windows') {
                 exec('start https://github.com/pestphp/pest');
             }
-            if (PHP_OS_FAMILY === 'Linux') {
+            if (PHP_OS_FAMILY == 'Linux') {
                 exec('xdg-open https://github.com/pestphp/pest');
             }
         }

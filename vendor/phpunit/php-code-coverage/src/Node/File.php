@@ -16,14 +16,14 @@ use function range;
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type CodeUnitFunctionType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
- * @phpstan-import-type CodeUnitMethodType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
- * @phpstan-import-type CodeUnitClassType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
- * @phpstan-import-type CodeUnitTraitType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
- * @phpstan-import-type LinesOfCodeType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
- * @phpstan-import-type LinesType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
+ * @psalm-import-type CodeUnitFunctionType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
+ * @psalm-import-type CodeUnitMethodType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
+ * @psalm-import-type CodeUnitClassType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
+ * @psalm-import-type CodeUnitTraitType from \SebastianBergmann\CodeCoverage\StaticAnalysis\CodeUnitFindingVisitor
+ * @psalm-import-type LinesOfCodeType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
+ * @psalm-import-type LinesType from \SebastianBergmann\CodeCoverage\StaticAnalysis\FileAnalyser
  *
- * @phpstan-type ProcessedFunctionType = array{
+ * @psalm-type ProcessedFunctionType = array{
  *     functionName: string,
  *     namespace: string,
  *     signature: string,
@@ -40,7 +40,7 @@ use function range;
  *     crap: int|string,
  *     link: string
  * }
- * @phpstan-type ProcessedMethodType = array{
+ * @psalm-type ProcessedMethodType = array{
  *     methodName: string,
  *     visibility: string,
  *     signature: string,
@@ -57,7 +57,7 @@ use function range;
  *     crap: int|string,
  *     link: string
  * }
- * @phpstan-type ProcessedClassType = array{
+ * @psalm-type ProcessedClassType = array{
  *     className: string,
  *     namespace: string,
  *     methods: array<string, ProcessedMethodType>,
@@ -73,7 +73,7 @@ use function range;
  *     crap: int|string,
  *     link: string
  * }
- * @phpstan-type ProcessedTraitType = array{
+ * @psalm-type ProcessedTraitType = array{
  *     traitName: string,
  *     namespace: string,
  *     methods: array<string, ProcessedMethodType>,
@@ -93,7 +93,7 @@ use function range;
 final class File extends AbstractNode
 {
     /**
-     * @var array<int, ?list<non-empty-string>>
+     * @psalm-var array<int, ?list<non-empty-string>>
      */
     private array $lineCoverageData;
     private array $functionCoverageData;
@@ -106,22 +106,22 @@ final class File extends AbstractNode
     private int $numExecutedPaths      = 0;
 
     /**
-     * @var array<string, ProcessedClassType>
+     * @psalm-var array<string, ProcessedClassType>
      */
     private array $classes = [];
 
     /**
-     * @var array<string, ProcessedTraitType>
+     * @psalm-var array<string, ProcessedTraitType>
      */
     private array $traits = [];
 
     /**
-     * @var array<string, ProcessedFunctionType>
+     * @psalm-var array<string, ProcessedFunctionType>
      */
     private array $functions = [];
 
     /**
-     * @var LinesOfCodeType
+     * @psalm-var LinesOfCodeType
      */
     private readonly array $linesOfCode;
     private ?int $numClasses         = null;
@@ -138,11 +138,11 @@ final class File extends AbstractNode
     private array $codeUnitsByLine = [];
 
     /**
-     * @param array<int, ?list<non-empty-string>> $lineCoverageData
-     * @param array<string, CodeUnitClassType>    $classes
-     * @param array<string, CodeUnitTraitType>    $traits
-     * @param array<string, CodeUnitFunctionType> $functions
-     * @param LinesOfCodeType                     $linesOfCode
+     * @psalm-param array<int, ?list<non-empty-string>> $lineCoverageData
+     * @psalm-param LinesOfCodeType $linesOfCode
+     * @psalm-param array<string, CodeUnitClassType> $classes
+     * @psalm-param array<string, CodeUnitTraitType> $traits
+     * @psalm-param array<string, CodeUnitFunctionType> $functions
      */
     public function __construct(string $name, AbstractNode $parent, array $lineCoverageData, array $functionCoverageData, array $testData, array $classes, array $traits, array $functions, array $linesOfCode)
     {
@@ -162,7 +162,7 @@ final class File extends AbstractNode
     }
 
     /**
-     * @return array<int, ?list<non-empty-string>>
+     * @psalm-return array<int, ?list<non-empty-string>>
      */
     public function lineCoverageData(): array
     {
@@ -179,25 +179,16 @@ final class File extends AbstractNode
         return $this->testData;
     }
 
-    /**
-     * @return array<string, ProcessedClassType>
-     */
     public function classes(): array
     {
         return $this->classes;
     }
 
-    /**
-     * @return array<string, ProcessedTraitType>
-     */
     public function traits(): array
     {
         return $this->traits;
     }
 
-    /**
-     * @return array<string, ProcessedFunctionType>
-     */
     public function functions(): array
     {
         return $this->functions;
@@ -360,9 +351,9 @@ final class File extends AbstractNode
     }
 
     /**
-     * @param array<string, CodeUnitClassType>    $classes
-     * @param array<string, CodeUnitTraitType>    $traits
-     * @param array<string, CodeUnitFunctionType> $functions
+     * @psalm-param array<string, CodeUnitClassType> $classes
+     * @psalm-param array<string, CodeUnitTraitType> $traits
+     * @psalm-param array<string, CodeUnitFunctionType> $functions
      */
     private function calculateStatistics(array $classes, array $traits, array $functions): void
     {
@@ -467,7 +458,7 @@ final class File extends AbstractNode
     }
 
     /**
-     * @param array<string, CodeUnitClassType> $classes
+     * @psalm-param array<string, CodeUnitClassType> $classes
      */
     private function processClasses(array $classes): void
     {
@@ -516,7 +507,7 @@ final class File extends AbstractNode
     }
 
     /**
-     * @param array<string, CodeUnitTraitType> $traits
+     * @psalm-param array<string, CodeUnitTraitType> $traits
      */
     private function processTraits(array $traits): void
     {
@@ -565,7 +556,7 @@ final class File extends AbstractNode
     }
 
     /**
-     * @param array<string, CodeUnitFunctionType> $functions
+     * @psalm-param array<string, CodeUnitFunctionType> $functions
      */
     private function processFunctions(array $functions): void
     {
@@ -634,9 +625,9 @@ final class File extends AbstractNode
     }
 
     /**
-     * @param CodeUnitMethodType $method
+     * @psalm-param CodeUnitMethodType $method
      *
-     * @return ProcessedMethodType
+     * @psalm-return ProcessedMethodType
      */
     private function newMethod(string $className, string $methodName, array $method, string $link): array
     {

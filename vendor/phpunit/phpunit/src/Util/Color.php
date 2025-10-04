@@ -12,7 +12,6 @@ namespace PHPUnit\Util;
 use const DIRECTORY_SEPARATOR;
 use const PHP_EOL;
 use function array_map;
-use function array_walk;
 use function count;
 use function explode;
 use function implode;
@@ -34,7 +33,7 @@ use function trim;
 final class Color
 {
     /**
-     * @var array<string,string>
+     * @psalm-var array<string,string>
      */
     private const WHITESPACE_MAP = [
         ' '  => '·',
@@ -42,7 +41,7 @@ final class Color
     ];
 
     /**
-     * @var array<string,string>
+     * @psalm-var array<string,string>
      */
     private const WHITESPACE_EOL_MAP = [
         ' '  => '·',
@@ -52,7 +51,7 @@ final class Color
     ];
 
     /**
-     * @var array<string,string>
+     * @psalm-var array<string,string>
      */
     private static array $ansiCodes = [
         'reset'      => '0',
@@ -91,7 +90,7 @@ final class Color
 
         foreach ($codes as $code) {
             if (isset(self::$ansiCodes[$code])) {
-                $styles[] = self::$ansiCodes[$code];
+                $styles[] = self::$ansiCodes[$code] ?? '';
             }
         }
 
@@ -102,21 +101,18 @@ final class Color
         return self::optimizeColor(sprintf("\x1b[%sm", implode(';', $styles)) . $buffer . "\x1b[0m");
     }
 
-    public static function colorizeTextBox(string $color, string $buffer, ?int $columns = null): string
+    public static function colorizeTextBox(string $color, string $buffer): string
     {
-        $lines       = preg_split('/\r\n|\r|\n/', $buffer);
-        $maxBoxWidth = max(array_map('\strlen', $lines));
+        $lines   = preg_split('/\r\n|\r|\n/', $buffer);
+        $padding = max(array_map('\strlen', $lines));
 
-        if ($columns !== null) {
-            $maxBoxWidth = min($maxBoxWidth, $columns);
+        $styledLines = [];
+
+        foreach ($lines as $line) {
+            $styledLines[] = self::colorize($color, str_pad($line, $padding));
         }
 
-        array_walk($lines, static function (string &$line) use ($color, $maxBoxWidth): void
-        {
-            $line = self::colorize($color, str_pad($line, $maxBoxWidth));
-        });
-
-        return implode(PHP_EOL, $lines);
+        return implode(PHP_EOL, $styledLines);
     }
 
     public static function colorizePath(string $path, ?string $previousPath = null, bool $colorizeFilename = false): string

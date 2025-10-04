@@ -16,7 +16,7 @@ use PHPUnit\Framework\TestStatus\TestStatus;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class NullResultCache implements ResultCache
+final class NullResultCache implements ResultCache
 {
     public function setStatus(string $id, TestStatus $status): void
     {

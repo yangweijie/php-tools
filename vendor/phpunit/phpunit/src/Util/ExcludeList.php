@@ -44,7 +44,6 @@ use SebastianBergmann\Template\Template;
 use SebastianBergmann\Timer\Timer;
 use SebastianBergmann\Type\TypeName;
 use SebastianBergmann\Version;
-use staabm\SideEffectsDetector\SideEffectsDetector;
 use TheSeer\Tokenizer\Tokenizer;
 
 /**
@@ -53,7 +52,7 @@ use TheSeer\Tokenizer\Tokenizer;
 final class ExcludeList
 {
     /**
-     * @var array<string,int>
+     * @psalm-var array<string,int>
      */
     private const EXCLUDED_CLASS_NAMES = [
         // composer
@@ -134,22 +133,19 @@ final class ExcludeList
         // sebastian/version
         Version::class => 1,
 
-        // staabm/side-effects-detector
-        SideEffectsDetector::class => 1,
-
         // theseer/tokenizer
         Tokenizer::class => 1,
     ];
 
     /**
-     * @var list<string>
+     * @psalm-var list<string>
      */
     private static array $directories = [];
     private static bool $initialized  = false;
     private readonly bool $enabled;
 
     /**
-     * @param non-empty-string $directory
+     * @psalm-param non-empty-string $directory
      *
      * @throws InvalidDirectoryException
      */
@@ -172,7 +168,7 @@ final class ExcludeList
     }
 
     /**
-     * @return list<string>
+     * @psalm-return list<string>
      */
     public function getExcludedDirectories(): array
     {

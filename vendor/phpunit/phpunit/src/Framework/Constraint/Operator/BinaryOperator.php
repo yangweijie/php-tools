@@ -18,7 +18,7 @@ use function count;
 abstract class BinaryOperator extends Operator
 {
     /**
-     * @var list<Constraint>
+     * @psalm-var list<Constraint>
      */
     private readonly array $constraints;
 
@@ -75,7 +75,7 @@ abstract class BinaryOperator extends Operator
     }
 
     /**
-     * @return list<Constraint>
+     * @psalm-return list<Constraint>
      */
     final protected function constraints(): array
     {

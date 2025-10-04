@@ -46,13 +46,13 @@ final class StrictUnifiedDiffOutputBuilder implements DiffOutputBuilderInterface
     private bool $collapseRanges;
 
     /**
-     * @var positive-int
+     * @psalm-var positive-int
      */
     private int $commonLineThreshold;
     private string $header;
 
     /**
-     * @var positive-int
+     * @psalm-var positive-int
      */
     private int $contextLines;
 

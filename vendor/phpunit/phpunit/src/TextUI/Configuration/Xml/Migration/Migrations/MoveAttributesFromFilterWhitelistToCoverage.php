@@ -17,7 +17,7 @@ use DOMElement;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class MoveAttributesFromFilterWhitelistToCoverage implements Migration
+final class MoveAttributesFromFilterWhitelistToCoverage implements Migration
 {
     /**
      * @throws MigrationException

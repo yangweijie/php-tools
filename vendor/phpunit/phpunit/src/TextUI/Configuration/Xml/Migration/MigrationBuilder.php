@@ -16,7 +16,7 @@ use function version_compare;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class MigrationBuilder
+final class MigrationBuilder
 {
     private const AVAILABLE_MIGRATIONS = [
         '8.5' => [
@@ -63,35 +63,10 @@ final readonly class MigrationBuilder
         '10.0' => [
             MoveCoverageDirectoriesToSource::class,
         ],
-
-        '10.4' => [
-            RemoveBeStrictAboutTodoAnnotatedTestsAttribute::class,
-        ],
-
-        '10.5' => [
-            RemoveRegisterMockObjectsFromTestArgumentsRecursivelyAttribute::class,
-        ],
-
-        '11.0' => [
-            ReplaceRestrictDeprecationsWithIgnoreDeprecations::class,
-        ],
-
-        '11.1' => [
-            RemoveCacheResultFileAttribute::class,
-            RemoveCoverageElementCacheDirectoryAttribute::class,
-        ],
-
-        '11.2' => [
-            RemoveBeStrictAboutTodoAnnotatedTestsAttribute::class,
-        ],
-
-        '11.4' => [
-            RemoveCoverageElementIncludeUncoveredFilesAttribute::class,
-        ],
     ];
 
     /**
-     * @return non-empty-list<Migration>
+     * @throws MigrationBuilderException
      */
     public function build(string $fromVersion): array
     {

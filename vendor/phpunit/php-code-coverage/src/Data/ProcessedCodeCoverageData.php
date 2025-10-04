@@ -21,9 +21,9 @@ use SebastianBergmann\CodeCoverage\Driver\Driver;
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type XdebugFunctionCoverageType from \SebastianBergmann\CodeCoverage\Driver\XdebugDriver
+ * @psalm-import-type XdebugFunctionCoverageType from \SebastianBergmann\CodeCoverage\Driver\XdebugDriver
  *
- * @phpstan-type TestIdType = string
+ * @psalm-type TestIdType = string
  */
 final class ProcessedCodeCoverageData
 {
@@ -31,7 +31,7 @@ final class ProcessedCodeCoverageData
      * Line coverage data.
      * An array of filenames, each having an array of linenumbers, each executable line having an array of testcase ids.
      *
-     * @var array<string, array<int, null|list<TestIdType>>>
+     * @psalm-var array<string, array<int, null|list<TestIdType>>>
      */
     private array $lineCoverage = [];
 
@@ -40,7 +40,7 @@ final class ProcessedCodeCoverageData
      * Maintains base format of raw data (@see https://xdebug.org/docs/code_coverage), but each 'hit' entry is an array
      * of testcase ids.
      *
-     * @var array<string, array<string, array{
+     * @psalm-var array<string, array<string, array{
      *     branches: array<int, array{
      *         op_start: int,
      *         op_end: int,
@@ -237,7 +237,7 @@ final class ProcessedCodeCoverageData
     /**
      * For a function we have never seen before, copy all data over and simply init the 'hit' array.
      *
-     * @param XdebugFunctionCoverageType $functionData
+     * @psalm-param XdebugFunctionCoverageType $functionData
      */
     private function initPreviouslyUnseenFunction(string $file, string $functionName, array $functionData): void
     {
@@ -257,7 +257,7 @@ final class ProcessedCodeCoverageData
      * Techniques such as mocking and where the contents of a file are different vary during tests (e.g. compiling
      * containers) mean that the functions inside a file cannot be relied upon to be static.
      *
-     * @param XdebugFunctionCoverageType $functionData
+     * @psalm-param XdebugFunctionCoverageType $functionData
      */
     private function initPreviouslySeenFunction(string $file, string $functionName, array $functionData): void
     {

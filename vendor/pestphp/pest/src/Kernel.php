@@ -27,7 +27,7 @@ use Whoops\Exception\Inspector;
 /**
  * @internal
  */
-final readonly class Kernel
+final class Kernel
 {
     /**
      * The Kernel bootstrappers.
@@ -47,8 +47,8 @@ final readonly class Kernel
      * Creates a new Kernel instance.
      */
     public function __construct(
-        private Application $application,
-        private OutputInterface $output,
+        private readonly Application $application,
+        private readonly OutputInterface $output,
     ) {
         //
     }

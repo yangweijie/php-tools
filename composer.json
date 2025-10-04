@@ -16,7 +16,8 @@
     ],
     "require": {
         "php": "^8.2",
-        "kingbes/libui": "*"
+        "kingbes/libui": "*",
+        "monolog/monolog": "^3.9"
     },
     "require-dev": {
         "humbug/box": "^4.6",
@@ -28,6 +29,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Kingbes\\Libui\\SDK\\": "sdk/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

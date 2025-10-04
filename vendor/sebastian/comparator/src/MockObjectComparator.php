@@ -24,9 +24,6 @@ final class MockObjectComparator extends ObjectComparator
         return $expected instanceof Stub && $actual instanceof Stub;
     }
 
-    /**
-     * @return array<mixed>
-     */
     protected function toArray(object $object): array
     {
         assert($object instanceof Stub);

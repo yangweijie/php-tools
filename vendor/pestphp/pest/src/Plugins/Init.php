@@ -15,7 +15,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * @internal
  */
-final readonly class Init implements HandlesArguments
+final class Init implements HandlesArguments
 {
     /**
      * The option the triggers the init job.
@@ -37,9 +37,9 @@ final readonly class Init implements HandlesArguments
      * Creates a new Plugin instance.
      */
     public function __construct(
-        private TestSuite $testSuite,
-        private InputInterface $input,
-        private OutputInterface $output
+        private readonly TestSuite $testSuite,
+        private readonly InputInterface $input,
+        private readonly OutputInterface $output
     ) {
         // ..
     }

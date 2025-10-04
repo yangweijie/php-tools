@@ -27,15 +27,13 @@ use PHPUnit\Framework\MockObject\Invocation as BaseInvocation;
 final class Parameters implements ParametersRule
 {
     /**
-     * @var list<Constraint>
+     * @psalm-var list<Constraint>
      */
     private array $parameters           = [];
     private ?BaseInvocation $invocation = null;
     private null|bool|ExpectationFailedException $parameterVerificationResult;
 
     /**
-     * @param array<mixed> $parameters
-     *
      * @throws \PHPUnit\Framework\Exception
      */
     public function __construct(array $parameters)
@@ -90,7 +88,7 @@ final class Parameters implements ParametersRule
         }
 
         if ($this->invocation === null) {
-            throw new ExpectationFailedException('Doubled method does not exist.');
+            throw new ExpectationFailedException('Mocked method does not exist.');
         }
 
         if (count($this->invocation->parameters()) < count($this->parameters)) {
@@ -119,7 +117,8 @@ final class Parameters implements ParametersRule
             $parameter->evaluate(
                 $other,
                 sprintf(
-                    'Parameter %s for invocation %s does not match expected value.',
+                    'Parameter %s for invocation %s does not match expected ' .
+                    'value.',
                     $i,
                     $this->invocation->toString(),
                 ),

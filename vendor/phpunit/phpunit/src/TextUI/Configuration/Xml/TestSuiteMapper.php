@@ -10,14 +10,14 @@
 namespace PHPUnit\TextUI\XmlConfiguration;
 
 use const PHP_VERSION;
+use function array_merge;
+use function array_unique;
 use function explode;
 use function in_array;
 use function is_dir;
 use function is_file;
-use function sprintf;
 use function str_contains;
 use function version_compare;
-use PHPUnit\Event\Facade as EventFacade;
 use PHPUnit\Framework\Exception as FrameworkException;
 use PHPUnit\Framework\TestSuite as TestSuiteObject;
 use PHPUnit\TextUI\Configuration\TestSuiteCollection;
@@ -31,43 +31,40 @@ use SebastianBergmann\FileIterator\Facade;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class TestSuiteMapper
+final class TestSuiteMapper
 {
     /**
-     * @param non-empty-string $xmlConfigurationFile,
+     * @psalm-param non-empty-string $xmlConfigurationFile,
      *
      * @throws RuntimeException
      * @throws TestDirectoryNotFoundException
      * @throws TestFileNotFoundException
      */
-    public function map(string $xmlConfigurationFile, TestSuiteCollection $configuredTestSuites, string $namesOfIncludedTestSuites, string $namesOfExcludedTestSuites): TestSuiteObject
+    public function map(string $xmlConfigurationFile, TestSuiteCollection $configuration, string $filter, string $excludedTestSuites): TestSuiteObject
     {
         try {
-            $namesOfIncludedTestSuitesAsArray = $namesOfIncludedTestSuites ? explode(',', $namesOfIncludedTestSuites) : [];
-            $excludedTestSuitesAsArray        = $namesOfExcludedTestSuites ? explode(',', $namesOfExcludedTestSuites) : [];
-            $result                           = TestSuiteObject::empty($xmlConfigurationFile);
-            $processed                        = [];
+            $filterAsArray         = $filter ? explode(',', $filter) : [];
+            $excludedFilterAsArray = $excludedTestSuites ? explode(',', $excludedTestSuites) : [];
+            $result                = TestSuiteObject::empty($xmlConfigurationFile);
 
-            foreach ($configuredTestSuites as $configuredTestSuite) {
-                if (!empty($namesOfIncludedTestSuitesAsArray) && !in_array($configuredTestSuite->name(), $namesOfIncludedTestSuitesAsArray, true)) {
+            foreach ($configuration as $testSuiteConfiguration) {
+                if (!empty($filterAsArray) && !in_array($testSuiteConfiguration->name(), $filterAsArray, true)) {
                     continue;
                 }
 
-                if (!empty($excludedTestSuitesAsArray) && in_array($configuredTestSuite->name(), $excludedTestSuitesAsArray, true)) {
+                if (!empty($excludedFilterAsArray) && in_array($testSuiteConfiguration->name(), $excludedFilterAsArray, true)) {
                     continue;
                 }
 
-                $testSuiteName = $configuredTestSuite->name();
-                $exclude       = [];
+                $exclude = [];
 
-                foreach ($configuredTestSuite->exclude()->asArray() as $file) {
+                foreach ($testSuiteConfiguration->exclude()->asArray() as $file) {
                     $exclude[] = $file->path();
                 }
 
-                $testSuite = TestSuiteObject::empty($configuredTestSuite->name());
-                $empty     = true;
+                $files = [];
 
-                foreach ($configuredTestSuite->directories() as $directory) {
+                foreach ($testSuiteConfiguration->directories() as $directory) {
                     if (!str_contains($directory->path(), '*') && !is_dir($directory->path())) {
                         throw new TestDirectoryNotFoundException($directory->path());
                     }
@@ -76,37 +73,18 @@ final readonly class TestSuiteMapper
                         continue;
                     }
 
-                    $files = (new Facade)->getFilesAsArray(
-                        $directory->path(),
-                        $directory->suffix(),
-                        $directory->prefix(),
-                        $exclude,
+                    $files = array_merge(
+                        $files,
+                        (new Facade)->getFilesAsArray(
+                            $directory->path(),
+                            $directory->suffix(),
+                            $directory->prefix(),
+                            $exclude,
+                        ),
                     );
-
-                    $groups = $directory->groups();
-
-                    foreach ($files as $file) {
-                        if (isset($processed[$file])) {
-                            EventFacade::emitter()->testRunnerTriggeredWarning(
-                                sprintf(
-                                    'Cannot add file %s to test suite "%s" as it was already added to test suite "%s"',
-                                    $file,
-                                    $testSuiteName,
-                                    $processed[$file],
-                                ),
-                            );
-
-                            continue;
-                        }
-
-                        $processed[$file] = $testSuiteName;
-                        $empty            = false;
-
-                        $testSuite->addTestFile($file, $groups);
-                    }
                 }
 
-                foreach ($configuredTestSuite->files() as $file) {
+                foreach ($testSuiteConfiguration->files() as $file) {
                     if (!is_file($file->path())) {
                         throw new TestFileNotFoundException($file->path());
                     }
@@ -115,26 +93,14 @@ final readonly class TestSuiteMapper
                         continue;
                     }
 
-                    if (isset($processed[$file->path()])) {
-                        EventFacade::emitter()->testRunnerTriggeredWarning(
-                            sprintf(
-                                'Cannot add file %s to test suite "%s" as it was already added to test suite "%s"',
-                                $file->path(),
-                                $testSuiteName,
-                                $processed[$file->path()],
-                            ),
-                        );
-
-                        continue;
-                    }
-
-                    $processed[$file->path()] = $testSuiteName;
-                    $empty                    = false;
-
-                    $testSuite->addTestFile($file->path(), $file->groups());
+                    $files[] = $file->path();
                 }
 
-                if (!$empty) {
+                if (!empty($files)) {
+                    $testSuite = TestSuiteObject::empty($testSuiteConfiguration->name());
+
+                    $testSuite->addTestFiles(array_unique($files));
+
                     $result->addTest($testSuite);
                 }
             }

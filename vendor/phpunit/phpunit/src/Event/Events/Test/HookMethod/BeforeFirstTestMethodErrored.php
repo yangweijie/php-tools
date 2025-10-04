@@ -17,23 +17,23 @@ use PHPUnit\Event\Event;
 use PHPUnit\Event\Telemetry;
 
 /**
- * @immutable
+ * @psalm-immutable
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class BeforeFirstTestMethodErrored implements Event
+final class BeforeFirstTestMethodErrored implements Event
 {
-    private Telemetry\Info $telemetryInfo;
+    private readonly Telemetry\Info $telemetryInfo;
 
     /**
-     * @var class-string
+     * @psalm-var class-string
      */
-    private string $testClassName;
-    private Code\ClassMethod $calledMethod;
-    private Throwable $throwable;
+    private readonly string $testClassName;
+    private readonly Code\ClassMethod $calledMethod;
+    private readonly Throwable $throwable;
 
     /**
-     * @param class-string $testClassName
+     * @psalm-param class-string $testClassName
      */
     public function __construct(Telemetry\Info $telemetryInfo, string $testClassName, Code\ClassMethod $calledMethod, Throwable $throwable)
     {
@@ -49,7 +49,7 @@ final readonly class BeforeFirstTestMethodErrored implements Event
     }
 
     /**
-     * @return class-string
+     * @psalm-return class-string
      */
     public function testClassName(): string
     {

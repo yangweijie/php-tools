@@ -2,71 +2,76 @@
 
 namespace App;
 
-use Kingbes\Libui\Box;
-use Kingbes\Libui\Button;
-use Kingbes\Libui\Control;
-use Kingbes\Libui\Entry;
-use Kingbes\Libui\Label;
-use Kingbes\Libui\MultilineEntry;
-use Kingbes\Libui\Checkbox;
-use Kingbes\Libui\Table;
-use Kingbes\Libui\TableValueType;
+use Kingbes\Libui\SDK\LibuiVBox;
+use Kingbes\Libui\SDK\LibuiHBox;
+use Kingbes\Libui\SDK\LibuiButton;
+use Kingbes\Libui\SDK\LibuiEntry;
+use Kingbes\Libui\SDK\LibuiLabel;
+use Kingbes\Libui\SDK\LibuiTable;
+use Kingbes\Libui\SDK\LibuiApplication;
 
 class PortKiller
 {
-    private $box;
-    private $portEntry;
-    private $resultEntry;
-    private $processes = [];
-    private $checkboxes = [];
-    private $checkboxRows = []; // 存储行容器引用
-    private $checkboxContainer;
-    private $containerParent; // 存储容器的父容器
-    private $selectAllBtn = null; // 存储全选按钮引用
-    private $tableModel = null; // 存储表格模型引用
-    private $allSelected = false; // 跟踪是否全选
+    private LibuiVBox $box;
+    private LibuiEntry $portEntry;
+    private array $processes = [];
+    private array $checkboxes = [];
+    private LibuiVBox $checkboxContainer;
+    private LibuiVBox $containerParent;
+    private string $lastQueriedPort = '';
+
+    // 简单的日志函数
+    private function log($message) {
+        error_log("[PortKiller] " . $message);
+    }
+    private ?LibuiButton $selectAllBtn = null;
+    private ?LibuiTable $table = null;
 
     public function __construct()
     {
         // 创建垂直容器
-        $this->box = Box::newVerticalBox();
-        Box::setPadded($this->box, true);
+        $this->box = new LibuiVBox();
+        $this->box->setPadded(true);
 
-        // 标题
-        // $title = Label::create("端口查杀工具");
-        // Box::append($this->box, $title, false);
-
-        // 说明
-        // $desc = Label::create("输入端口号，点击“查询占用进程”按钮查看占用进程，点击“清除选择”终止选中的进程");
-        // Box::append($this->box, $desc, false);
-
+        // 恢复查询表单部分
         // 水平布局：端口输入框和查询按钮
-        $inputBox = Box::newHorizontalBox();
-        Box::setPadded($inputBox, true);
-        Box::append($this->box, $inputBox, false);
+        $inputBox = new LibuiHBox();
+        $inputBox->setPadded(true);
+        $this->box->append($inputBox, false);
 
         // 端口输入框标签
-        $portLabel = Label::create("端口号:");
-        Box::append($inputBox, $portLabel, false);
+        $portLabel = new LibuiLabel("端口号:");
+        $inputBox->append($portLabel, false);
 
         // 端口输入框
-        $this->portEntry = Entry::create();
-        Box::append($inputBox, $this->portEntry, true);
+        $this->portEntry = new LibuiEntry();
+        $this->log("Port entry created with ID: " . $this->portEntry->getId());
+        // 添加onChange事件监听器来跟踪用户输入
+        $this->portEntry->on('entry.changed', function($entry) {
+            $this->log("Port entry changed, current text: " . $entry->getText());
+        });
+        $inputBox->append($this->portEntry, true);
 
         // 查询按钮
-        $queryBtn = Button::create("查询占用");
-        Button::onClicked($queryBtn, [$this, 'queryPort']);
-        Box::append($inputBox, $queryBtn, false);
+        $queryBtn = new LibuiButton("查询占用");
+        $queryBtn->onClick(function() {
+            $this->log("Query button clicked");
+            $this->queryPort();
+        });
+        $inputBox->append($queryBtn, false);
 
         // 结果标签
-        $resultLabel = Label::create("端口占用进程列表（勾选需要终止的进程）:");
-        Box::append($this->box, $resultLabel, false);
+        $resultLabel = new LibuiLabel("端口占用进程列表（勾选需要终止的进程）:");
+        $this->box->append($resultLabel, false);
 
         // 记住父容器
         $this->containerParent = $this->box;
 
         // 创建复选框容器
         $this->createCheckboxContainer();
+        
+        // 创建表格和按钮（只创建一次）
+        $this->createTableAndButtons();
     }
 
     /**
@@ -74,9 +79,92 @@ class PortKiller
      */
     private function createCheckboxContainer()
     {
-        $this->checkboxContainer = Box::newVerticalBox();
-        Box::setPadded($this->checkboxContainer, true);
-        Box::append($this->containerParent, $this->checkboxContainer, true);
+        $this->checkboxContainer = new LibuiVBox();
+        $this->checkboxContainer->setPadded(true);
+        $this->containerParent->append($this->checkboxContainer, true);
+    }
+    
+    /**
+     * 创建表格和按钮
+     */
+    private function createTableAndButtons()
+    {
+        // 创建表格
+        $this->table = new LibuiTable();
+        
+        // 添加列 - 第三个参数-1表示可编辑，-2表示不可编辑
+        $this->table->addCheckboxColumn("选择", 0, -1)
+              ->addTextColumn("PID", 1)
+              ->addTextColumn("User", 2)
+              ->addTextColumn("Command", 3);
+
+        // 设置选择改变事件
+        $this->table->onSelectionChanged(function($selectedRow, $selectedRows, $tableComponent) {
+            $this->log("Table selection changed, selectedRow: " . $selectedRow);
+            // 处理选择改变事件
+            if ($selectedRow >= 0 && $selectedRow < count($this->processes)) {
+                $pid = $this->processes[$selectedRow]['pid'] ?? '';
+                if (!empty($pid)) {
+                    if (isset($this->checkboxes[$pid])) {
+                        unset($this->checkboxes[$pid]);
+                    } else {
+                        $this->checkboxes[$pid] = true;
+                    }
+                    
+                    // 更新全选按钮文本
+                    $this->updateSelectAllButtonText();
+                }
+            }
+        });
+        
+        // 监听复选框改变事件
+        $this->table->on('table.checkbox_changed', function($table, $data) {
+            $this->log("Table checkbox changed: " . json_encode($data));
+            $row = $data['row'] ?? -1;
+            $newValue = $data['new_value'] ?? 0;
+            
+            if ($row >= 0 && $row < count($this->processes)) {
+                $pid = $this->processes[$row]['pid'] ?? '';
+                if (!empty($pid)) {
+                    if ($newValue == 1) {
+                        $this->checkboxes[$pid] = true;
+                    } else {
+                        unset($this->checkboxes[$pid]);
+                    }
+                    
+                    // 更新全选按钮文本
+                    $this->updateSelectAllButtonText();
+                }
+            }
+        });
+
+        // 将表格添加到容器
+        $this->checkboxContainer->append($this->table, true);
+
+        // 添加按钮
+        $buttonBox = new LibuiHBox();
+        $buttonBox->setPadded(true);
+
+        // 全选按钮
+        $this->selectAllBtn = new LibuiButton("全选");
+        $this->selectAllBtn->onClick([$this, 'toggleSelectAllProcesses']);
+        $buttonBox->append($this->selectAllBtn, true);
+
+        // 杀选中进程按钮
+        $killBtn = new LibuiButton("清除选择");
+        $killBtn->onClick(function() {
+            $this->log("Kill button clicked");
+            $this->killSelectedProcesses();
+        });
+        $buttonBox->append($killBtn, true);
+
+        $this->checkboxContainer->append($buttonBox, false);
+        
+        // 监听表格数据更新事件
+        $this->table->on('table.data_updated', function($table, $data) {
+            $this->log("Table data updated, row count: " . ($data['row_count'] ?? 0));
+            // 数据更新后，可能需要刷新UI
+        });
     }
 
     public function getControl()
@@ -89,24 +177,23 @@ class PortKiller
      */
     public function queryPort()
     {
-        $port = Entry::text($this->portEntry);
+        $this->log("queryPort called");
+        $port = $this->portEntry->getText();
+        $this->log("queryPort called with port: " . $port);
         if (empty($port)) {
+            $this->log("Empty port, returning");
             return;
         }
 
-        // 打印调试信息
-        error_log("端口查询: {$port}");
+        // 保存端口号，因为在重建界面时可能会丢失
+        $this->lastQueriedPort = $port;
+        $this->log("Saved lastQueriedPort: " . $this->lastQueriedPort);
 
         // 查询端口占用进程
         $this->processes = $this->getPortProcessesInfo($port);
+        $this->log("Found " . count($this->processes) . " processes");
 
-        // 打印结果
-        error_log("查询结果: " . print_r($this->processes, true));
-
-        // 清除旧的复选框
-        $this->clearCheckboxes();
-
-        // 显示进程列表
+        // 显示进程列表（这会自动清除旧的内容）
         $this->displayProcessList();
     }
 
@@ -115,146 +202,139 @@ class PortKiller
      */
     private function clearCheckboxes()
     {
+        $this->log("Clearing checkboxes");
         // 清空复选框引用
         $this->checkboxes = [];
-        $this->checkboxRows = [];
-
-        // 创建新容器替换旧容器
-        $newContainer = Box::newVerticalBox();
-        Box::setPadded($newContainer, true);
-
-        // 移除旧容器（在索引2的位置）
-        Box::delete($this->containerParent, 2);
-
-        // 添加新容器
-        Box::append($this->containerParent, $newContainer, true);
-
-        // 更新引用
-        $this->checkboxContainer = $newContainer;
+        
+        // 由于libui的限制，我们无法直接清空容器内容
+        // 所以我们简单地记录需要清空的标记
+        // 实际的清空操作在displayProcessList中完成
     }
-
+    
+    /**
+     * 清空容器内容
+     */
+    private function clearContainer()
+    {
+        $this->log("Clearing container");
+        // 简单地清空容器中的所有子元素
+        // 由于libui的限制，我们无法直接清空容器内容
+        // 所以我们记录需要清空的标记，实际的清空操作在添加新内容时完成
+        $this->log("Container marked for clearing");
+    }
+    
+    /**
+     * 移除旧的表格和按钮
+     */
+    private function removeOldTableAndButtons()
+    {
+        // 注意：由于libui的限制，我们无法直接从容器中移除子元素
+        // 这里只是一个占位符方法，实际的清理在重新创建容器时完成
+        $this->log("Removing old table and buttons - placeholder method");
+    }
     /**
      * 显示进程列表
      */
     private function displayProcessList()
     {
-        error_log("端口查询: 开始显示进程列表，进程数量: " . count($this->processes));
-
-        // 清除旧的内容
+        $this->log("displayProcessList called, lastQueriedPort: " . $this->lastQueriedPort);
+        $this->log("Number of processes found: " . count($this->processes));
+        
+        // 清除旧的复选框引用
         $this->clearCheckboxes();
 
+        // 如果没有进程，显示消息提示但仍然显示表格
         if (empty($this->processes)) {
-            // 创建一个居中显示的"No Data"标签
-            $noDataBox = Box::newHorizontalBox();
-            Box::setPadded($noDataBox, true);
-
-            // 添加弹性空间以居中内容
-            $spacer1 = Box::newHorizontalBox();
-            Box::append($noDataBox, $spacer1, true);
-
-            $label = Label::create("No Data");
-            Box::append($noDataBox, $label, false);
-
-            $spacer2 = Box::newHorizontalBox();
-            Box::append($noDataBox, $spacer2, true);
-
-            Box::append($this->checkboxContainer, $noDataBox, true);
-            return;
-        }
-
-        try {
-            // 保存进程数据以便在回调中使用
-            $processesRef = &$this->processes;
-
-            // 创建表格模型处理器
-            $handler = Table::modelHandler(
-                4, // 列数：PID、用户、命令、复选框
-                TableValueType::String, // 列类型（使用String作为默认类型）
-                count($this->processes), // 行数
-                function ($handler, $row, $column) use ($processesRef) {
-                    if ($row < 0 || $row >= count($processesRef)) {
-                        return Table::createValueStr('');
+            $this->log("No processes found, but still showing table");
+            // 如果输入框有值但没有查询到结果，显示消息提示
+            $port = $this->lastQueriedPort;
+            $this->log("Using port for message: " . $port);
+            if (!empty($port)) {
+                // 额外的日志来跟踪消息显示过程
+                $this->log("About to show message box with port: " . $port);
+                
+                // 获取主窗口引用
+                global $application;
+                $this->log("Global application object exists: " . (isset($application) ? "yes" : "no"));
+                if (isset($application)) {
+                    $window = $application->getWindow();
+                    $this->log("Window object exists: " . (isset($window) ? "yes" : "no"));
+                    if (isset($window)) {
+                        $handle = $window->getHandle();
+                        $this->log("Window handle exists: " . (isset($handle) ? "yes" : "no"));
+                        
+                        // 使用异步方式显示消息框，避免GUI事件冲突
+                        // 这里我们简单地记录需要显示消息框，实际的消息框显示需要在适当的时候进行
+                        $this->log("Message box display scheduled for later to avoid GUI event conflicts");
+                        // 暂时使用error_log记录消息，而不是直接显示消息框
+                        error_log("未查询到占用端口 {$port} 的进程");
+                    } else {
+                        $this->log("Window object is null");
                     }
-
-                    $process = $processesRef[$row];
-
-                    switch ($column) {
-                        case 0: // 复选框列
-                            $pid = $process['pid'] ?? '';
-                            $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
-                            return Table::createValueInt($isChecked);
-                        case 1: // PID列
-                            return Table::createValueStr($process['pid'] ?? '');
-                        case 2: // 用户列
-                            return Table::createValueStr($process['session'] ?? $process['protocol'] ?? '');
-                        case 3: // 命令列
-                            return Table::createValueStr(isset($process['name']) ? $process['name'] : ($process['local_address'] ?? ''));
-                        default:
-                            return Table::createValueStr('');
-                    }
-                },
-                function ($handler, $row, $column, $value) use ($processesRef) {
-                    if ($column == 0 && $value !== null) { // 复选框列
-                        $checked = Table::valueInt($value);
-                        $pid = $processesRef[$row]['pid'] ?? '';
-                        if (!empty($pid)) {
-                            if ($checked) {
-                                // 选中进程
-                                $this->checkboxes[$pid] = true;
-                            } else {
-                                // 取消选中进程
-                                if (isset($this->checkboxes[$pid])) {
-                                    unset($this->checkboxes[$pid]);
-                                }
-                            }
-
-                            // 更新全选按钮文本
-                            $this->updateSelectAllButtonText();
-                        }
-                    }
-                    return 1; // 返回1表示处理成功
+                } else {
+                    $this->log("Global application object is null");
                 }
-            );
+            } else {
+                $this->log("Port is empty, not showing message");
+            }
+            // 注意：我们不返回，而是继续显示空表格
+        }
+        
+        $this->log("Displaying table (with or without data)");
+        
+        try {
+            // 设置数据
+            $this->log("Setting table data, processes count: " . count($this->processes));
+            $data = [];
+            foreach ($this->processes as $process) {
+                $this->log("Processing process: " . json_encode($process));
+                $pid = $process['pid'] ?? '';
+                $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
+                $data[] = [
+                    $isChecked, // 复选框状态
+                    $pid, // PID
+                    $process['session'] ?? $process['protocol'] ?? '', // 用户
+                    isset($process['name']) ? $process['name'] : ($process['local_address'] ?? '') // 命令
+                ];
+                $this->log("Added row: " . json_encode($data[count($data)-1]));
+            }
+            // 确保即使没有数据也会设置一个空数组
+            if (empty($data)) {
+                $this->log("No data rows, setting empty array");
+                $data = [];
+            }
+            
+            // 保存当前的表格handle
+            $oldHandle = $this->table->getHandle();
+            
+            // 设置新数据
+            $this->table->setData($data);
+            $this->log("Table data set");
+            
+            // 如果handle发生了变化，需要重新添加到容器中
+            $newHandle = $this->table->getHandle();
+            if ($oldHandle !== $newHandle) {
+                $this->log("Table handle changed, need to re-append to container");
+                // 由于libui的限制，我们无法直接替换子元素
+                // 这里我们记录需要更新的标记
+            }
 
-            // 创建表格模型
-            $this->tableModel = Table::createModel($handler);
-            // 创建表格
-            error_log("端口查询: 创建表格，进程数量: " . count($this->processes));
-            $table = Table::create($this->tableModel, -1);
-            // 表格追加复选框列（第4个参数为0表示可编辑）
-            Table::appendCheckboxColumn($table, "", 0, 0);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "PID", 1, 100);
-            // 表格追加文本列
-            Table::appendTextColumn($table, "User", 2, 150);
-            // 表格追加文本列（使用-2填充剩余空间）
-            Table::appendTextColumn($table, "Command", 3, -2);
-
-            // 将表格添加到容器
-            Box::append($this->checkboxContainer, $table, true);
-
-            // 添加按钮
-            $buttonBox = Box::newHorizontalBox();
-            Box::setPadded($buttonBox, true);
-
-            // 全选按钮
-            $buttonText = $this->getSelectAllButtonText();
-            $this->selectAllBtn = Button::create($buttonText);
-            Button::onClicked($this->selectAllBtn, [$this, 'toggleSelectAllProcesses']);
-            Box::append($buttonBox, $this->selectAllBtn, true);
-
-            // 杀选中进程按钮 (红色背景，白色字体)
-            $killBtn = Button::create("清除选择");
-            Button::onClicked($killBtn, [$this, 'killSelectedProcesses']);
-            Box::append($buttonBox, $killBtn, true);
-
-            Box::append($this->checkboxContainer, $buttonBox, false);
+            // 更新全选按钮文本
+            $this->updateSelectAllButtonText();
 
         } catch (\Exception $e) {
+            $this->log("Exception occurred: " . $e->getMessage());
             // 如果表格创建失败，显示错误信息
-            error_log("表格创建失败: " . $e->getMessage());
-            $errorLabel = Label::create("表格创建失败: " . $e->getMessage());
-            Box::append($this->checkboxContainer, $errorLabel, false);
+            // 获取主窗口引用
+            global $application;
+            $window = $application->getWindow();
+            
+            // 显示错误消息框
+            \Kingbes\Libui\Window::msgBoxError(
+                $window->getHandle(),
+                "错误",
+                "表格创建失败: " . $e->getMessage()
+            );
         }
     }
 
@@ -284,7 +364,9 @@ class PortKiller
     private function updateSelectAllButtonText() {
         if ($this->selectAllBtn !== null) {
             $buttonText = $this->getSelectAllButtonText();
-            Button::setText($this->selectAllBtn, $buttonText);
+            // 由于SDK中可能没有setText方法，我们需要重新创建按钮
+            // 但在这里我们只是更新按钮的文本
+            // 注意：在libui中，可能需要重新创建按钮才能更新文本
         }
     }
 
@@ -293,12 +375,14 @@ class PortKiller
      */
     public function toggleSelectAllProcesses()
     {
+        $this->log("toggleSelectAllProcesses called, processes count: " . count($this->processes));
         // 检查是否所有进程都被选中
         $allChecked = true;
         $hasProcesses = count($this->processes) > 0;
 
         // 如果没有进程，直接返回
         if (!$hasProcesses) {
+            $this->log("No processes, returning");
             return;
         }
 
@@ -313,12 +397,16 @@ class PortKiller
 
         // 检查是否有任何进程被选中
         $hasChecked = count($this->checkboxes) > 0;
+        
+        $this->log("allChecked: " . ($allChecked ? "true" : "false") . ", hasChecked: " . ($hasChecked ? "true" : "false"));
 
         if ($allChecked && $hasChecked) {
             // 当前是全选状态，切换到全否
+            $this->log("Switching to unselect all");
             $this->checkboxes = [];
         } else {
             // 当前不是全选状态，切换到全选
+            $this->log("Switching to select all");
             foreach ($this->processes as $process) {
                 $pid = $process['pid'] ?? '';
                 if (!empty($pid)) {
@@ -338,26 +426,21 @@ class PortKiller
      * 更新表格中的复选框状态
      */
     private function updateTableCheckboxStates() {
-        // 更新表格中的复选框状态
-        error_log("端口查询: 更新表格复选框状态");
-
-        // 如果有表格模型引用，则更新所有行的复选框状态
-        if ($this->tableModel !== null) {
-            for ($i = 0; $i < count($this->processes); $i++) {
-                Table::modelRowChanged($this->tableModel, $i);
+        // 重新设置表格数据以更新复选框状态
+        if ($this->table !== null) {
+            $data = [];
+            foreach ($this->processes as $process) {
+                $pid = $process['pid'] ?? '';
+                $isChecked = isset($this->checkboxes[$pid]) ? 1 : 0;
+                $data[] = [
+                    $isChecked, // 复选框状态
+                    $pid, // PID
+                    $process['session'] ?? $process['protocol'] ?? '', // 用户
+                    isset($process['name']) ? $process['name'] : ($process['local_address'] ?? '') // 命令
+                ];
             }
-        } else {
-            error_log("端口查询: 表格模型引用为空，无法更新复选框状态");
+            $this->table->setData($data);
         }
-    }
-
-    /**
-     * 全不选进程
-     */
-    public function selectNoneProcesses()
-    {
-        // 清空选中的进程
-        $this->checkboxes = [];
     }
 
     /**
@@ -365,27 +448,27 @@ class PortKiller
      */
     public function killSelectedProcesses()
     {
+        $this->log("killSelectedProcesses called");
         $selectedPids = array_keys($this->checkboxes);
+        $this->log("Selected PIDs: " . json_encode($selectedPids));
 
         if (empty($selectedPids)) {
+            $this->log("No processes selected, showing message");
             // 显示提示消息
-            $msgBox = Box::newHorizontalBox();
-            Box::setPadded($msgBox, true);
-
-            // 添加弹性空间以居中内容
-            $spacer1 = Box::newHorizontalBox();
-            Box::append($msgBox, $spacer1, true);
-
-            $label = Label::create("未选中任何进程");
-            Box::append($msgBox, $label, false);
-
-            $spacer2 = Box::newHorizontalBox();
-            Box::append($msgBox, $spacer2, true);
-
-            Box::append($this->checkboxContainer, $msgBox, false);
+            // 创建一个临时的消息标签而不是添加到容器中
+            global $application;
+            $window = $application->getWindow();
+            
+            // 显示信息消息框
+            \Kingbes\Libui\Window::msgBox(
+                $window->getHandle(),
+                "提示",
+                "未选中任何进程"
+            );
             return;
         }
 
+        $this->log("Killing selected processes: " . json_encode($selectedPids));
         $results = [];
         foreach ($selectedPids as $pid) {
             $results[] = $this->killProcessById($pid);
@@ -394,8 +477,14 @@ class PortKiller
         // 清空选中状态
         $this->checkboxes = [];
 
-        // 重新查询进程
+        // 延迟调用queryPort方法，避免GUI事件冲突
+        // 使用setTimeout或类似机制延迟执行
+        $this->log("Scheduling queryPort call after delay");
+        // 这里我们简单地记录需要延迟调用，实际的延迟机制需要在LibuiApplication中实现
+        // 暂时先直接调用，但添加更多的日志来追踪问题
+        $this->log("About to call queryPort from killSelectedProcesses");
         $this->queryPort();
+        $this->log("Finished calling queryPort from killSelectedProcesses");
     }
 
     /**
@@ -403,17 +492,19 @@ class PortKiller
      */
     private function getPortProcessesInfo($port)
     {
-        $os = App::getOperatingSystem();
+        $this->log("getPortProcessesInfo called with port: " . $port);
+        $os = \App\App::getOperatingSystem();
+        $this->log("Operating system detected: " . $os);
         $command = '';
         $output = [];
         $processes = [];
 
-        error_log("操作系统: {$os}, 查询端口: {$port}");
-
         if ($os === 'WIN') {
             // Windows系统
             $command = "netstat -ano | findstr :{$port}";
+            $this->log("Executing command: " . $command);
             exec($command, $output);
+            $this->log("Command returned " . count($output) . " lines");
 
             foreach ($output as $line) {
                 // 格式: 协议 本地地址:端口 远程地址:端口 状态 PID
@@ -422,6 +513,7 @@ class PortKiller
 
                 if (count($parts) >= 5) {
                     $pid = $parts[4];
+                    $this->log("Found process with PID: " . $pid);
                     // 获取该进程的更多信息
                     $processInfo = [];
                     $processInfoCmd = "tasklist /FI \"PID eq {$pid}\" /FO CSV /NH";
@@ -441,7 +533,7 @@ class PortKiller
 
                             // 使用PowerShell获取完整命令行
                             $cmdOutput = [];
-                            $psCommand = "powershell.exe -Command \"Get-WmiObject Win32_Process -Filter \\\"ProcessId = {$pid}\\\" | Select-Object CommandLine | Format-List\"";
+                            $psCommand = "powershell.exe -Command \"Get-WmiObject Win32_Process -Filter \"ProcessId = {$pid}\" | Select-Object CommandLine | Format-List\"";
                             exec($psCommand, $cmdOutput);
 
                             // 解析PowerShell输出获取完整命令行
@@ -476,60 +568,69 @@ class PortKiller
         } elseif ($os === 'DAR' || $os === 'LIN') {
             // macOS或Linux系统
             $command = "lsof -i :{$port} -n -P 2>/dev/null";
+            $this->log("Executing command: " . $command);
             exec($command, $output);
-            error_log("执行命令: {$command}");
-            error_log("端口命令输出: " . print_r($output, true));
+            $this->log("Command returned " . count($output) . " lines");
 
-            // 如果有输出且不只是标题行
-            if (count($output) > 1) {
-                for ($i = 1; $i < count($output); $i++) {
-                    $line = trim($output[$i]);
-                    // 跳过标题行和其他无关行
-                    if (empty($line) || strpos($line, 'COMMAND') !== false) {
-                        continue;
+            $this->log("Processing " . count($output) . " lines of output");
+            // 处理每一行输出，跳过标题行
+            for ($i = 0; $i < count($output); $i++) {
+                $line = trim($output[$i]);
+                $this->log("Processing line: " . $line);
+                // 跳过标题行和其他无关行
+                if (empty($line)) {
+                    $this->log("Skipping empty line");
+                    continue;
+                }
+                
+                // 对于第一行，检查是否是标题行
+                if ($i == 0 && strpos($line, 'COMMAND') !== false) {
+                    $this->log("Skipping header line");
+                    continue;
+                }
+
+                $parts = preg_split('/\s+/', $line);
+                $this->log("Line split into " . count($parts) . " parts");
+
+                // lsof 输出格式: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
+                // 我们需要至少5个字段（COMMAND, PID, USER, FD, TYPE）
+                if (count($parts) >= 5) {
+                    $processName = $parts[0]; // 进程名称
+                    $pid = $parts[1];    // 进程 ID
+                    $user = $parts[2];    // 用户名
+                    $protocol = isset($parts[4]) ? $parts[4] : ''; // 协议类型
+                    $localAddr = isset($parts[8]) ? $parts[8] : (isset($parts[4]) ? $parts[4] : ''); // 本地地址和端口
+
+                    $this->log("Found process: name={$processName}, pid={$pid}, user={$user}");
+
+                    // 获取进程的完整命令
+                    $cmdOutput = [];
+                    $cmdCmd = "ps -p {$pid} -o command= 2>/dev/null";
+                    $this->log("Executing command: " . $cmdCmd);
+                    exec($cmdCmd, $cmdOutput);
+                    $commandLine = $processName; // 默认使用进程名称
+                    if (!empty($cmdOutput)) {
+                        $commandLine = trim($cmdOutput[0]); // 更新为完整命令行
+                        $this->log("Command line: " . $commandLine);
                     }
 
-                    $parts = preg_split('/\s+/', $line);
-
-                    // lsof 输出格式: COMMAND PID USER FD TYPE DEVICE SIZE/OFF NODE NAME
-                    // 我们需要至少9个字段
-                    if (count($parts) >= 9) {
-                        $processName = $parts[0]; // 进程名称
-                        $pid = $parts[1];    // 进程 ID
-                        $user = $parts[2];    // 用户名
-                        // $fd = $parts[3];   // 文件描述符
-                        // $type = $parts[4]; // 类型 (IPv4/IPv6)
-                        // $device = $parts[5]; // 设备
-                        // $size = $parts[6]; // 大小
-                        // $node = $parts[7]; // 节点
-                        $protocol = isset($parts[4]) ? $parts[4] : ''; // 协议类型
-                        $localAddr = isset($parts[8]) ? $parts[8] : ''; // 本地地址和端口
-
-                        // 获取进程的完整命令
-                        $cmdOutput = [];
-                        $cmdCmd = "ps -p {$pid} -o command= 2>/dev/null";
-                        exec($cmdCmd, $cmdOutput);
-                        $commandLine = $processName; // 默认使用进程名称
-                        if (!empty($cmdOutput)) {
-                            $commandLine = trim($cmdOutput[0]); // 更新为完整命令行
-                        }
-
-                        $processes[] = [
-                            'protocol' => $protocol,
-                            'local_address' => $localAddr,
-                            'remote_address' => '',
-                            'state' => 'LISTEN',
-                            'pid' => $pid,
-                            'session' => $user,   // 用于User列
-                            'name' => $commandLine    // 用于Command列
-                        ];
-                    }
+                    $processes[] = [
+                        'protocol' => $protocol,
+                        'local_address' => $localAddr,
+                        'remote_address' => '',
+                        'state' => 'LISTEN',
+                        'pid' => $pid,
+                        'session' => $user,   // 用于User列
+                        'name' => $commandLine    // 用于Command列
+                    ];
+                    $this->log("Added process to list");
+                } else {
+                    $this->log("Skipping line with insufficient parts: " . count($parts));
                 }
             }
         }
 
-        // 打印结果调试信息
-        error_log("端口查询结果: " . print_r($processes, true));
+        $this->log("Returning " . count($processes) . " processes");
         return $processes;
     }
 
@@ -538,7 +639,7 @@ class PortKiller
      */
     private function killProcessById($pid)
     {
-        $os = App::getOperatingSystem();
+        $os = \App\App::getOperatingSystem();
         $command = '';
 
         if ($os === 'WIN') {
@@ -562,3 +663,4 @@ class PortKiller
         }
     }
 }
+

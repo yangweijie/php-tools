@@ -30,7 +30,7 @@ final class UnifiedDiffOutputBuilder extends AbstractChunkOutputBuilder
     private int $commonLineThreshold = 6;
 
     /**
-     * @var positive-int
+     * @psalm-var positive-int
      */
     private int $contextLines = 3;
     private string $header;

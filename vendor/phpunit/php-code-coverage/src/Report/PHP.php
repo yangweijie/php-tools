@@ -9,7 +9,6 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report;
 
-use const PHP_EOL;
 use function dirname;
 use function file_put_contents;
 use function serialize;

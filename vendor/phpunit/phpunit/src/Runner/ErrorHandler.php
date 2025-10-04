@@ -9,7 +9,6 @@
  */
 namespace PHPUnit\Runner;
 
-use const DEBUG_BACKTRACE_IGNORE_ARGS;
 use const E_COMPILE_ERROR;
 use const E_COMPILE_WARNING;
 use const E_CORE_ERROR;
@@ -25,23 +24,14 @@ use const E_USER_ERROR;
 use const E_USER_NOTICE;
 use const E_USER_WARNING;
 use const E_WARNING;
-use function array_keys;
-use function array_values;
-use function debug_backtrace;
 use function defined;
 use function error_reporting;
 use function restore_error_handler;
 use function set_error_handler;
-use function sprintf;
 use PHPUnit\Event;
-use PHPUnit\Event\Code\IssueTrigger\IssueTrigger;
 use PHPUnit\Event\Code\NoTestCaseObjectOnCallStackException;
-use PHPUnit\Event\Code\TestMethod;
 use PHPUnit\Runner\Baseline\Baseline;
 use PHPUnit\Runner\Baseline\Issue;
-use PHPUnit\TextUI\Configuration\Registry;
-use PHPUnit\TextUI\Configuration\Source;
-use PHPUnit\TextUI\Configuration\SourceFilter;
 use PHPUnit\Util\ExcludeList;
 
 /**
@@ -57,23 +47,10 @@ final class ErrorHandler
     private ?Baseline $baseline               = null;
     private bool $enabled                     = false;
     private ?int $originalErrorReportingLevel = null;
-    private readonly Source $source;
-    private readonly SourceFilter $sourceFilter;
-
-    /**
-     * @var ?array{functions: list<non-empty-string>, methods: list<array{className: class-string, methodName: non-empty-string}>}
-     */
-    private ?array $deprecationTriggers = null;
 
     public static function instance(): self
     {
-        return self::$instance ?? self::$instance = new self(Registry::get()->source());
-    }
-
-    private function __construct(Source $source)
-    {
-        $this->source       = $source;
-        $this->sourceFilter = new SourceFilter;
+        return self::$instance ?? self::$instance = new self;
     }
 
     /**
@@ -159,24 +136,19 @@ final class ErrorHandler
                     $suppressed,
                     $ignoredByBaseline,
                     $ignoredByTest,
-                    $this->trigger($test, false),
                 );
 
                 break;
 
             case E_USER_DEPRECATED:
-                $deprecationFrame = $this->guessDeprecationFrame();
-
                 Event\Facade::emitter()->testTriggeredDeprecation(
                     $test,
                     $errorString,
-                    $deprecationFrame['file'] ?? $errorFile,
-                    $deprecationFrame['line'] ?? $errorLine,
+                    $errorFile,
+                    $errorLine,
                     $suppressed,
                     $ignoredByBaseline,
                     $ignoredByTest,
-                    $this->trigger($test, true),
-                    $this->stackTrace(),
                 );
 
                 break;
@@ -233,23 +205,15 @@ final class ErrorHandler
         $this->originalErrorReportingLevel = null;
     }
 
-    public function useBaseline(Baseline $baseline): void
+    public function use(Baseline $baseline): void
     {
         $this->baseline = $baseline;
     }
 
     /**
-     * @param array{functions: list<non-empty-string>, methods: list<array{className: class-string, methodName: non-empty-string}>} $deprecationTriggers
-     */
-    public function useDeprecationTriggers(array $deprecationTriggers): void
-    {
-        $this->deprecationTriggers = $deprecationTriggers;
-    }
-
-    /**
-     * @param non-empty-string $file
-     * @param positive-int     $line
-     * @param non-empty-string $description
+     * @psalm-param non-empty-string $file
+     * @psalm-param positive-int $line
+     * @psalm-param non-empty-string $description
      */
     private function ignoredByBaseline(string $file, int $line, string $description): bool
     {
@@ -258,170 +222,5 @@ final class ErrorHandler
         }
 
         return $this->baseline->has(Issue::from($file, $line, null, $description));
-    }
-
-    private function trigger(TestMethod $test, bool $filterTrigger): IssueTrigger
-    {
-        if (!$this->source->notEmpty()) {
-            return IssueTrigger::unknown();
-        }
-
-        $trace = $this->filteredStackTrace($filterTrigger);
-
-        $triggeredInFirstPartyCode       = false;
-        $triggerCalledFromFirstPartyCode = false;
-
-        if (isset($trace[0]['file'])) {
-            if ($trace[0]['file'] === $test->file()) {
-                return IssueTrigger::test();
-            }
-
-            if ($this->sourceFilter->includes($this->source, $trace[0]['file'])) {
-                $triggeredInFirstPartyCode = true;
-            }
-        }
-
-        if (isset($trace[1]['file']) &&
-            ($trace[1]['file'] === $test->file() ||
-            $this->sourceFilter->includes($this->source, $trace[1]['file']))) {
-            $triggerCalledFromFirstPartyCode = true;
-        }
-
-        if ($triggerCalledFromFirstPartyCode) {
-            if ($triggeredInFirstPartyCode) {
-                return IssueTrigger::self();
-            }
-
-            return IssueTrigger::direct();
-        }
-
-        return IssueTrigger::indirect();
-    }
-
-    /**
-     * @return list<array{file: string, line: int, class?: string, function?: string, type: string}>
-     */
-    private function filteredStackTrace(bool $filterDeprecationTriggers): array
-    {
-        $trace = $this->errorStackTrace();
-
-        if ($this->deprecationTriggers === null || !$filterDeprecationTriggers) {
-            return array_values($trace);
-        }
-
-        foreach (array_keys($trace) as $frame) {
-            foreach ($this->deprecationTriggers['functions'] as $function) {
-                if ($this->frameIsFunction($trace[$frame], $function)) {
-                    unset($trace[$frame]);
-
-                    continue 2;
-                }
-            }
-
-            foreach ($this->deprecationTriggers['methods'] as $method) {
-                if ($this->frameIsMethod($trace[$frame], $method)) {
-                    unset($trace[$frame]);
-
-                    continue 2;
-                }
-            }
-        }
-
-        return array_values($trace);
-    }
-
-    /**
-     * @return ?array{file: non-empty-string, line: positive-int}
-     */
-    private function guessDeprecationFrame(): ?array
-    {
-        if ($this->deprecationTriggers === null) {
-            return null;
-        }
-
-        $trace = $this->errorStackTrace();
-
-        foreach ($trace as $frame) {
-            foreach ($this->deprecationTriggers['functions'] as $function) {
-                if ($this->frameIsFunction($frame, $function)) {
-                    return $frame;
-                }
-            }
-
-            foreach ($this->deprecationTriggers['methods'] as $method) {
-                if ($this->frameIsMethod($frame, $method)) {
-                    return $frame;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return list<array{file: string, line: ?int, class?: class-string, function?: string, type: string}>
-     */
-    private function errorStackTrace(): array
-    {
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-
-        $i = 0;
-
-        do {
-            unset($trace[$i]);
-        } while (self::class === ($trace[++$i]['class'] ?? null));
-
-        return array_values($trace);
-    }
-
-    /**
-     * @param array{class? : class-string, function?: non-empty-string} $frame
-     * @param non-empty-string                                          $function
-     */
-    private function frameIsFunction(array $frame, string $function): bool
-    {
-        return !isset($frame['class']) && isset($frame['function']) && $frame['function'] === $function;
-    }
-
-    /**
-     * @param array{class? : class-string, function?: non-empty-string}    $frame
-     * @param array{className: class-string, methodName: non-empty-string} $method
-     */
-    private function frameIsMethod(array $frame, array $method): bool
-    {
-        return isset($frame['class']) &&
-            $frame['class'] === $method['className'] &&
-            isset($frame['function']) &&
-            $frame['function'] === $method['methodName'];
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    private function stackTrace(): string
-    {
-        $buffer      = '';
-        $excludeList = new ExcludeList(true);
-
-        foreach ($this->errorStackTrace() as $frame) {
-            /**
-             * @see https://github.com/sebastianbergmann/phpunit/issues/6043
-             */
-            if (!isset($frame['file'])) {
-                continue;
-            }
-
-            if ($excludeList->isExcluded($frame['file'])) {
-                continue;
-            }
-
-            $buffer .= sprintf(
-                "%s:%s\n",
-                $frame['file'],
-                $frame['line'] ?? '?',
-            );
-        }
-
-        return $buffer;
     }
 }

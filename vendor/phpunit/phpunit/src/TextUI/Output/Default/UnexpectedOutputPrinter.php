@@ -16,9 +16,9 @@ use PHPUnit\Event\Test\PrintedUnexpectedOutputSubscriber;
 use PHPUnit\Event\UnknownSubscriberTypeException;
 use PHPUnit\TextUI\Output\Printer;
 
-final readonly class UnexpectedOutputPrinter implements PrintedUnexpectedOutputSubscriber
+final class UnexpectedOutputPrinter implements PrintedUnexpectedOutputSubscriber
 {
-    private Printer $printer;
+    private readonly Printer $printer;
 
     /**
      * @throws EventFacadeIsSealedException

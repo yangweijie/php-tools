@@ -13,7 +13,7 @@ use PHPUnit\Architecture\Elements\ObjectDescription;
 /**
  * @internal
  *
- * @mixin Expectation<array<int, string>|string>
+ * @mixin Expectation<array|string>
  */
 final class PendingArchExpectation
 {
@@ -25,13 +25,13 @@ final class PendingArchExpectation
     /**
      * Creates a new Pending Arch Expectation instance.
      *
-     * @param  Expectation<array<int, string>|string>  $expectation
      * @param  array<int, Closure(ObjectDescription): bool>  $excludeCallbacks
      */
     public function __construct(
         private readonly Expectation $expectation,
         private array $excludeCallbacks,
-    ) {}
+    ) {
+    }
 
     /**
      * Filters the given "targets" by only classes.
@@ -74,39 +74,6 @@ final class PendingArchExpectation
     }
 
     /**
-     * Filters the given "targets" by only classes implementing the given interface.
-     */
-    public function implementing(string $interface): self
-    {
-        $this->excludeCallbacks[] = fn (ObjectDescription $object): bool => ! in_array($interface, class_implements($object->name));
-
-        return $this;
-    }
-
-    /**
-     * Filters the given "targets" by only classes extending the given class.
-     *
-     * @param  class-string  $parentClass
-     */
-    public function extending(string $parentClass): self
-    {
-        // @phpstan-ignore-next-line
-        $this->excludeCallbacks[] = fn (ObjectDescription $object): bool => ! is_subclass_of($object->name, $parentClass);
-
-        return $this;
-    }
-
-    /**
-     * Filters the given "targets" by only classes using the given trait.
-     */
-    public function using(string $trait): self
-    {
-        $this->excludeCallbacks[] = fn (ObjectDescription $object): bool => ! in_array($trait, class_uses($object->name));
-
-        return $this;
-    }
-
-    /**
      * Creates an opposite expectation.
      */
     public function not(): self
@@ -125,11 +92,10 @@ final class PendingArchExpectation
     {
         $expectation = $this->opposite ? $this->expectation->not() : $this->expectation;
 
-        /** @var ArchExpectation $archExpectation */
-        $archExpectation = $expectation->{$name}(...$arguments);
+        /** @var $archExpectation SingleArchExpectation */
+        $archExpectation = $expectation->{$name}(...$arguments); // @phpstan-ignore-line
 
-        if ($archExpectation instanceof HigherOrderExpectation) { // @phpstan-ignore-line
-            // @phpstan-ignore-next-line
+        if ($archExpectation instanceof HigherOrderExpectation) {
             $originalExpectation = (fn (): \Pest\Expectation => $this->original)->call($archExpectation);
         } else {
             $originalExpectation = $archExpectation;
@@ -145,6 +111,6 @@ final class PendingArchExpectation
      */
     public function __get(string $name): mixed
     {
-        return $this->{$name}();
+        return $this->{$name}(); // @phpstan-ignore-line
     }
 }

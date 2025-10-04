@@ -300,20 +300,23 @@ class Table extends Base
      *
      * @param CData $model 表格模型
      * @param string $name 列名称
-     * @param int $checkboxModelColumn 复选框模型列 -1为 自身复选框
+     * @param int $checkboxModelColumn 复选框模型列
+     * @param int $checkboxEditableModelColumn 复选框是否可编辑 -1为可编辑 -2为不可编辑
      * @return void
      */
     public static function appendCheckboxColumn(
         CData $model,
         string $name,
         int $checkboxModelColumn,
-        bool $checkboxEditableModelColumn = false
+        int $checkboxEditableModelColumn = -2
     ): void {
+        // 确保可编辑参数是-1(可编辑)或-2(不可编辑)
+        $editableValue = ($checkboxEditableModelColumn == -1) ? -1 : -2;
         self::ffi()->uiTableAppendCheckboxColumn(
             $model,
             $name,
             $checkboxModelColumn,
-            $checkboxEditableModelColumn == false ? -1 : 0
+            $editableValue
         );
     }
 
@@ -398,5 +401,211 @@ class Table extends Base
         $params->RowBackgroundColorModelColumn = $RowBackgroundColorModelColumn;
         $c_params = self::ffi()->cast("uiTableParams[1]", $params);
         return self::ffi()->uiNewTable($c_params);
+    }
+
+    /**
+     * 表格是否显示标题
+     *
+     * @param CData $table 表格句柄
+     * @return bool 是否显示标题
+     */
+    public static function headerVisible(CData $table): bool
+    {
+        return self::ffi()->uiTableHeaderVisible($table);
+    }
+
+    /**
+     * 设置表格是否显示标题
+     *
+     * @param CData $table 表格句柄
+     * @param bool $visible 是否显示标题
+     * @return void
+     */
+    public static function setHeaderVisible(CData $table, bool $visible): void
+    {
+        self::ffi()->uiTableSetHeaderVisible($table, $visible ? 1 : 0);
+    }
+
+    /**
+     * 表格行点击事件
+     *
+     * @param CData $table 表格句柄
+     * @param callable $callback 回调函数
+     * @return void
+     */
+    public static function onRowClicked(CData $table, callable $callback): void
+    {
+        $c_callback = function ($t, $row) use ($callback) {
+            $callback($t, $row);
+        };
+        self::ffi()->uiTableOnRowClicked($table, $c_callback);
+    }
+
+    /**
+     * 表格行双击事件
+     *
+     * @param CData $table 表格句柄
+     * @param callable $callback 回调函数
+     * @return void
+     */
+    public static function onRowDoubleClicked(CData $table, callable $callback): void
+    {
+        $c_callback = function ($t, $row) use ($callback) {
+            $callback($t, $row);
+        };
+        self::ffi()->uiTableOnRowDoubleClicked($table, $c_callback);
+    }
+
+    /**
+     * 设置表格标题排序指示器
+     *
+     * @param CData $table 表格句柄
+     * @param int $column 列索引
+     * @param SortIndicator $direction 排序方向
+     * @return void
+     */
+    public static function setHeaderSortIndicator(CData $table, int $column, SortIndicator $direction): void
+    {
+        self::ffi()->uiTableSetHeaderSortIndicator($table, $column, $direction->value);
+    }
+
+    /**
+     * 表格标题排序指示器
+     *
+     * @param CData $table 表格句柄
+     * @param int $column 列索引
+     * @return SortIndicator 排序方向
+     */
+    public static function headerSortIndicator(CData $table, int $column): SortIndicator
+    {
+        return SortIndicator::from(self::ffi()->uiTableHeaderSortIndicator($table, $column));
+    }
+
+    /**
+     * 表格标题点击事件
+     *
+     * @param CData $table 表格句柄
+     * @param callable $callback 回调函数
+     * @return void
+     */
+    public static function onHeaderClicked(CData $table, callable $callback): void
+    {
+        $c_callback = function ($t, $column) use ($callback) {
+            $callback($t, $column);
+        };
+        self::ffi()->uiTableOnHeaderClicked($table, $c_callback);
+    }
+
+    /**
+     * 表格列宽度
+     *
+     * @param CData $table 表格句柄
+     * @param int $column 列索引
+     * @return int 列宽度
+     */
+    public static function columnWidth(CData $table, int $column): int
+    {
+        return self::ffi()->uiTableColumnWidth($table, $column);
+    }
+
+    /**
+     * 设置表格列宽度
+     *
+     * @param CData $table 表格句柄
+     * @param int $column 列索引
+     * @param int $width 列宽度
+     * @return void
+     */
+    public static function setColumnWidth(CData $table, int $column, int $width): void
+    {
+        self::ffi()->uiTableSetColumnWidth($table, $column, $width);
+    }
+
+    /**
+     * 表格选择模式
+     *
+     * @param CData $table 表格句柄
+     * @return TableSelectionMode 选择模式
+     */
+    public static function selectionMode(CData $table): TableSelectionMode
+    {
+        return TableSelectionMode::from(self::ffi()->uiTableSelectionMode($table));
+    }
+
+    /**
+     * 设置表格选择模式
+     *
+     * @param CData $table 表格句柄
+     * @param TableSelectionMode $mode 选择模式
+     * @return void
+     */
+    public static function setSelectionMode(CData $table, TableSelectionMode $mode): void
+    {
+        self::ffi()->uiTableSetSelectionMode($table, $mode->value);
+    }
+
+    /**
+     * 表格选择改变事件
+     *
+     * @param CData $table 表格句柄
+     * @param callable $callback 回调函数
+     * @return void
+     */
+    public static function onSelectionChanged(CData $table, callable $callback): void
+    {
+        $c_callback = function ($t) use ($callback) {
+            // 回调函数不传递额外参数，让上层处理选择信息
+            $callback($t);
+        };
+        self::ffi()->uiTableOnSelectionChanged($table, $c_callback, null);
+    }
+
+    /**
+     * 获取表格选择行索引
+     *
+     * @param CData $table 表格句柄
+     * @return CData 选择对象
+     */
+    public static function selectionRow(CData $table): CData
+    {
+        return self::ffi()->uiTableSelectionRow($table);
+    }
+
+    /**
+     * 设置表格选择行索引
+     *
+     * @param CData $table 表格句柄
+     * @param CData $sel 行索引
+     * @return void
+     */
+    public static function setSelectionRow(CData $table, CData $sel): void
+    {
+        self::ffi()->uiTableSetSelectionRow($table, $sel);
+    }
+
+    /**
+     * 获取表格选择信息
+     *
+     * @param CData $table 表格句柄
+     * @return CData|null 选择信息
+     */
+    public static function getSelection(CData $table): CData|null
+    {
+        $selection = self::ffi()->uiTableGetSelection($table);
+        if ($selection === null) {
+            return null;
+        }
+        return $selection;
+    }
+
+    /**
+     * 释放表格选择信息
+     *
+     * @param CData $selection 选择信息
+     * @return void
+     */
+    public static function freeSelection(CData $selection): void
+    {
+        self::ffi()->uiFreeTableSelection($selection);
     }
 }

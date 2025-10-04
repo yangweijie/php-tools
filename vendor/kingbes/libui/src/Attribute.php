@@ -40,16 +40,18 @@ class Attribute extends Base
      */
     public static function createFamily(string $name): CData
     {
-        return self::ffi()->uiNewFamilyAttribute($name);
+        $char = self::ffi()->new("char[" . strlen($name) + 1 . "]");
+        self::ffi()::memcpy($char, $name, strlen($name));
+        return self::ffi()->uiNewFamilyAttribute($char);
     }
 
     /**
-     * 释放属性族
+     * 获取属性族
      *
      * @param CData $family 属性族句柄
      * @return string 属性族名称
      */
-    public static function Family(CData $family): string
+    public static function family(CData $family): string
     {
         return self::ffi()->uiAttributeFamily($family);
     }
@@ -309,6 +311,20 @@ class Attribute extends Base
     public static function stringDelete(CData $attr, int $start, int $end): void
     {
         self::ffi()->uiAttributedStringDelete($attr, $start, $end);
+    }
+
+    /**
+     * 字符串属性设置属性
+     *
+     * @param CData $attrStr 字符串属性句柄
+     * @param CData $attr 属性句柄
+     * @param integer $start 开始位置
+     * @param integer $end 结束位置
+     * @return void
+     */
+    public static function stringSet(CData $attrStr, CData $attr, int $start, int $end): void
+    {
+        self::ffi()->uiAttributedStringSetAttribute($attrStr, $attr, $start, $end);
     }
 
     /**

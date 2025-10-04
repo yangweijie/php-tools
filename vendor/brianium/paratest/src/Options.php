@@ -80,14 +80,14 @@ final class Options
     public readonly bool $needsTeamcity;
 
     /**
-     * @param non-empty-string                                                      $phpunit
-     * @param non-empty-string                                                      $cwd
-     * @param list<non-empty-string>|null                                           $passthruPhp
-     * @param array<non-empty-string, non-empty-string|true|list<non-empty-string>> $phpunitOptions
-     * @param non-empty-string                                                      $runner
-     * @param non-empty-string                                                      $tmpDir
+     * @param non-empty-string                               $phpunit
+     * @param non-empty-string                               $cwd
+     * @param list<non-empty-string>|null                    $passthruPhp
+     * @param array<non-empty-string, non-empty-string|true> $phpunitOptions
+     * @param non-empty-string                               $runner
+     * @param non-empty-string                               $tmpDir
      */
-    public function __construct(
+    private function __construct(
         public readonly Configuration $configuration,
         public readonly string $phpunit,
         public readonly string $cwd,
@@ -172,17 +172,10 @@ final class Options
                 continue;
             }
 
-            if (! is_array($value)) {
-                $value = [$value];
-            }
-
-            foreach ($value as $innerValue) {
-                $phpunitArgv[] = "--{$key}={$innerValue}";
-            }
+            $phpunitArgv[] = "--{$key}={$value}";
         }
 
         if (($path = $input->getArgument('path')) !== null) {
-            assert(is_string($path));
             $phpunitArgv[] = '--';
             $phpunitArgv[] = $path;
         }
@@ -313,13 +306,13 @@ final class Options
             new InputOption(
                 'group',
                 null,
-                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                InputOption::VALUE_REQUIRED,
                 '@see PHPUnit guide, chapter: ' . $chapter,
             ),
             new InputOption(
                 'exclude-group',
                 null,
-                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                InputOption::VALUE_REQUIRED,
                 '@see PHPUnit guide, chapter: ' . $chapter,
             ),
             new InputOption(
@@ -555,7 +548,7 @@ final class Options
             new InputOption(
                 'coverage-filter',
                 null,
-                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                InputOption::VALUE_REQUIRED,
                 '@see PHPUnit guide, chapter: ' . $chapter,
             ),
             new InputOption(

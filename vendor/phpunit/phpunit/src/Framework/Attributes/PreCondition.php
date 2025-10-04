@@ -12,31 +12,11 @@ namespace PHPUnit\Framework\Attributes;
 use Attribute;
 
 /**
- * @immutable
+ * @psalm-immutable
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
 #[Attribute(Attribute::TARGET_METHOD)]
-final readonly class PreCondition
+final class PreCondition
 {
-    /**
-     * @var non-negative-int
-     */
-    private int $priority;
-
-    /**
-     * @param non-negative-int $priority
-     */
-    public function __construct(int $priority = 0)
-    {
-        $this->priority = $priority;
-    }
-
-    /**
-     * @return non-negative-int
-     */
-    public function priority(): int
-    {
-        return $this->priority;
-    }
 }

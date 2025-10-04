@@ -60,7 +60,7 @@ final class StringContains extends Constraint
 
     public function failureDescription(mixed $other): string
     {
-        $stringifiedHaystack = Exporter::export($other);
+        $stringifiedHaystack = Exporter::export($other, true);
         $haystackEncoding    = $this->getDetectedEncoding($other);
         $haystackLength      = $this->getHaystackLength($other);
 
@@ -71,7 +71,7 @@ final class StringContains extends Constraint
             $haystackLength,
         );
 
-        $needleInformation = $this->toString();
+        $needleInformation = $this->toString(true);
 
         return $haystackInformation . $needleInformation;
     }

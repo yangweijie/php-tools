@@ -16,8 +16,6 @@ use Kingbes\Libui\App as LibuiApp;
 use Kingbes\Libui\Window;
 use Kingbes\Libui\Combobox;
 use Kingbes\Libui\Spinbox;
-use Kingbes\Libui\Table;
-use Kingbes\Libui\TableValueType;
 
 class IntelligentPackagerTab
 {

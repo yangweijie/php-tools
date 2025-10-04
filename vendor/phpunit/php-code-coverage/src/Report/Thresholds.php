@@ -12,7 +12,7 @@ namespace SebastianBergmann\CodeCoverage\Report;
 use SebastianBergmann\CodeCoverage\InvalidArgumentException;
 
 /**
- * @immutable
+ * @psalm-immutable
  */
 final class Thresholds
 {

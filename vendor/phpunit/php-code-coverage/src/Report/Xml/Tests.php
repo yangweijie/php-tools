@@ -9,13 +9,12 @@
  */
 namespace SebastianBergmann\CodeCoverage\Report\Xml;
 
-use function assert;
 use DOMElement;
 
 /**
  * @internal This class is not covered by the backward compatibility promise for phpunit/php-code-coverage
  *
- * @phpstan-import-type TestType from \SebastianBergmann\CodeCoverage\CodeCoverage
+ * @psalm-import-type TestType from \SebastianBergmann\CodeCoverage\CodeCoverage
  */
 final class Tests
 {
@@ -37,8 +36,6 @@ final class Tests
                 'test',
             ),
         );
-
-        assert($node instanceof DOMElement);
 
         $node->setAttribute('name', $test);
         $node->setAttribute('size', $result['size']);

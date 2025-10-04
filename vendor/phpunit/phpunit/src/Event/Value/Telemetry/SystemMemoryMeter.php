@@ -17,7 +17,7 @@ use function memory_get_usage;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class SystemMemoryMeter implements MemoryMeter
+final class SystemMemoryMeter implements MemoryMeter
 {
     public function memoryUsage(): MemoryUsage
     {

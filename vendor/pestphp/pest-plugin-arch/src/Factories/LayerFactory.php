@@ -60,9 +60,7 @@ final class LayerFactory
             return $object;
         }, $this->objectsStorage->allByNamespace($name, $onlyUserDefinedUses));
 
-        $layer = str_contains($name, '*')
-            ? Layer::fromBase($objects)->leaveByNameRegex('/'.strtr(preg_quote($name, '/'), ['\\*' => '[^\\\\]+']).'/')
-            : Layer::fromBase($objects)->leaveByNameStart($name);
+        $layer = Layer::fromBase($objects)->leaveByNameStart($name);
 
         foreach ($options->exclude as $exclude) {
             $layer = $layer->excludeByNameStart($exclude);

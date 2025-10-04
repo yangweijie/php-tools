@@ -10,7 +10,6 @@
 namespace PHPUnit\TestRunner\TestResult;
 
 use function count;
-use PHPUnit\Event\Test\AfterLastTestMethodErrored;
 use PHPUnit\Event\Test\BeforeFirstTestMethodErrored;
 use PHPUnit\Event\Test\ConsideredRisky;
 use PHPUnit\Event\Test\Errored;
@@ -30,127 +29,127 @@ use PHPUnit\TestRunner\TestResult\Issues\Issue;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class TestResult
+final class TestResult
 {
-    private int $numberOfTests;
-    private int $numberOfTestsRun;
-    private int $numberOfAssertions;
+    private readonly int $numberOfTests;
+    private readonly int $numberOfTestsRun;
+    private readonly int $numberOfAssertions;
 
     /**
-     * @var list<AfterLastTestMethodErrored|BeforeFirstTestMethodErrored|Errored>
+     * @psalm-var list<BeforeFirstTestMethodErrored|Errored>
      */
-    private array $testErroredEvents;
+    private readonly array $testErroredEvents;
 
     /**
-     * @var list<Failed>
+     * @psalm-var list<Failed>
      */
-    private array $testFailedEvents;
+    private readonly array $testFailedEvents;
 
     /**
-     * @var list<MarkedIncomplete>
+     * @psalm-var list<MarkedIncomplete>
      */
-    private array $testMarkedIncompleteEvents;
+    private readonly array $testMarkedIncompleteEvents;
 
     /**
-     * @var list<TestSuiteSkipped>
+     * @psalm-var list<TestSuiteSkipped>
      */
-    private array $testSuiteSkippedEvents;
+    private readonly array $testSuiteSkippedEvents;
 
     /**
-     * @var list<TestSkipped>
+     * @psalm-var list<TestSkipped>
      */
-    private array $testSkippedEvents;
+    private readonly array $testSkippedEvents;
 
     /**
-     * @var array<string,list<ConsideredRisky>>
+     * @psalm-var array<string,list<ConsideredRisky>>
      */
-    private array $testConsideredRiskyEvents;
+    private readonly array $testConsideredRiskyEvents;
 
     /**
-     * @var array<string,list<PhpunitDeprecationTriggered>>
+     * @psalm-var array<string,list<PhpunitDeprecationTriggered>>
      */
-    private array $testTriggeredPhpunitDeprecationEvents;
+    private readonly array $testTriggeredPhpunitDeprecationEvents;
 
     /**
-     * @var array<string,list<PhpunitErrorTriggered>>
+     * @psalm-var array<string,list<PhpunitErrorTriggered>>
      */
-    private array $testTriggeredPhpunitErrorEvents;
+    private readonly array $testTriggeredPhpunitErrorEvents;
 
     /**
-     * @var array<string,list<PhpunitWarningTriggered>>
+     * @psalm-var array<string,list<PhpunitWarningTriggered>>
      */
-    private array $testTriggeredPhpunitWarningEvents;
+    private readonly array $testTriggeredPhpunitWarningEvents;
 
     /**
-     * @var list<TestRunnerDeprecationTriggered>
+     * @psalm-var list<TestRunnerDeprecationTriggered>
      */
-    private array $testRunnerTriggeredDeprecationEvents;
+    private readonly array $testRunnerTriggeredDeprecationEvents;
 
     /**
-     * @var list<TestRunnerWarningTriggered>
+     * @psalm-var list<TestRunnerWarningTriggered>
      */
-    private array $testRunnerTriggeredWarningEvents;
+    private readonly array $testRunnerTriggeredWarningEvents;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $errors;
+    private readonly array $errors;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $deprecations;
+    private readonly array $deprecations;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $notices;
+    private readonly array $notices;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $warnings;
+    private readonly array $warnings;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $phpDeprecations;
+    private readonly array $phpDeprecations;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $phpNotices;
+    private readonly array $phpNotices;
 
     /**
-     * @var list<Issue>
+     * @psalm-var list<Issue>
      */
-    private array $phpWarnings;
+    private readonly array $phpWarnings;
 
     /**
-     * @var non-negative-int
+     * @psalm-var non-negative-int
      */
-    private int $numberOfIssuesIgnoredByBaseline;
+    private readonly int $numberOfIssuesIgnoredByBaseline;
 
     /**
-     * @param list<AfterLastTestMethodErrored|BeforeFirstTestMethodErrored|Errored> $testErroredEvents
-     * @param list<Failed>                                                          $testFailedEvents
-     * @param array<string,list<ConsideredRisky>>                                   $testConsideredRiskyEvents
-     * @param list<TestSuiteSkipped>                                                $testSuiteSkippedEvents
-     * @param list<TestSkipped>                                                     $testSkippedEvents
-     * @param list<MarkedIncomplete>                                                $testMarkedIncompleteEvents
-     * @param array<string,list<PhpunitDeprecationTriggered>>                       $testTriggeredPhpunitDeprecationEvents
-     * @param array<string,list<PhpunitErrorTriggered>>                             $testTriggeredPhpunitErrorEvents
-     * @param array<string,list<PhpunitWarningTriggered>>                           $testTriggeredPhpunitWarningEvents
-     * @param list<TestRunnerDeprecationTriggered>                                  $testRunnerTriggeredDeprecationEvents
-     * @param list<TestRunnerWarningTriggered>                                      $testRunnerTriggeredWarningEvents
-     * @param list<Issue>                                                           $errors
-     * @param list<Issue>                                                           $deprecations
-     * @param list<Issue>                                                           $notices
-     * @param list<Issue>                                                           $warnings
-     * @param list<Issue>                                                           $phpDeprecations
-     * @param list<Issue>                                                           $phpNotices
-     * @param list<Issue>                                                           $phpWarnings
-     * @param non-negative-int                                                      $numberOfIssuesIgnoredByBaseline
+     * @psalm-param list<BeforeFirstTestMethodErrored|Errored> $testErroredEvents
+     * @psalm-param list<Failed> $testFailedEvents
+     * @psalm-param array<string,list<ConsideredRisky>> $testConsideredRiskyEvents
+     * @psalm-param list<TestSuiteSkipped> $testSuiteSkippedEvents
+     * @psalm-param list<TestSkipped> $testSkippedEvents
+     * @psalm-param list<MarkedIncomplete> $testMarkedIncompleteEvents
+     * @psalm-param array<string,list<PhpunitDeprecationTriggered>> $testTriggeredPhpunitDeprecationEvents
+     * @psalm-param array<string,list<PhpunitErrorTriggered>> $testTriggeredPhpunitErrorEvents
+     * @psalm-param array<string,list<PhpunitWarningTriggered>> $testTriggeredPhpunitWarningEvents
+     * @psalm-param list<TestRunnerDeprecationTriggered> $testRunnerTriggeredDeprecationEvents
+     * @psalm-param list<TestRunnerWarningTriggered> $testRunnerTriggeredWarningEvents
+     * @psalm-param list<Issue> $errors
+     * @psalm-param list<Issue> $deprecations
+     * @psalm-param list<Issue> $notices
+     * @psalm-param list<Issue> $warnings
+     * @psalm-param list<Issue> $phpDeprecations
+     * @psalm-param list<Issue> $phpNotices
+     * @psalm-param list<Issue> $phpWarnings
+     * @psalm-param non-negative-int $numberOfIssuesIgnoredByBaseline
      */
     public function __construct(int $numberOfTests, int $numberOfTestsRun, int $numberOfAssertions, array $testErroredEvents, array $testFailedEvents, array $testConsideredRiskyEvents, array $testSuiteSkippedEvents, array $testSkippedEvents, array $testMarkedIncompleteEvents, array $testTriggeredPhpunitDeprecationEvents, array $testTriggeredPhpunitErrorEvents, array $testTriggeredPhpunitWarningEvents, array $testRunnerTriggeredDeprecationEvents, array $testRunnerTriggeredWarningEvents, array $errors, array $deprecations, array $notices, array $warnings, array $phpDeprecations, array $phpNotices, array $phpWarnings, int $numberOfIssuesIgnoredByBaseline)
     {
@@ -189,7 +188,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<AfterLastTestMethodErrored|BeforeFirstTestMethodErrored|Errored>
+     * @psalm-return list<BeforeFirstTestMethodErrored|Errored>
      */
     public function testErroredEvents(): array
     {
@@ -207,7 +206,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Failed>
+     * @psalm-return list<Failed>
      */
     public function testFailedEvents(): array
     {
@@ -225,7 +224,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return array<string,list<ConsideredRisky>>
+     * @psalm-return array<string,list<ConsideredRisky>>
      */
     public function testConsideredRiskyEvents(): array
     {
@@ -243,7 +242,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<TestSuiteSkipped>
+     * @psalm-return list<TestSuiteSkipped>
      */
     public function testSuiteSkippedEvents(): array
     {
@@ -261,7 +260,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<TestSkipped>
+     * @psalm-return list<TestSkipped>
      */
     public function testSkippedEvents(): array
     {
@@ -279,7 +278,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<MarkedIncomplete>
+     * @psalm-return list<MarkedIncomplete>
      */
     public function testMarkedIncompleteEvents(): array
     {
@@ -297,7 +296,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return array<string,list<PhpunitDeprecationTriggered>>
+     * @psalm-return array<string,list<PhpunitDeprecationTriggered>>
      */
     public function testTriggeredPhpunitDeprecationEvents(): array
     {
@@ -315,7 +314,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return array<string,list<PhpunitErrorTriggered>>
+     * @psalm-return array<string,list<PhpunitErrorTriggered>>
      */
     public function testTriggeredPhpunitErrorEvents(): array
     {
@@ -333,7 +332,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return array<string,list<PhpunitWarningTriggered>>
+     * @psalm-return array<string,list<PhpunitWarningTriggered>>
      */
     public function testTriggeredPhpunitWarningEvents(): array
     {
@@ -351,7 +350,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<TestRunnerDeprecationTriggered>
+     * @psalm-return list<TestRunnerDeprecationTriggered>
      */
     public function testRunnerTriggeredDeprecationEvents(): array
     {
@@ -369,7 +368,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<TestRunnerWarningTriggered>
+     * @psalm-return list<TestRunnerWarningTriggered>
      */
     public function testRunnerTriggeredWarningEvents(): array
     {
@@ -416,7 +415,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function errors(): array
     {
@@ -424,7 +423,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function deprecations(): array
     {
@@ -432,7 +431,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function notices(): array
     {
@@ -440,7 +439,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function warnings(): array
     {
@@ -448,7 +447,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function phpDeprecations(): array
     {
@@ -456,7 +455,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function phpNotices(): array
     {
@@ -464,7 +463,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return list<Issue>
+     * @psalm-return list<Issue>
      */
     public function phpWarnings(): array
     {
@@ -568,7 +567,7 @@ final readonly class TestResult
     }
 
     /**
-     * @return non-negative-int
+     * @psalm-return non-negative-int
      */
     public function numberOfIssuesIgnoredByBaseline(): int
     {

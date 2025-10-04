@@ -24,8 +24,6 @@ final class DOMNodeComparator extends ObjectComparator
     }
 
     /**
-     * @param array<mixed> $processed
-     *
      * @throws ComparisonFailure
      */
     public function assertEquals(mixed $expected, mixed $actual, float $delta = 0.0, bool $canonicalize = false, bool $ignoreCase = false, array &$processed = []): void
@@ -70,29 +68,13 @@ final class DOMNodeComparator extends ObjectComparator
             $node = $document;
         }
 
-        if ($node instanceof DOMDocument) {
-            $document = $node;
-        } else {
-            $document = $node->ownerDocument;
-        }
-
-        assert($document instanceof DOMDocument);
+        $document = $node instanceof DOMDocument ? $node : $node->ownerDocument;
 
         $document->formatOutput = true;
         $document->normalizeDocument();
 
-        if ($node instanceof DOMDocument) {
-            $text = $node->saveXML();
-        } else {
-            $text = $document->saveXML($node);
-        }
+        $text = $node instanceof DOMDocument ? $node->saveXML() : $document->saveXML($node);
 
-        assert($text !== false);
-
-        if ($ignoreCase) {
-            return mb_strtolower($text, 'UTF-8');
-        }
-
-        return $text;
+        return $ignoreCase ? mb_strtolower($text, 'UTF-8') : $text;
     }
 }

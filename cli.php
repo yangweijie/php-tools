@@ -3,7 +3,7 @@
 
 /**
  * PHP Tools CLI Entry Point
- * 
+ *
  * A native PHP CLI implementation without Laravel Zero
  */
 
@@ -23,12 +23,12 @@ try {
             // Run the GUI application
             runGuiApplication();
             break;
-            
+
         case 'build':
             // Build PHAR file
             buildPhar();
             break;
-            
+
         case 'help':
         default:
             showHelp();
@@ -47,15 +47,15 @@ function runGuiApplication()
     // Initialize the GUI application
     global $application;
     $application = new App\App();
-    
+
     // Create port killer tool
     $portKiller = new App\PortKiller();
     $application->addTab("端口查杀", $portKiller->getControl());
-    
+
     // Create process killer tool
     $processKiller = new App\ProcessKiller();
     $application->addTab("进程查杀", $processKiller->getControl());
-    
+
     // Create download accelerator tab
     $downloadAcceleratorTab = new App\DownloadAcceleratorTab();
     $application->addTab("下载加速", $downloadAcceleratorTab->getControl());
@@ -72,10 +72,14 @@ function runGuiApplication()
     $testStepTab = new App\TestStepTab();
     $application->addTab("测试步骤切换", $testStepTab->getBox());
 
+    // Create wifi tab
+//    $wifiTab = new App\WifiTab();
+//    $application->addTab("Wifi破解", $wifiTab->getControl());
+
     // Create example tab
     $exampleTab = new App\ExampleTab();
     $application->addTab("示例", $exampleTab->getControl());
-    
+
     // Create datetime tab
     $exampleTab2 = new App\DatetimeTab();
     $application->addTab("示例2", $exampleTab2->getControl());
@@ -91,20 +95,20 @@ function runGuiApplication()
 function buildPhar()
 {
     echo "Building PHAR file...\n";
-    
+
     // Check if Box is available
     $boxPath = __DIR__ . '/vendor/bin/box';
     if (!file_exists($boxPath)) {
         echo "Error: Box not found at $boxPath\n";
         exit(1);
     }
-    
+
     // 执行 Box 编译命令
     $command = "php $boxPath compile";
     $output = shell_exec("$command 2>&1");
-    
+
     echo $output;
-    
+
     // 检查构建是否成功
     if (file_exists(__DIR__ . '/builds/tools.phar')) {
         echo "Build successful! PHAR file created at builds/tools.phar\n";

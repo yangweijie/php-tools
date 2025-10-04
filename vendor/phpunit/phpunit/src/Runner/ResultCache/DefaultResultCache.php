@@ -45,12 +45,12 @@ final class DefaultResultCache implements ResultCache
     private readonly string $cacheFilename;
 
     /**
-     * @var array<string, TestStatus>
+     * @psalm-var array<string, TestStatus>
      */
     private array $defects = [];
 
     /**
-     * @var array<string, float>
+     * @psalm-var array<string, float>
      */
     private array $times = [];
 
@@ -85,17 +85,6 @@ final class DefaultResultCache implements ResultCache
     public function time(string $id): float
     {
         return $this->times[$id] ?? 0.0;
-    }
-
-    public function mergeWith(self $other): void
-    {
-        foreach ($other->defects as $id => $defect) {
-            $this->defects[$id] = $defect;
-        }
-
-        foreach ($other->times as $id => $time) {
-            $this->times[$id] = $time;
-        }
     }
 
     public function load(): void

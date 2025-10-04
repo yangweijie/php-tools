@@ -12,7 +12,7 @@ namespace PHPUnit\Runner\Baseline;
 use const DIRECTORY_SEPARATOR;
 use function assert;
 use function dirname;
-use function is_file;
+use function file_exists;
 use function realpath;
 use function sprintf;
 use function str_replace;
@@ -27,16 +27,16 @@ use PHPUnit\Util\Xml\XmlException;
  *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class Reader
+final class Reader
 {
     /**
-     * @param non-empty-string $baselineFile
+     * @psalm-param non-empty-string $baselineFile
      *
      * @throws CannotLoadBaselineException
      */
     public function read(string $baselineFile): Baseline
     {
-        if (!is_file($baselineFile)) {
+        if (!file_exists($baselineFile)) {
             throw new CannotLoadBaselineException(
                 sprintf(
                     'Cannot read baseline %s, file does not exist',
@@ -50,8 +50,7 @@ final readonly class Reader
         } catch (XmlException $e) {
             throw new CannotLoadBaselineException(
                 sprintf(
-                    'Cannot read baseline %s: %s',
-                    $baselineFile,
+                    'Cannot read baseline: %s',
                     trim($e->getMessage()),
                 ),
             );

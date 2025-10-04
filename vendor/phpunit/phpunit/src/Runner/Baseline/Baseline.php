@@ -19,7 +19,7 @@ final class Baseline
     public const VERSION = 1;
 
     /**
-     * @var array<non-empty-string, array<positive-int, list<Issue>>>
+     * @psalm-var array<non-empty-string, array<positive-int, list<Issue>>>
      */
     private array $issues = [];
 
@@ -52,7 +52,7 @@ final class Baseline
     }
 
     /**
-     * @return array<string, array<positive-int, list<Issue>>>
+     * @psalm-return array<string, array<positive-int, list<Issue>>>
      */
     public function groupedByFileAndLine(): array
     {

@@ -2,53 +2,49 @@
 
 namespace App;
 
-use Kingbes\Libui\Box;
-use Kingbes\Libui\Label;
-use Kingbes\Libui\Group;
-use Kingbes\Libui\DateTimePicker;
+use Kingbes\Libui\SDK\LibuiVBox;
+use Kingbes\Libui\SDK\LibuiLabel;
+use Kingbes\Libui\SDK\LibuiGroup;
+use Kingbes\Libui\SDK\LibuiDateTimePicker;
+use Kingbes\Libui\SDK\Enums\DateTimePickerType;
 use Kingbes\Libui\DateTime;
 
 
 class DatetimeTab
 {
-    private $box;
-    private $tableData = [];
-    
+    private LibuiVBox $box;
+    private array $tableData = [];
+
     public function __construct()
     {
-       
-         // 创建主垂直容器
-        $this->box = Box::newVerticalBox();
-        Box::setPadded($this->box, true);
-        
+        // 创建主垂直容器
+        $this->box = new LibuiVBox();
+        $this->box->setPadded(true);
+
         // 添加标题
-        $titleLabel = Label::create("基础控件");
-        Box::append($this->box, $titleLabel, false);
-        
         $this->addBasicControls($this->box);
     }
-    
-    private function addBasicControls($container)
+
+    private function addBasicControls(LibuiVBox $container)
     {
         // 基础控件组
-        $basicGroup = Group::create("基础控件");
-        Group::setMargined($basicGroup, true);
-        Box::append($container, $basicGroup, false);
-        
-        $basicBox = Box::newVerticalBox();
-        Box::setPadded($basicBox, true);
-        Group::setChild($basicGroup, $basicBox);
-        
-        // 标签
-       // 创建日期时间选择器
-        $dateTimePicker = DateTimePicker::createDataTime();
+        $basicGroup = new LibuiGroup("基础控件");
+        $basicGroup->setPadded(true);
+        $container->append($basicGroup, false);
+
+        $basicBox = new LibuiVBox();
+        $basicBox->setPadded(true);
+        $basicGroup->append($basicBox, false);
+
+        // 创建日期时间选择器
+        $dateTimePicker = new LibuiDateTimePicker(DateTimePickerType::DATE_TIME);
         // 创建日期选择器
-        $datePicker = DateTimePicker::createDate();
+        $datePicker = new LibuiDateTimePicker(DateTimePickerType::DATE_ONLY);
         // 创建时间选择器
-        $timePicker = DateTimePicker::createTime();
+        $timePicker = new LibuiDateTimePicker(DateTimePickerType::TIME_ONLY);
 
         // 设置时间为2023年
-        DateTimePicker::setTime($dateTimePicker, new DateTime(
+        $dateTimePicker->setDateTime(new DateTime(
             50,
             30,
             10,
@@ -58,30 +54,30 @@ class DatetimeTab
         ));
 
         // 追加按钮到容器
-        Box::append($basicBox, $dateTimePicker, false);
-        Box::append($basicBox, $datePicker, false);
-        Box::append($basicBox, $timePicker, false);
+        $basicBox->append($dateTimePicker, false);
+        $basicBox->append($datePicker, false);
+        $basicBox->append($timePicker, false);
 
         //时间日期时间选择器事件
-        DateTimePicker::onChanged($dateTimePicker, function ($dateTimePicker) {
+        $dateTimePicker->onChanged(function ($dateTime) use ($dateTimePicker) {
             echo "时间日期时间选择器事件";
             // 显示选中的事件
-            var_dump(DateTimePicker::time($dateTimePicker));
+            var_dump($dateTimePicker->getDateTime());
         });
+
         //日期选择器事件
-        DateTimePicker::onChanged($datePicker, function ($datePicker) {
+        $datePicker->onChanged(function ($dateTime) use ($datePicker) {
             echo "日期选择器事件";
             // 显示选中的事件
-            var_dump(DateTimePicker::time($datePicker));
+            var_dump($datePicker->getDateTime());
         });
+
         //时间选择器事件
-        DateTimePicker::onChanged($timePicker, function ($timePicker) {
+        $timePicker->onChanged(function ($dateTime) use ($timePicker) {
             echo "时间选择器事件";
             // 显示选中的事件
-            var_dump(DateTimePicker::time($timePicker));
+            var_dump($timePicker->getDateTime());
         });
-        
-       
     }
 
     public function getControl()

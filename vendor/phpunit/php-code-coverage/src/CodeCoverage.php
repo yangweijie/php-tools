@@ -37,7 +37,7 @@ use SebastianBergmann\CodeUnitReverseLookup\Wizard;
 /**
  * Provides collection functionality for PHP code coverage information.
  *
- * @phpstan-type TestType = array{
+ * @psalm-type TestType = array{
  *     size: string,
  *     status: string,
  * }
@@ -57,17 +57,17 @@ final class CodeCoverage
     private bool $useAnnotationsForIgnoringCode = true;
 
     /**
-     * @var array<string,list<int>>
+     * @psalm-var array<string,list<int>>
      */
     private array $linesToBeIgnored = [];
 
     /**
-     * @var array<string, TestType>
+     * @psalm-var array<string, TestType>
      */
     private array $tests = [];
 
     /**
-     * @var list<class-string>
+     * @psalm-var list<class-string>
      */
     private array $parentClassesExcludedFromUnintentionallyCoveredCodeCheck = [];
     private ?FileAnalyser $analyser                                         = null;
@@ -145,7 +145,7 @@ final class CodeCoverage
     }
 
     /**
-     * @return array<string, TestType>
+     * @psalm-return array<string, TestType>
      */
     public function getTests(): array
     {
@@ -153,7 +153,7 @@ final class CodeCoverage
     }
 
     /**
-     * @param array<string, TestType> $tests
+     * @psalm-param array<string, TestType> $tests
      */
     public function setTests(array $tests): void
     {
@@ -175,7 +175,7 @@ final class CodeCoverage
     }
 
     /**
-     * @param array<string,list<int>> $linesToBeIgnored
+     * @psalm-param array<string,list<int>> $linesToBeIgnored
      */
     public function stop(bool $append = true, ?TestStatus $status = null, array|false $linesToBeCovered = [], array $linesToBeUsed = [], array $linesToBeIgnored = []): RawCodeCoverageData
     {
@@ -196,7 +196,7 @@ final class CodeCoverage
     }
 
     /**
-     * @param array<string,list<int>> $linesToBeIgnored
+     * @psalm-param array<string,list<int>> $linesToBeIgnored
      *
      * @throws ReflectionException
      * @throws TestIdMissingException
@@ -287,17 +287,11 @@ final class CodeCoverage
         $this->checkForUnintentionallyCoveredCode = false;
     }
 
-    /**
-     * @deprecated
-     */
     public function includeUncoveredFiles(): void
     {
         $this->includeUncoveredFiles = true;
     }
 
-    /**
-     * @deprecated
-     */
     public function excludeUncoveredFiles(): void
     {
         $this->includeUncoveredFiles = false;
@@ -324,7 +318,7 @@ final class CodeCoverage
     }
 
     /**
-     * @phpstan-assert-if-true !null $this->cacheDirectory
+     * @psalm-assert-if-true !null $this->cacheDirectory
      */
     public function cachesStaticAnalysis(): bool
     {
@@ -356,7 +350,7 @@ final class CodeCoverage
     }
 
     /**
-     * @param class-string $className
+     * @psalm-param class-string $className
      */
     public function excludeSubclassesOfThisClassFromUnintentionallyCoveredCodeCheck(string $className): void
     {
@@ -453,7 +447,7 @@ final class CodeCoverage
     }
 
     /**
-     * @param array<string,list<int>> $linesToBeIgnored
+     * @psalm-param array<string,list<int>> $linesToBeIgnored
      */
     private function applyIgnoredLinesFilter(RawCodeCoverageData $data, array $linesToBeIgnored): void
     {

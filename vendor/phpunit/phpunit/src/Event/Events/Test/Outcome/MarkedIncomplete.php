@@ -18,15 +18,15 @@ use PHPUnit\Event\Event;
 use PHPUnit\Event\Telemetry;
 
 /**
- * @immutable
+ * @psalm-immutable
  *
  * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
  */
-final readonly class MarkedIncomplete implements Event
+final class MarkedIncomplete implements Event
 {
-    private Telemetry\Info $telemetryInfo;
-    private Code\Test $test;
-    private Throwable $throwable;
+    private readonly Telemetry\Info $telemetryInfo;
+    private readonly Code\Test $test;
+    private readonly Throwable $throwable;
 
     public function __construct(Telemetry\Info $telemetryInfo, Code\Test $test, Throwable $throwable)
     {

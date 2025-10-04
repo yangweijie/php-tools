@@ -24,6 +24,16 @@ class DateTimePicker extends Base
     {
         $c_tm = self::ffi()->new("struct tm [1]");
         self::ffi()->uiDateTimePickerTime($dateTimePicker, $c_tm);
+        
+        // 检查字段是否存在，避免FFI异常
+        $isdst = -1;
+        try {
+            $isdst = $c_tm[0]->tm_isdst;
+        } catch (\FFI\Exception $e) {
+            // 如果tm_isdst字段不存在，使用默认值-1
+            $isdst = -1;
+        }
+        
         $tm = new DateTime(
             $c_tm[0]->tm_sec,
             $c_tm[0]->tm_min,
@@ -33,7 +43,7 @@ class DateTimePicker extends Base
             $c_tm[0]->tm_year + 1900,
             $c_tm[0]->tm_wday + 1,
             $c_tm[0]->tm_yday,
-            $c_tm[0]->tm_isdst,
+            $isdst,
         );
         unset($c_tm);
         return $tm;
@@ -46,7 +56,7 @@ class DateTimePicker extends Base
      * @param DateTime $time 时间类
      * @return void
      */
-    public static function setTime(CData $dateTimePicker, DateTime $time)
+    public static function setTime(CData $dateTimePicker, DateTime $time): void
     {
         $c_tm = self::ffi()->new("struct tm [1]");
         $c_tm[0]->tm_sec = $time->sec;
@@ -57,7 +67,14 @@ class DateTimePicker extends Base
         $c_tm[0]->tm_year = $time->year - 1900;
         $c_tm[0]->tm_wday = $time->wday - 1;
         $c_tm[0]->tm_yday = $time->yday;
-        $c_tm[0]->tm_isdst = $time->isdst;
+        
+        // 检查字段是否存在，避免FFI异常
+        try {
+            $c_tm[0]->tm_isdst = $time->isdst;
+        } catch (\FFI\Exception $e) {
+            // 如果tm_isdst字段不存在，跳过设置
+        }
+        
         self::ffi()->uiDateTimePickerSetTime($dateTimePicker, $c_tm);
         unset($c_tm);
     }

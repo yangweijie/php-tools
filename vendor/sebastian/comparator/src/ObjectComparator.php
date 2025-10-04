@@ -24,8 +24,6 @@ class ObjectComparator extends ArrayComparator
     }
 
     /**
-     * @param array<mixed> $processed
-     *
      * @throws ComparisonFailure
      */
     public function assertEquals(mixed $expected, mixed $actual, float $delta = 0.0, bool $canonicalize = false, bool $ignoreCase = false, array &$processed = []): void
@@ -83,9 +81,6 @@ class ObjectComparator extends ArrayComparator
         }
     }
 
-    /**
-     * @return array<mixed>
-     */
     protected function toArray(object $object): array
     {
         return (new Exporter)->toArray($object);

@@ -13,7 +13,7 @@ use PHPUnit\Event\Subscriber;
 /**
  * @internal
  */
-final readonly class BootSubscribers implements Bootstrapper
+final class BootSubscribers implements Bootstrapper
 {
     /**
      * The list of Subscribers.
@@ -31,7 +31,7 @@ final readonly class BootSubscribers implements Bootstrapper
      * Creates a new instance of the Boot Subscribers.
      */
     public function __construct(
-        private Container $container,
+        private readonly Container $container,
     ) {}
 
     /**

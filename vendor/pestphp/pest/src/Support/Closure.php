@@ -20,13 +20,13 @@ final class Closure
      */
     public static function bind(?BaseClosure $closure, ?object $newThis, object|string|null $newScope = 'static'): BaseClosure
     {
-        if (! $closure instanceof \Closure) {
+        if ($closure == null) {
             throw ShouldNotHappen::fromMessage('Could not bind null closure.');
         }
 
         $closure = BaseClosure::bind($closure, $newThis, $newScope);
 
-        if (! $closure instanceof \Closure) {
+        if ($closure == false) {
             throw ShouldNotHappen::fromMessage('Could not bind closure.');
         }
 

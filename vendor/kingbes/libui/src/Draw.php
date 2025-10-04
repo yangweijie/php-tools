@@ -198,7 +198,8 @@ class Draw extends Base
      */
     public static function Stroke(CData $c, CData $path, CData $brush, CData $params): void
     {
-        self::ffi()->uiDrawStroke($c, $path, $brush, $params);
+        $c_uiDrawStrokeParams = self::ffi()::addr($params);
+        self::ffi()->uiDrawStroke($c[0]->Context, $path, $brush, $c_uiDrawStrokeParams);
     }
 
     /**
@@ -209,10 +210,9 @@ class Draw extends Base
      * @param CData $brush 画笔句柄
      * @return void
      */
-    public static function fill(CData $params, CData $path, CData $brush): void
+    public static function fill(CData $context, CData $path, CData $brush): void
     {
-        var_dump($params);
-        self::ffi()->uiDrawFill($params->Context, $path, $brush);
+        self::ffi()->uiDrawFill($context[0]->Context, $path, $brush);
     }
 
     /**
@@ -376,7 +376,7 @@ class Draw extends Base
      */
     public static function clip(CData $c, CData $path): void
     {
-        self::ffi()->uiDrawClip($c, $path);
+        self::ffi()->uiDrawClip($c[0]->Context, $path);
     }
 
     /**
@@ -387,7 +387,7 @@ class Draw extends Base
      */
     public static function save(CData $c): void
     {
-        self::ffi()->uiDrawSave($c);
+        self::ffi()->uiDrawSave($c[0]->Context);
     }
 
     /**
@@ -398,7 +398,7 @@ class Draw extends Base
      */
     public static function restore(CData $c): void
     {
-        self::ffi()->uiDrawRestore($c);
+        self::ffi()->uiDrawRestore($c[0]->Context);
     }
 
     /**
@@ -409,7 +409,8 @@ class Draw extends Base
      */
     public static function createTextLayout(CData $params): CData
     {
-        return self::ffi()->uiDrawNewTextLayout($params);
+        $c_params = self::ffi()::addr($params);
+        return self::ffi()->uiDrawNewTextLayout($c_params);
     }
 
     /**
@@ -434,7 +435,7 @@ class Draw extends Base
      */
     public static function text(CData $c, CData $tl, float $x, float $y): void
     {
-        self::ffi()->uiDrawText($c, $tl, $x, $y);
+        self::ffi()->uiDrawText($c[0]->Context, $tl, $x, $y);
     }
 
     /**
@@ -523,27 +524,22 @@ class Draw extends Base
         float $y0 = 0.0,
         float $x1 = 0.0,
         float $y1 = 0.0,
-        float $outerRadius = 0.0,
-        CData|null $Stops = null,
-        int $numStops = 0
+        float $outerRadius = 0.0
     ): CData {
-        $uiDrawBrush = self::ffi()->new("uiDrawBrush");
-        $uiDrawBrush->Type = $type->value;
-        $uiDrawBrush->R = $r;
-        $uiDrawBrush->G = $g;
-        $uiDrawBrush->B = $b;
-        $uiDrawBrush->A = $a;
-        $uiDrawBrush->X0 = $x0;
-        $uiDrawBrush->Y0 = $y0;
-        $uiDrawBrush->X1 = $x1;
-        $uiDrawBrush->Y1 = $y1;
-        $uiDrawBrush->OuterRadius = $outerRadius;
-        if ($Stops !== null) {
-            $uiDrawBrush->Stops = $Stops;
-        }
-        $uiDrawBrush->NumStops = $numStops;
-        $c_uiDrawBrush = self::ffi()->cast("uiDrawBrush *", $uiDrawBrush);
-        return $c_uiDrawBrush;
+        $uiDrawBrush = self::ffi()::addr(self::ffi()->new("struct uiDrawBrush"));
+        $uiDrawBrushGradientStop = self::ffi()::addr(self::ffi()->new("struct uiDrawBrushGradientStop"));
+        $uiDrawBrush[0]->Type = $type->value;
+        $uiDrawBrush[0]->R = $r;
+        $uiDrawBrush[0]->G = $g;
+        $uiDrawBrush[0]->B = $b;
+        $uiDrawBrush[0]->A = $a;
+        $uiDrawBrush[0]->Stops = $uiDrawBrushGradientStop;
+        $uiDrawBrush[0]->X0 = $x0;
+        $uiDrawBrush[0]->Y0 = $y0;
+        $uiDrawBrush[0]->X1 = $x1;
+        $uiDrawBrush[0]->Y1 = $y1;
+        $uiDrawBrush[0]->OuterRadius = $outerRadius;
+        return $uiDrawBrush;
     }
 
     /**
@@ -559,7 +555,7 @@ class Draw extends Base
      * @param float ...$Dashes 画笔描边虚线数组
      * @return CData
      */
-    public static function createStrokeParams(DrawLineCap $cap, DrawLineJoin $join, DrawLineJoin $join1, float $thickness, float $miterLimit, int $numDashes, float $DashPhase, float ...$Dashes): CData
+    public static function createStrokeParams(DrawLineCap $cap, DrawLineJoin $join, DrawLineJoin $join1, float $thickness = 1.0, float $miterLimit = 0.0, int $numDashes = 0, float $DashPhase = 0.0, float ...$Dashes): CData
     {
         $uiDrawStrokeParams = self::ffi()->new("uiDrawStrokeParams");
         $uiDrawStrokeParams->Cap = $cap->value;
@@ -569,12 +565,55 @@ class Draw extends Base
         $uiDrawStrokeParams->MiterLimit = $miterLimit;
         $uiDrawStrokeParams->DashPhase = $DashPhase;
         $uiDrawStrokeParams->NumDashes = $numDashes;
-        $c_Dashes = self::ffi()->new("double[" . count($Dashes) . "]");
-        for ($i = 0; $i < count($Dashes); $i++) {
-            $c_Dashes[$i] = $Dashes[$i];
+        if ($numDashes > 0) {
+            $c_Dashes = self::ffi()->new("double[" . count($Dashes) . "]");
+            for ($i = 0; $i < count($Dashes); $i++) {
+                $c_Dashes[$i] = $Dashes[$i];
+            }
+            $uiDrawStrokeParams->Dashes = $c_Dashes;
         }
-        $uiDrawStrokeParams->Dashes = $c_Dashes;
-        $c_uiDrawStrokeParams = self::ffi()->cast("uiDrawStrokeParams *", $uiDrawStrokeParams);
-        return $c_uiDrawStrokeParams;
+        return $uiDrawStrokeParams;
+    }
+
+    /**
+     * 创建文本布局参数
+     *
+     * @param CData $str 文本字符串
+     * @param CData $defaultFont 默认字体
+     * @param float $width 文本宽度
+     * @param TextAlign $align 文本对齐方式
+     * @return CData 文本布局参数句柄
+     */
+    public static function createTextLayoutParams(CData $str, CData $defaultFont, float $width, TextAlign $align): CData
+    {
+        $uiDrawTextLayoutParams = self::ffi()->new("uiDrawTextLayoutParams");
+        $uiDrawTextLayoutParams->String = $str;
+        $uiDrawTextLayoutParams->DefaultFont = self::ffi()->cast("uiFontDescriptor *", $defaultFont);
+        $uiDrawTextLayoutParams->Width = $width;
+        $uiDrawTextLayoutParams->Align = $align->value;
+        return $uiDrawTextLayoutParams;
+    }
+
+    /**
+     * 创建字体描述符
+     *
+     * @param string $family 字体名称
+     * @param float $size 字体大小
+     * @param TextWeight $weight 字体重量
+     * @param TextItalic $italic 字体斜体
+     * @param TextStretch $stretch 字体拉伸
+     * @return CData 字体描述符句柄
+     */
+    public static function createFontDesc(string $family, float $size, TextWeight $weight, TextItalic $italic, TextStretch $stretch): CData
+    {
+        $uiFontDescriptor = self::ffi()->new("uiFontDescriptor[1]");
+        $char = self::ffi()->new("char[" . strlen($family) + 1 . "]");
+        self::ffi()::memcpy($char, $family, strlen($family));
+        $uiFontDescriptor[0]->Family = self::ffi()->cast("char *", $char);
+        $uiFontDescriptor[0]->Size = $size;
+        $uiFontDescriptor[0]->Weight = $weight->value;
+        $uiFontDescriptor[0]->Italic = $italic->value;
+        $uiFontDescriptor[0]->Stretch = $stretch->value;
+        return $uiFontDescriptor;
     }
 }
