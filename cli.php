@@ -76,6 +76,10 @@ function runGuiApplication()
 //    $wifiTab = new App\WifiTab();
 //    $application->addTab("Wifi破解", $wifiTab->getControl());
 
+    // Create PHP-FPM calculator tab
+    $phpFpmCalculatorTab = new App\PHPFpmCalculatorTab();
+    $application->addTab("PHP-FPM计算器", $phpFpmCalculatorTab->getControl());
+
     // Create example tab
     $exampleTab = new App\ExampleTab();
     $application->addTab("示例", $exampleTab->getControl());
@@ -83,7 +87,6 @@ function runGuiApplication()
     // Create datetime tab
     $exampleTab2 = new App\DatetimeTab();
     $application->addTab("示例2", $exampleTab2->getControl());
-
 
     // Run the application
     $application->run();
