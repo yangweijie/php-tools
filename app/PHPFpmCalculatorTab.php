@@ -4,18 +4,19 @@ namespace App;
 
 use Kingbes\Libui\SDK\LibuiVBox;
 use Kingbes\Libui\SDK\LibuiLabel;
-use Kingbes\Libui\SDK\LibuiEntry;
 use Kingbes\Libui\SDK\LibuiButton;
 use Kingbes\Libui\SDK\LibuiGroup;
 use Kingbes\Libui\SDK\LibuiMultilineEntry;
+use Kingbes\Libui\SDK\LibuiSlider;
+use Kingbes\Libui\Slider;
 
 class PHPFpmCalculatorTab
 {
     private LibuiVBox $box;
-    private LibuiEntry $totalRamEntry;
-    private LibuiEntry $reservedRamEntry;
-    private LibuiEntry $ramBufferEntry;
-    private LibuiEntry $processSizeEntry;
+    private LibuiSlider $totalRamSlider;
+    private LibuiSlider $reservedRamSlider;
+    private LibuiSlider $ramBufferSlider;
+    private LibuiSlider $processSizeSlider;
     private LibuiLabel $availableRamLabel; // Combined label for available RAM
     private LibuiLabel $maxChildrenLabel;
     private LibuiLabel $startServersLabel;
@@ -60,33 +61,33 @@ class PHPFpmCalculatorTab
         $inputBox->setPadded(true);
         $inputGroup->append($inputBox, false);
 
-        // Total RAM
+        // Total RAM - Slider with range 1-64
         $totalRamLabel = new LibuiLabel("总内存 (GB):");
         $inputBox->append($totalRamLabel, false);
-        $this->totalRamEntry = new LibuiEntry();
-        $this->totalRamEntry->setText("8");
-        $inputBox->append($this->totalRamEntry, false);
+        $this->totalRamSlider = new LibuiSlider(1, 128);
+        $this->totalRamSlider->setValue(8);  // Default value
+        $inputBox->append($this->totalRamSlider->getHandle(), false);
 
-        // Reserved RAM
+        // Reserved RAM - Slider with range 1-64
         $reservedRamLabel = new LibuiLabel("预留内存 (GB):");
         $inputBox->append($reservedRamLabel, false);
-        $this->reservedRamEntry = new LibuiEntry();
-        $this->reservedRamEntry->setText("2");
-        $inputBox->append($this->reservedRamEntry, false);
+        $this->reservedRamSlider = new LibuiSlider(1, 64);
+        $this->reservedRamSlider->setValue(2);  // Default value
+        $inputBox->append($this->reservedRamSlider->getHandle(), false);
 
-        // RAM Buffer
+        // RAM Buffer - Slider with range 1-64
         $ramBufferLabel = new LibuiLabel("内存缓冲 (%):");
         $inputBox->append($ramBufferLabel, false);
-        $this->ramBufferEntry = new LibuiEntry();
-        $this->ramBufferEntry->setText("10");
-        $inputBox->append($this->ramBufferEntry, false);
+        $this->ramBufferSlider = new LibuiSlider(1, 64);
+        $this->ramBufferSlider->setValue(10);  // Default value
+        $inputBox->append($this->ramBufferSlider->getHandle(), false);
 
-        // Process size
+        // Process size - Slider with range 1-64
         $processSizeLabel = new LibuiLabel("每个进程大小 (MB):");
         $inputBox->append($processSizeLabel, false);
-        $this->processSizeEntry = new LibuiEntry();
-        $this->processSizeEntry->setText("64");
-        $inputBox->append($this->processSizeEntry, false);
+        $this->processSizeSlider = new LibuiSlider(1, 1024);
+        $this->processSizeSlider->setValue(32);  // Default value
+        $inputBox->append($this->processSizeSlider->getHandle(), false);
     }
 
     private function addResultControls(LibuiVBox $container)
@@ -160,42 +161,42 @@ class PHPFpmCalculatorTab
 
     private function addEventHandlers()
     {
-        // Add event handlers for input fields
-        $this->totalRamEntry->on('entry.changed', function () {
+        // Add event handlers for slider changes
+        $this->totalRamSlider->onChange(function () {
             $this->calculate();
         });
 
-        $this->reservedRamEntry->on('entry.changed', function () {
+        $this->reservedRamSlider->onChange(function () {
             $this->calculate();
         });
 
-        $this->ramBufferEntry->on('entry.changed', function () {
+        $this->ramBufferSlider->onChange(function () {
             $this->calculate();
         });
 
-        $this->processSizeEntry->on('entry.changed', function () {
+        $this->processSizeSlider->onChange(function () {
             $this->calculate();
         });
     }
 
     private function initializeDefaultValues()
     {
-        // Set default values
-        $this->totalRamEntry->setText("8");
-        $this->reservedRamEntry->setText("2");
-        $this->ramBufferEntry->setText("10");
-        $this->processSizeEntry->setText("64");
+        // Set default values for sliders
+        $this->totalRamSlider->setValue(8);
+        $this->reservedRamSlider->setValue(2);
+        $this->ramBufferSlider->setValue(10);
+        $this->processSizeSlider->setValue(64);
         // Set initial value for available RAM label
     }
 
     private function calculate()
     {
         try {
-            // Get input values
-            $totalRamGb = floatval($this->totalRamEntry->getText()) ?: 0;
-            $reservedRamGb = floatval($this->reservedRamEntry->getText()) ?: 0;
-            $ramBufferPercent = floatval($this->ramBufferEntry->getText()) ?: 0;
-            $processSizeMb = floatval($this->processSizeEntry->getText()) ?: 0;
+            // Get input values from sliders
+            $totalRamGb = $this->totalRamSlider->getValue();
+            $reservedRamGb = $this->reservedRamSlider->getValue();
+            $ramBufferPercent = $this->ramBufferSlider->getValue();
+            $processSizeMb = $this->processSizeSlider->getValue();
 
             // Validate inputs
             if ($processSizeMb <= 0) {
